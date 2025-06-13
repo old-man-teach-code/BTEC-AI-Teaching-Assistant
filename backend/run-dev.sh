@@ -14,7 +14,7 @@ docker-compose $COMPOSE_FILES up -d --build
 
 # Đợi MySQL trên container db sẵn sàng
 echo "Đợi MySQL sẵn sàng trên container db..."
-until docker exec db mysqladmin ping -h"fastapi_mysql_db" --silent; do
+until docker exec fastapi_mysql_db mysqladmin ping -h"fastapi_mysql_db" --silent; do
     sleep 2
     echo "Chưa sẵn sàng, thử lại..."
 done
