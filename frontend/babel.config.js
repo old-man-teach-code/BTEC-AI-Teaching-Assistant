@@ -1,9 +1,8 @@
 module.exports = {
   presets: [
-    ['@vue/cli-plugin-babel/preset', { requireConfigFile: false }],
-    ['@babel/preset-env', { requireConfigFile: false }],
+    ['@vue/cli-plugin-babel/preset', { requireConfigFile: true }],
+    ['@babel/preset-env', { requireConfigFile: true }],
   ],
-  // Ensure Babel does not look for a config file
   babelrc: false,
   configFile: false
 };
