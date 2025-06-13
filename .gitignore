@@ -1,0 +1,16 @@
+*/node_modules
+*/.idea
+*/.vscode
+*/.DS_Store
+*/.env
+*/dist
+*/coverage
+*/build
+*/.cache
+*/.next
+*/.nuxt
+*/.sass-cache
+*/.tmp
+*/.history
+*/.log
+*/.logs
