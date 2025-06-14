@@ -14,3 +14,10 @@
 */.history
 */.log
 */.logs
+frontend/node_modules
+frontend/.idea
+frontend/.vscode
+frontend/.DS_Store
+frontend/.env
+frontend/dist
+*/__pycache__
