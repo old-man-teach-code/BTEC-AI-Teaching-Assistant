@@ -26,7 +26,7 @@ protected_app.add_middleware(
 # Mount các router
 
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
-protected_app.include_router(user.router, prefix="/users", tags=["users"])
+protected_app.include_router(auth.router, prefix="/auth", tags=["auth"], include_in_schema=False)
 
 app.mount("", protected_app)
 
