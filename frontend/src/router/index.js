@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import LoginView from '../views/LoginView.vue'
+import NotFoundView from '../views/NotFoundView.vue'
 import { useAuthStore } from '../stores/auth' // Adjust the path as needed
 
 const router = createRouter({
@@ -30,6 +31,11 @@ const router = createRouter({
         authStore.logout()
         next({ name: 'login' })
       }
+    },
+    {
+      path: '/:catchAll(.*)',
+      name: 'not-found',
+      component: NotFoundView // Catch-all route for 404 Not Found
     }
   ],
 })
@@ -39,7 +45,10 @@ router.beforeEach((to, from, next) => {
   const authStore = useAuthStore()
   if (to.name !== 'login' && !authStore.isAuthenticated) {
     next({ name: 'login' })
-  } else {
+  } else if (to.name === 'login' && authStore.isAuthenticated) {
+    next({ name: 'home' }) // Redirect to home if already authenticated
+  }
+  else {
     next()
   }
 })

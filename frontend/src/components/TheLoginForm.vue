@@ -45,7 +45,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { nextTick, ref } from 'vue'
 // import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import router from '../router'
@@ -58,20 +58,19 @@ const loading = ref(false)
 const formRef = ref(null)
 const authStore = useAuthStore()
 
+
 const onSubmit = async () => {
   error.value = ''
   loading.value = true
   try {
-    const user_info = await authStore.login({ username: username.value, password: password.value })
-    console.log('Đăng nhập thành công:', user_info)
+    await authStore.login({ username: username.value, password: password.value })
+    loading.value = false
+    await nextTick();
     router.push({ name: 'home' }) // Chuyển hướng đến trang chính sau khi đăng nhập thành công
   } catch (err) {
-    console.error('Đăng nhập thất bại:', err)
     error.value = err?.response?.data?.detail || 'Đăng nhập thất bại'
-  } finally {
-    console.log('Đăng nhập hoàn tất')
     loading.value = false
-    router.push({ name: 'home' })
+    throw new Error(error.value)
   }
 }
 </script>
