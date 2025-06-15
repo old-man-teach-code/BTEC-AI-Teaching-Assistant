@@ -46,26 +46,32 @@
 
 <script setup>
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { login } from '../api/auth'
+// import { useRouter } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
+import router from '../router'
 
-const username = ref('')
-const password = ref('')
+const username = ref('linhhn13@fpt.edu.vn') // Mặc định tên đăng nhập
+const password = ref('12345678')
 const error = ref('')
 const loading = ref(false)
-const router = useRouter()
+
 const formRef = ref(null)
+const authStore = useAuthStore()
 
 const onSubmit = async () => {
   error.value = ''
   loading.value = true
   try {
-    await login(username.value, password.value)
-    router.push('/')
+    const user_info = await authStore.login({ username: username.value, password: password.value })
+    console.log('Đăng nhập thành công:', user_info)
+    router.push({ name: 'home' }) // Chuyển hướng đến trang chính sau khi đăng nhập thành công
   } catch (err) {
+    console.error('Đăng nhập thất bại:', err)
     error.value = err?.response?.data?.detail || 'Đăng nhập thất bại'
   } finally {
+    console.log('Đăng nhập hoàn tất')
     loading.value = false
+    router.push({ name: 'home' })
   }
 }
 </script>
