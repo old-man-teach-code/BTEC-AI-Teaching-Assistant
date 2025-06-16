@@ -22,3 +22,7 @@ frontend/.env
 frontend/dist
 */__pycache__
 backend/app/routes/__pycache__
+*/*.cpython-311.pyc
+*.*.pyc
+*/*.pyo
+*/*.pyd

@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from schemas.user import UserCreate, UserRead, Token
 from services.user_service import service_create_user, service_get_user
 from services.auth_service import authenticate_user, login_for_access_token
-from api.deps import get_db, get_current_user
+from dependencies.deps import get_db, get_current_user
 from fastapi.security import OAuth2PasswordRequestForm
 
 router = APIRouter()

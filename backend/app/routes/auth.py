@@ -5,7 +5,7 @@ from services.auth_service import authenticate_user, login_for_access_token
 from services.user_service import service_create_user
 from schemas.user import UserCreate, UserRead
 from schemas.user import Token
-from api.deps import get_db
+from dependencies.deps import get_db
 
 router = APIRouter()
 
