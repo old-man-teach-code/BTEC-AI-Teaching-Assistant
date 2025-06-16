@@ -1,10 +1,16 @@
+from routes.api import user
 from fastapi import FastAPI
-from routes import user, auth
+from routes import auth
 from core.jwt_middleware import JWTAuthMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
-protected_app = FastAPI()
+protected_app = FastAPI(
+    title="FastAPI + MySQL + Docker Compose",
+    description="Basic template for FastAPI with MySQL and Docker Compose",
+    version="1.0.0",
+    doc_url="/api/docs",
+)
 # Sub-app cho routes cần JWT
 protected_app.add_middleware(JWTAuthMiddleware)
 
@@ -23,12 +29,14 @@ protected_app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 # Mount các router
+protected_app.include_router(user.router, prefix="/users", tags=["users"])
 
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
-protected_app.include_router(auth.router, prefix="/auth", tags=["auth"], include_in_schema=False)
 
-app.mount("", protected_app)
+
+app.mount("/api", protected_app)
 
 @app.get("/")
 def read_root():
