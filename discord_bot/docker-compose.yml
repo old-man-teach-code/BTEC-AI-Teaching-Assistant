@@ -1,0 +1,11 @@
+
+services:
+  discord_bot_dev:
+    build: .
+    container_name: discord_bot_dev
+    env_file:
+      - .env
+    restart: unless-stopped
+    volumes:
+      - .:/app
+    command: python bot.py
