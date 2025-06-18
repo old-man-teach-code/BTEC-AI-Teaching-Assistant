@@ -1,4 +1,8 @@
 import os
+from pathlib import Path
+
+# Lấy đường dẫn gốc của dự án
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 class Settings:
     # Database settings
@@ -18,5 +22,10 @@ class Settings:
     REDIS_DB: int = int(os.getenv("REDIS_DB", 0))
     REDIS_PASSWORD: str = os.getenv("REDIS_PASSWORD", "")
     REDIS_DEFAULT_TTL: int = int(os.getenv("REDIS_DEFAULT_TTL", 3600))  # 1 hour default
+    
+    # File storage settings
+    UPLOAD_DIR: Path = Path(os.getenv("UPLOAD_DIR", str(BASE_DIR / "uploads")))
+    MAX_FILE_SIZE: int = int(os.getenv("MAX_FILE_SIZE", 10 * 1024 * 1024))  # 10MB mặc định
+    ALLOWED_EXTENSIONS: list = os.getenv("ALLOWED_EXTENSIONS", ".pdf,.docx,.pptx").split(",")
 
 settings = Settings()

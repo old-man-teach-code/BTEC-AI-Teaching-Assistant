@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from cache.redis_client import get_cache, set_cache
 from datetime import datetime
 import time
+from services.file_service import validate_file
 
 router = APIRouter()
 
@@ -51,3 +52,19 @@ async def clear_specific_cache(key: str):
     from cache.redis_client import delete_cache
     success = delete_cache(key)
     return {"success": success, "message": f"Đã xóa cache key: {key}"}
+
+@router.post("/validate-file")
+async def validate_file_endpoint(file: UploadFile = File(...)):
+    """
+    Kiểm tra tính hợp lệ của file
+    
+    - **file**: File cần kiểm tra
+    """
+    is_valid, error_message = validate_file(file)
+    
+    return {
+        "valid": is_valid,
+        "filename": file.filename,
+        "content_type": file.content_type,
+        "error_message": error_message if not is_valid else None
+    }
