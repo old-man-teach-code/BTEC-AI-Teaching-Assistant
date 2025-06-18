@@ -28,3 +28,6 @@ request.log
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Docs - tài liệu nội bộ
+docs/
