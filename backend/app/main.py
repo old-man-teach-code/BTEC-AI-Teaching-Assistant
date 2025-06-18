@@ -1,6 +1,6 @@
 from routes.api import user
 from fastapi import FastAPI
-from routes import auth
+from routes import auth, info
 from core.jwt_middleware import JWTAuthMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -34,7 +34,7 @@ protected_app.add_middleware(
 protected_app.include_router(user.router, prefix="/users", tags=["users"])
 
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
-
+app.include_router(info.router, prefix="/info", tags=["info"])
 
 app.mount("/api", protected_app)
 
