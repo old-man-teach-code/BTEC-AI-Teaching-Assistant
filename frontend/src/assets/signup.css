@@ -1,0 +1,107 @@
+    .form-section {
+      background: #fff;
+      padding: 0;
+      flex: 1;
+    }
+    .form-section h2 {
+      text-align: center;
+      transform: translateY(-1px); /* kéo lên 50px,  ko ảnh hưởng đến layout các phần tử xung quanh.*/ 
+      
+    }
+    .form-input {
+      margin-bottom: 22px;
+      width: 370px;   
+      
+    }
+
+    .form-input-wrapper {
+      position: relative;
+    }
+    .form-input-wrapper input {
+      width: 100%;
+      padding: 16px 48px 16px 22px;
+      background: #f3f3f3;
+      border: none;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      color: #222;
+      font-family: inherit;
+      transition: box-shadow 0.2s;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+    }
+    .form-input-wrapper input:focus {
+      outline: none;
+      box-shadow: 0 2px 8px rgba(66,133,244,0.10);
+    }
+    .form-input-wrapper i {
+      position: absolute;
+      right: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #222;
+      font-size: 1rem;
+      pointer-events: none;
+    }
+    .signup-btn {
+      width: 100%;
+        height: 48px;
+        background: #7494ec;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, .1);
+        border: none;
+        cursor: pointer;
+        font-size: 16px;
+        color: #fff;
+        font-weight: 600;
+    }
+
+    .social-icons {
+      margin-top: 15px;
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+    }
+    .social-icons i {
+      font-size: 18px;
+      cursor: pointer;
+    }
+    .social-icons {
+      display: flex;
+      gap: 10px; /* khoảng cách giữa các icon */
+      justify-content: center;
+      align-items: center;
+      margin-top: 20px;
+    }
+
+    .social-icons i {
+      font-size: 20px;
+      padding: 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background-color: white;
+    }
+
+    .social-icons i:hover {
+      background-color: #f0f0f0;
+      transform: scale(1.1);
+    }
+    .social {
+      align-items: center;
+      text-align: center;
+      margin: 20px 0;
+    }
+
+    .social::before,
+    .social::after {
+      content: '';
+      flex: 1;
+      border-bottom: 1px solid #ccc;
+    }
+
+    .social span {
+      padding: 5px 15px;
+      margin: 0 0px;
+      background-color: #fff;
+    }
