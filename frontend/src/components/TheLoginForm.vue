@@ -68,13 +68,13 @@ export default {
       this.loading = true
       try {
         await this.authStore.login({
-          username: this.form.email, // 📌 dùng 'username' nếu backend dùng OAuth2PasswordRequestForm
+          username: this.form.email, // ->>  dùng 'username' nếu backend dùng OAuth2PasswordRequestForm
           password: this.form.password
         })
         this.loading = false
-        this.router.push({ path: '/dashboard' }) // ✅ Chuyển hướng sau khi đăng nhập
+        this.router.push({ path: '/dashboard' }) // ->> Chuyển hướng sau khi đăng nhập
       } catch (err) {
-        this.error = err?.response?.data?.detail || 'Đăng nhập thất bại. Vui lòng thử lại.'
+        this.error = err?.response?.data?.detail || 'Login failed. Please try again.'
         this.loading = false
       }
     },

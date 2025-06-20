@@ -1,27 +1,32 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
-import LoginView from '../views/LoginView.vue'
 import NotFoundView from '../views/NotFoundView.vue'
 import { useAuthStore } from '../stores/auth' // Adjust the path as needed
+import Authen from '../Authen.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',
+      redirect: '/auth'
+    },
+    {
+      path: '/home',
       name: 'home',
       component: HomeView,
+    },
+    {
+      path: '/auth',
+      name: 'authen',
+      component: Authen,
     },
     {
       path: '/about',
       name: 'about',
       component: () => import('../views/AboutView.vue'),
     },
-    {
-      path: '/login',
-      name: 'login',
-      component: LoginView
-    },
+    // Removed /login and /resgister routes
     // logout route is handled in the auth store
     {
       path: '/logout',
@@ -29,7 +34,7 @@ const router = createRouter({
       beforeEnter: (to, from, next) => {
         const authStore = useAuthStore()
         authStore.logout()
-        next({ name: 'login' })
+        next({ name: 'authen' }) // Redirect to /auth after logout
       }
     },
     {
@@ -42,15 +47,18 @@ const router = createRouter({
 
 // Navigation guard
 router.beforeEach((to, from, next) => {
-  const authStore = useAuthStore()
-  if (to.name !== 'login' && !authStore.isAuthenticated) {
-    next({ name: 'login' })
-  } else if (to.name === 'login' && authStore.isAuthenticated) {
-    next({ name: 'home' }) // Redirect to home if already authenticated
+  const authStore = useAuthStore();
+  const token = authStore.token; // Giả sử token lưu trong store
+  const publicPages = ['/auth'];
+  const authRequired = !publicPages.includes(to.path);
+
+  if (authRequired && !token) {
+    return next({ name: 'authen' }); // hoặc { path: '/auth' }
   }
-  else {
-    next()
+  if (to.path === '/auth' && token) {
+    return next({ path: '/dashboard' });
   }
+  next();
 })
 
 export default router
