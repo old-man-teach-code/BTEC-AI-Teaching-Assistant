@@ -26,3 +26,5 @@ backend/app/routes/__pycache__
 *.*.pyc
 */*.pyo
 */*.pyd
+discord_bot/certs/
+discord_bot/nginx.conf
