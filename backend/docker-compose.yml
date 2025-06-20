@@ -22,6 +22,19 @@ services:
       - redis_data:/data
     command: redis-server --save 60 1 --loglevel warning
   
+  # Kích hoạt lại service ChromaDB
+  chromadb:
+    image: ghcr.io/chroma-core/chroma:latest
+    container_name: fastapi_chromadb
+    restart: always
+    ports:
+      - "8001:8000"
+    volumes:
+      - chroma_data:/chroma/chroma
+    environment:
+      - ALLOW_RESET=true
+      - ANONYMIZED_TELEMETRY=false
+  
   api:
     build: .
     container_name: fastapi_app
@@ -29,16 +42,24 @@ services:
     depends_on:
       - db
       - redis
+      - chromadb
     env_file:
       - .env
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - CHROMA_HOST=chromadb
+      - CHROMA_PORT=8000
+      - CHROMA_USE_PERSISTENT=True
+      - CHROMA_PERSISTENT_DIR=/app/chroma_db
     ports:
       - "8000:8000"
     volumes:
       - ./app:/app
+      - chroma_persistent:/app/chroma_db
 
 volumes:
   db_data:
   redis_data:
+  chroma_data:
+  chroma_persistent:
