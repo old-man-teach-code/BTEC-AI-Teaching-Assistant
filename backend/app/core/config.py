@@ -27,5 +27,11 @@ class Settings:
     UPLOAD_DIR: Path = Path(os.getenv("UPLOAD_DIR", str(BASE_DIR / "uploads")))
     MAX_FILE_SIZE: int = int(os.getenv("MAX_FILE_SIZE", 10 * 1024 * 1024))  # 10MB mặc định
     ALLOWED_EXTENSIONS: list = os.getenv("ALLOWED_EXTENSIONS", ".pdf,.docx,.pptx").split(",")
+    
+    # ChromaDB settings
+    CHROMA_HOST: str = os.getenv("CHROMA_HOST", "localhost")
+    CHROMA_PORT: int = int(os.getenv("CHROMA_PORT", 8000))
+    CHROMA_PERSISTENT_DIR: str = os.getenv("CHROMA_PERSISTENT_DIR", str(BASE_DIR / "chroma_db"))
+    CHROMA_USE_PERSISTENT: bool = os.getenv("CHROMA_USE_PERSISTENT", "True").lower() == "true"
 
 settings = Settings()

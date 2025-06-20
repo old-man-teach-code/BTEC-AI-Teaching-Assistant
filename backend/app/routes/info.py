@@ -3,6 +3,8 @@ from cache.redis_client import get_cache, set_cache
 from datetime import datetime
 import time
 from services.file_service import validate_file
+from services.chromadb_client import chromadb_client
+from typing import Dict, List
 
 router = APIRouter()
 
@@ -68,3 +70,61 @@ async def validate_file_endpoint(file: UploadFile = File(...)):
         "content_type": file.content_type,
         "error_message": error_message if not is_valid else None
     }
+
+@router.get("/health")
+def health_check():
+    """
+    Endpoint kiểm tra trạng thái hoạt động của API
+    """
+    return {"status": "ok"}
+
+@router.get("/chromadb/collections")
+def list_chromadb_collections() -> Dict[str, List[str]]:
+    """
+    Liệt kê tất cả các collections trong ChromaDB
+    
+    Returns:
+        Dict[str, List[str]]: Danh sách tên các collections
+    """
+    try:
+        collections = chromadb_client.list_collections()
+        return {"collections": collections}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Lỗi khi truy cập ChromaDB: {str(e)}")
+
+@router.post("/chromadb/teacher-collection/{teacher_id}")
+def create_teacher_collection(teacher_id: str) -> Dict:
+    """
+    Tạo collection cho giảng viên
+    
+    Args:
+        teacher_id (str): ID của giảng viên
+        
+    Returns:
+        Dict: Thông tin về collection đã tạo
+    """
+    try:
+        result = chromadb_client.create_teacher_collection(teacher_id)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Lỗi khi tạo collection: {str(e)}")
+
+@router.delete("/chromadb/teacher-collection/{teacher_id}")
+def delete_teacher_collection(teacher_id: str) -> Dict:
+    """
+    Xóa collection của giảng viên
+    
+    Args:
+        teacher_id (str): ID của giảng viên
+        
+    Returns:
+        Dict: Kết quả xóa collection
+    """
+    try:
+        success = chromadb_client.delete_teacher_collection(teacher_id)
+        if success:
+            return {"status": "deleted", "teacher_id": teacher_id}
+        else:
+            raise HTTPException(status_code=404, detail=f"Không tìm thấy collection cho giảng viên {teacher_id}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Lỗi khi xóa collection: {str(e)}")

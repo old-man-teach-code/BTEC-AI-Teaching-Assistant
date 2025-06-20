@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 
 class FileResponse(BaseModel):
     """Schema cho thông tin file đã upload"""
@@ -8,6 +8,7 @@ class FileResponse(BaseModel):
     content_type: str
     size: int
     path: str
+    full_path: Optional[str] = None
     
 class FileListItem(BaseModel):
     """Schema cho item trong danh sách file"""
@@ -18,10 +19,10 @@ class FileListItem(BaseModel):
     
 class FileListResponse(BaseModel):
     """Schema cho danh sách file"""
-    files: List[FileListItem]
+    files: List[Dict[str, Any]]
     total: int
     
 class FileDeleteResponse(BaseModel):
-    """Schema cho response xóa file"""
+    """Schema cho kết quả xóa file"""
     success: bool
     message: str 
