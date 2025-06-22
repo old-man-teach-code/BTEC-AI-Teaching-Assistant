@@ -1,4 +1,4 @@
- *{ margin: 0;
+*{ margin: 0;
   padding: 0;
   box-sizing: border-box;
   font-family: 'Poppins', sans-serif;
@@ -33,23 +33,34 @@ body {
   display: flex;
   align-items: center;
 }
-
+/*  form này sẽ bị ẩn đi tại vì có opacity với giá trị là 0 và pointer-events là none  */
 .form-box.register {
   right: 0;
-  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition: right 0.6s cubic-bezier(.77,0,.18,1) 0s, opacity 0.3s cubic-bezier(.77,0,.18,1) 0.6s;
 }
-.form-box.login {
+/*  lúc này thì sẽ chưa có active nên hiển thị login form  */
+.form-box.login { 
   right: 0;
   left: auto;
+  opacity: 1;
+  pointer-events: auto;
+  transition: right 0.6s cubic-bezier(.77,0,.18,1) 0s, opacity 0.3s cubic-bezier(.77,0,.18,1) 0.6s;
 }
-
+/*Và khi được active sẽ mờ dần đi bởi vì opcaity là 0  */
 .container.active .form-box.login {
   right: 50%;
+  opacity: 0;
+  pointer-events: none;
+  transition: right 0.6s cubic-bezier(.77,0,.18,1) 0s, opacity 0.3s cubic-bezier(.77,0,.18,1) 0s;
 }
-
+/* khi đó form sign up sẽ được hiện ra do opacity là 1 */
 .container.active .form-box.register {
-  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
   right: 50%;
+  transition: right 0.6s cubic-bezier(.77,0,.18,1) 0s, opacity 0.3s cubic-bezier(.77,0,.18,1) 0.6s;
 }
 
 .toggle-box {
