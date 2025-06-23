@@ -1,5 +1,6 @@
 <template>
   <div class="form-section">
+    <div v-if="successMessage" class="alert-success">{{ successMessage }}</div>
     <h2>Sign-up</h2>
     <form @submit.prevent="handleRegister">
       <!-- Không render lỗi tổng trên form nữa -->
@@ -80,6 +81,7 @@ export default {
       },
       loading: false,
       error: '',
+      successMessage: '',
       fullNameError: false,
       emailError: false,
       passwordError: false,
@@ -89,6 +91,7 @@ export default {
   methods: {
     async handleRegister() {
       this.error = '';
+      this.successMessage = '';
       this.fullNameError = false;
       this.emailError = false;
       this.passwordError = false;
@@ -122,24 +125,25 @@ export default {
       if (hasError) {
         alert('Please fill in all required fields correctly.');
         return;
+        
       }
       this.loading = true;
       try {
         // Gọi API đăng ký
-        await axios.post('/api/signup', {
-          full_name: this.form.fullName,
+        await axios.post('http://localhost:8000/auth/create', {
+          name: this.form.fullName, 
           email: this.form.email,
           password: this.form.password
         });
-        // Auto login sau khi đăng ký thành công
-        const loginRes = await axios.post('/api/login', {
-          email: this.form.email,
-          password: this.form.password
-        });
-        // Lưu token vào store
-        this.$root.authStore.setToken(loginRes.data.token); // hoặc dùng Pinia/Vuex tuỳ cấu trúc
-        // Chuyển hướng tới dashboard
-        this.$router.push('/dashboard');
+        // Hiện thông báo thành công bằng alert
+        alert('Sign-up successfully, please login...!');
+        // Emit event để parent chuyển panel sang login
+        this.$emit('switch-to-login', this.form.email);
+        // Reset form
+        this.form.fullName = '';
+        this.form.email = '';
+        this.form.password = '';
+        this.form.confirmPassword = '';
         this.loading = false;
       } catch (err) {
         alert(err.response?.data?.message || 'Sign-up failed. Please try again later.');
@@ -151,10 +155,4 @@ export default {
   }
 }
 </script>
-
-<style scoped>
-.input-error-border {
-  border: 1.5px solid #e74c3c !important;
-}
-</style>
 

@@ -2,22 +2,29 @@
   <div class="form-section">
     <h2>Login</h2>
     <div v-if="error" class="error-message">{{ error }}</div>
+    
+    <!-- Email -->
     <div class="form-input">
       <div class="form-input-wrapper">
         <input type="email" v-model="form.email" placeholder="Email" />
         <i class="fas fa-envelope"></i>
       </div>
     </div>
+
+    
+    <!-- Password -->
     <div class="form-input">
       <div class="form-input-wrapper">
         <input type="password" v-model="form.password" placeholder="Password" />
         <i class="fas fa-lock"></i>
       </div>
     </div>
+    
     <button class="login-btn" @click="handleLogin" :disabled="loading">
       <span v-if="loading" class="spinner"></span>
       <span v-else>Login</span>
     </button>
+    
     <div class="options">
       <label class="remember">
         <input type="checkbox" />
@@ -25,7 +32,8 @@
       </label>
       <a href="#" class="forgot">Forgot Password?</a>
     </div>
-    <div class="socialx"><span>Or Sign-up with social platform</span></div>
+    
+    <div class="social"><span>Or Sign-up with social platform</span></div>
     <div class="social-icons">
       <i class="fab fa-facebook"></i>
       <i class="fab fa-github"></i>
@@ -71,6 +79,9 @@ export default {
           username: this.form.email, // ->>  dùng 'username' nếu backend dùng OAuth2PasswordRequestForm
           password: this.form.password
         })
+        // JWT sẽ được lưu trong store (auth.js) và localStorage
+        console.log('JWT:', this.authStore.jwt)
+        console.log('JWT in localStorage:', localStorage.getItem('jwt_token'))
         this.loading = false
         this.router.push({ path: '/dashboard' }) // ->> Chuyển hướng sau khi đăng nhập
       } catch (err) {

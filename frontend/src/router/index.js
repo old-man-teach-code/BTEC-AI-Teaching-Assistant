@@ -2,7 +2,8 @@ import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import NotFoundView from '../views/NotFoundView.vue'
 import { useAuthStore } from '../stores/auth' // Adjust the path as needed
-import Authen from '../Authen.vue'
+import Authen from '../views/Authen.vue'
+import DashboardView from '../views/DashboardView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -26,8 +27,6 @@ const router = createRouter({
       name: 'about',
       component: () => import('../views/AboutView.vue'),
     },
-    // Removed /login and /resgister routes
-    // logout route is handled in the auth store
     {
       path: '/logout',
       name: 'logout',
@@ -36,6 +35,11 @@ const router = createRouter({
         authStore.logout()
         next({ name: 'authen' }) // Redirect to /auth after logout
       }
+    },
+    {
+      path: '/dashboard',
+      name: 'dashboard',
+      component: DashboardView,
     },
     {
       path: '/:catchAll(.*)',
@@ -48,12 +52,12 @@ const router = createRouter({
 // Navigation guard
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore();
-  const token = authStore.token; // Giả sử token lưu trong store
+  const token = authStore.jwt; // SỬA LẠI DÒNG NÀY
   const publicPages = ['/auth'];
   const authRequired = !publicPages.includes(to.path);
 
   if (authRequired && !token) {
-    return next({ name: 'authen' }); // hoặc { path: '/auth' }
+    return next({ name: 'authen' });
   }
   if (to.path === '/auth' && token) {
     return next({ path: '/dashboard' });
