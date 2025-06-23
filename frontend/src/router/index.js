@@ -3,7 +3,8 @@ import HomeView from '../views/HomeView.vue'
 import NotFoundView from '../views/NotFoundView.vue'
 import { useAuthStore } from '../stores/auth' // Adjust the path as needed
 import Authen from '../views/Authen.vue'
-import DashboardView from '../views/DashboardView.vue'
+
+
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -27,6 +28,12 @@ const router = createRouter({
       name: 'about',
       component: () => import('../views/AboutView.vue'),
     },
+
+    // {
+    //   path: '/dashboard',
+    //   name: 'dashboard',
+    //   component: () => import('../views/DashboardView.vue'),
+    // },
     {
       path: '/logout',
       name: 'logout',
@@ -35,11 +42,6 @@ const router = createRouter({
         authStore.logout()
         next({ name: 'authen' }) // Redirect to /auth after logout
       }
-    },
-    {
-      path: '/dashboard',
-      name: 'dashboard',
-      component: DashboardView,
     },
     {
       path: '/:catchAll(.*)',
@@ -60,7 +62,7 @@ router.beforeEach((to, from, next) => {
     return next({ name: 'authen' });
   }
   if (to.path === '/auth' && token) {
-    return next({ path: '/dashboard' });
+    return next({ path: '/home' });
   }
   next();
 })

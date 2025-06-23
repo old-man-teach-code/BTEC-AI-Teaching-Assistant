@@ -1,7 +1,6 @@
 // import './assets/main.css'
 import './assets/login.css'
 import './assets/signup.css';
-import './assets/auth.css';
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 // import '@fortawesome/fontawesome-free/css/all.min.css';

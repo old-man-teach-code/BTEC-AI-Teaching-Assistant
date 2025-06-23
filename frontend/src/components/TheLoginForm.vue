@@ -83,7 +83,7 @@ export default {
         console.log('JWT:', this.authStore.jwt)
         console.log('JWT in localStorage:', localStorage.getItem('jwt_token'))
         this.loading = false
-        this.router.push({ path: '/dashboard' }) // ->> Chuyển hướng sau khi đăng nhập
+        this.router.push({ path: '/home' }) // ->> Chuyển hướng sau khi đăng nhập
       } catch (err) {
         this.error = err?.response?.data?.detail || 'Login failed. Please try again.'
         this.loading = false
