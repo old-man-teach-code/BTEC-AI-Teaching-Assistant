@@ -22,6 +22,7 @@ onMounted(() => {
 </script>
 
 <template>
+  
   <v-container class="text-center">
     <v-row justify="center" class="mb-4">
       <v-col cols="12" md="12">
