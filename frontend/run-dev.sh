@@ -14,4 +14,4 @@ cp .env.dev .env
 docker compose $COMPOSE_FILES up -d --build frontend-dev
 
 echo "Đang khởi động frontend, theo dõi log realtime:"
-docker compose $COMPOSE_FILES logs -f frontend-devdoc
+docker compose $COMPOSE_FILES logs -f frontend-dev

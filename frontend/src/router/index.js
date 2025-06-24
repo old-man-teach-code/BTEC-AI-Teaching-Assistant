@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import NotFoundView from '../views/NotFoundView.vue'
-import { useAuthStore } from '../stores/auth' // Adjust the path as needed
+import { useAuthStore } from '../stores/auth' 
 import Authen from '../views/Authen.vue'
 
 
@@ -28,12 +28,6 @@ const router = createRouter({
       name: 'about',
       component: () => import('../views/AboutView.vue'),
     },
-
-    // {
-    //   path: '/dashboard',
-    //   name: 'dashboard',
-    //   component: () => import('../views/DashboardView.vue'),
-    // },
     {
       path: '/logout',
       name: 'logout',
@@ -54,7 +48,7 @@ const router = createRouter({
 // Navigation guard
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore();
-  const token = authStore.jwt; // SỬA LẠI DÒNG NÀY
+  const token = authStore.jwt; 
   const publicPages = ['/auth'];
   const authRequired = !publicPages.includes(to.path);
 

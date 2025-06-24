@@ -3,7 +3,6 @@
     <h2>Login</h2>
     <div v-if="error" class="error-message">{{ error }}</div>
     
-    <!-- Email -->
     <div class="form-input">
       <div class="form-input-wrapper">
         <input type="email" v-model="form.email" placeholder="Email" />
@@ -11,8 +10,6 @@
       </div>
     </div>
 
-    
-    <!-- Password -->
     <div class="form-input">
       <div class="form-input-wrapper">
         <input type="password" v-model="form.password" placeholder="Password" />
@@ -37,7 +34,7 @@
     <div class="social-icons">
       <i class="fab fa-facebook"></i>
       <i class="fab fa-github"></i>
-      <i class="fab fa-google" @click="loginWithGoogle"></i>
+      <i class="fab fa-google"></i>
       <i class="fab fa-twitter"></i>
     </div>
   </div>
@@ -76,22 +73,18 @@ export default {
       this.loading = true
       try {
         await this.authStore.login({
-          username: this.form.email, // ->>  dùng 'username' nếu backend dùng OAuth2PasswordRequestForm
+          username: this.form.email, 
           password: this.form.password
         })
-        // JWT sẽ được lưu trong store (auth.js) và localStorage
         console.log('JWT:', this.authStore.jwt)
         console.log('JWT in localStorage:', localStorage.getItem('jwt_token'))
         this.loading = false
-        this.router.push({ path: '/home' }) // ->> Chuyển hướng sau khi đăng nhập
+        this.router.push({ path: '/home' }) 
       } catch (err) {
         this.error = err?.response?.data?.detail || 'Login failed. Please try again.'
         this.loading = false
       }
     },
-    loginWithGoogle() {
-      // Placeholder cho đăng nhập Google nếu có
-    }
   }
 }
 </script>

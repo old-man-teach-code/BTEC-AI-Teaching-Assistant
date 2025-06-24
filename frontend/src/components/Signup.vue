@@ -1,9 +1,8 @@
-<template>
+i<template>
   <div class="form-section">
     <div v-if="successMessage" class="alert-success">{{ successMessage }}</div>
     <h2>Sign-up</h2>
     <form @submit.prevent="handleRegister">
-      <!-- Không render lỗi tổng trên form nữa -->
       <div class="form-input">
         <div class="form-input-wrapper">
           <input
@@ -59,16 +58,16 @@
     </form>
     <div class="social"><span>Or Sign-up with social platform</span></div>
     <div class="social-icons">
-      <i class="fab fa-facebook" @click="loginWithFacebook"></i>
+      <i class="fab fa-facebook" ></i>
       <i class="fab fa-github"></i>
-      <i class="fab fa-google" @click="loginWithGoogle"></i>
+      <i class="fab fa-google"></i>
       <i class="fab fa-twitter"></i>
     </div>
   </div>
 </template>
 
 <script>
-import axios from 'axios';
+import api from '../api/http' 
 export default {
   name: 'sign-up',
   data() {
@@ -129,17 +128,13 @@ export default {
       }
       this.loading = true;
       try {
-        // Gọi API đăng ký
-        await axios.post('http://localhost:8000/auth/create', {
+        await api.post('/auth/create', {
           name: this.form.fullName, 
           email: this.form.email,
           password: this.form.password
         });
-        // Hiện thông báo thành công bằng alert
         alert('Sign-up successfully, please login...!');
-        // Emit event để parent chuyển panel sang login
         this.$emit('switch-to-login', this.form.email);
-        // Reset form
         this.form.fullName = '';
         this.form.email = '';
         this.form.password = '';
@@ -150,8 +145,6 @@ export default {
         this.loading = false;
       }
     },
-    loginWithFacebook() {},
-    loginWithGoogle() {},
   }
 }
 </script>

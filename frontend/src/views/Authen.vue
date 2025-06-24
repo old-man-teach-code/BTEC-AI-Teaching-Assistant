@@ -41,15 +41,6 @@ export default {
       this.transitionName = this.isSignin ? 'slide-left' : 'slide-right';
       this.isSignin = !this.isSignin;
     },
-  //   async handleLogin() {
-  //     // Giả sử kiểm tra thành công:
-  //     const success = true; // thay bằng logic thực tế
-  //     if (success) {
-  //       this.$router.push('/dashboard');
-  //     } else {
-  //       alert('Login failed');
-  //     }
-  // }
 }
 }
 
