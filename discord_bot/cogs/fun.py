@@ -21,7 +21,6 @@ class Fun(commands.Cog):
 
     @commands.command()
     async def hello(self, ctx):
-        """Chào bot."""
         await ctx.send(f"Xin chào, {ctx.author.mention}!")
 
 async def setup(bot):

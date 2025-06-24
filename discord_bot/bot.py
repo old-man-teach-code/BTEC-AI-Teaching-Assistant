@@ -23,10 +23,15 @@ async def on_message(message):
         return  
     if not message.content.startswith('!'):
         return
-    if message.content.startswith('!ping'):
-        await message.channel.send("Pong!")
     elif message.content.startswith('!help'):
-        help_text = "Các lệnh cơ bản:\n!ping - reply Pong!\n!help - list các commands\n!kick - kick thành viên\n!ban - ban thành viên"
+        help_text = """Các lệnh cơ bản:
+                        !hello - chào bot
+                        !ping - reply Pong!
+                        !help - list các commands
+                        !kick - kick thành viên
+                        !ban - ban thành viên
+                        !roll - quay xúc xắc (ví dụ: !roll 2d6)"""
+
         await message.channel.send(help_text)
     await bot.process_commands(message)
 
@@ -42,7 +47,7 @@ async def main():
             await bot.load_extension(ext)
             print(f"Đã load extension: {ext}")
         except Exception as e:
-            print(f"Không thể load extension {ext}: {e}")
+            print(f"Lỗi khi load extension {ext}: {e}")
     await bot.start(TOKEN)
 
 if __name__ == "__main__":

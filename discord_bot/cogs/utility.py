@@ -16,6 +16,6 @@ class Utility(commands.Cog):
     async def version(self, ctx):
         """Xem version của bot và thư viện discord.py."""
         await ctx.send(f"Bot đang chạy discord.py version {discord_version}")
-
+        
 async def setup(bot):
     await bot.add_cog(Utility(bot))
