@@ -20,6 +20,7 @@ frontend/.vscode
 frontend/.DS_Store
 frontend/.env
 frontend/dist
+discord_bot/venv
 */__pycache__
 backend/app/routes/__pycache__
 */*.cpython-311.pyc
