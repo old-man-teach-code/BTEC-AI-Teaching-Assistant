@@ -7,5 +7,3 @@ cryptography
 python-jose
 passlib[bcrypt]
 python-multipart
-redis
-chromadb
