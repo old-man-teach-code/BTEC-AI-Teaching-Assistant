@@ -1,4 +1,3 @@
-
 services:
   discord_bot_dev:
     build: .
@@ -8,4 +7,16 @@ services:
     restart: unless-stopped
     volumes:
       - .:/app
-    command: python bot.py
+    command: python run_watchgod.py # Chạy bot.py qua run_watchgod.py để tự động reload khi có thay đổi
+
+  n8n:
+    image: n8nio/n8n
+    container_name: n8n
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - n8n_data:/home/node/.n8n
+
+volumes:
+  n8n_data:
