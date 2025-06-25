@@ -49,7 +49,7 @@ export const useAuthStore = defineStore('auth', {
       if (this.isAuthenticated) {
         try {
           const response = await userApi.fetchUser()
-          this.setUser(response.data) // Giờ đây sẽ đúng
+          this.setUser(response.data) 
           return response.data
         } catch (error) {
           

@@ -1,36 +1,26 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
-import axios from 'axios'
 import { useAuthStore } from '@/stores/auth'
+import { fetchNotifications, markAllAsRead } from '@/api/notification'
 import { useDisplay } from 'vuetify'
 import { useRoute } from 'vue-router'
 
 const authStore = useAuthStore()
 const drawer = ref(true)
-
 const { mobile } = useDisplay()
 const route = useRoute()
 
 const notifications = ref([])
 const unreadCount = computed(() => notifications.value.length)
-const userId = computed(() => authStore.currentUser?.id || '')
+const userId = computed(() => authStore.user?.id || '')
 
-async function fetchNotifications() {
-  if (!userId.value) return
-  try {
-    const response = await axios.get(`/api/notifications/${userId.value}`)
-    notifications.value = response.data
-  } catch (error) {
-    console.error('Lỗi lấy thông báo:', error)
-  }
-}
 
-async function markAllAsRead() {
+async function handleMarkAllAsRead() {
   try {
-    await axios.post(`http://localhost:5000/api/notifications/${userId.value}/mark-all-read`)
+    await markAllAsRead(userId.value)
     notifications.value = []
-  } catch (error) {
-    console.error('Lỗi cập nhật thông báo:', error)
+  } catch (e) {
+    console.error('❌ Lỗi khi đánh dấu đã đọc:', e)
   }
 }
 
@@ -38,14 +28,42 @@ function logout() {
   authStore.logout()
 }
 
-onMounted(() => {
+// Load thông báo sau khi đăng nhập
+onMounted(async () => {
   if (!authStore.isAuthenticated) {
     authStore.logout()
+    return
   }
+
   drawer.value = !mobile.value
-  fetchNotifications()
+
+  if (userId.value) {
+    try {
+      const data = await fetchNotifications(userId.value)
+      notifications.value = data
+    } catch (e) {
+      console.error('❌ Lỗi khi fetch thông báo trong onMounted:', e)
+    }
+  }
 })
 
+// Nếu user thay đổi (sau login), load lại thông báo
+watch(
+  () => authStore.currentUser,
+  async (user) => {
+    if (user?.id) {
+      try {
+        const data = await fetchNotifications(user.id)
+        notifications.value = data
+      } catch (e) {
+        console.error('❌ Lỗi khi fetch thông báo khi user thay đổi:', e)
+      }
+    }
+  },
+  { immediate: true }
+)
+
+// Responsive drawer
 watch(mobile, (newVal) => {
   drawer.value = !newVal
 })
@@ -64,24 +82,16 @@ const items = [
 <template>
   <v-app>
     <v-app-bar color="primary" app>
-      <!-- Chỉ hiển thị nav icon khi ở mobile -->
       <v-app-bar-nav-icon v-if="mobile" @click.stop="drawer = !drawer" />
-
       <v-toolbar-title class="me-4">Logo</v-toolbar-title>
-
       <v-spacer />
-
-      <!-- Các nút điều hướng -->
-
       <v-toolbar-items class="nav-links" v-show="!mobile">
         <v-btn to="/" text class="nav-btn">HOME</v-btn>
         <v-btn to="/about" text class="nav-btn">ABOUT</v-btn>
         <v-btn to="/contact" text class="nav-btn">CONTACT US</v-btn>
       </v-toolbar-items>
-
       <v-spacer />
 
-      <!-- Actions: Notification + Account -->
       <div class="header-actions">
         <!-- Notifications -->
         <v-menu offset-y>
@@ -114,30 +124,25 @@ const items = [
               </v-list>
             </v-card-text>
             <v-card-actions>
-              <v-btn color="primary" @click="markAllAsRead">Đánh dấu đã đọc</v-btn>
+              <v-btn color="primary" @click="handleMarkAllAsRead">Đánh dấu đã đọc</v-btn>
             </v-card-actions>
           </v-card>
         </v-menu>
 
-        <!-- User Menu -->
+        <!-- User -->
         <v-menu>
           <template #activator="{ props }">
             <v-btn icon v-bind="props"><v-icon>mdi-account</v-icon></v-btn>
           </template>
           <v-list>
-            <v-list-item
-              title="Thông tin cá nhân"
-              prepend-icon="mdi-account-circle"
-              @click="home"
-            />
-            <v-list-item title="Đổi mật khẩu" prepend-icon="mdi-lock-reset" @click="home" />
+            <v-list-item title="Thông tin cá nhân" prepend-icon="mdi-account-circle" />
+            <v-list-item title="Đổi mật khẩu" prepend-icon="mdi-lock-reset" />
             <v-list-item title="Đăng xuất" prepend-icon="mdi-logout" @click="logout" />
           </v-list>
         </v-menu>
       </div>
     </v-app-bar>
 
-    <!-- Sidebar -->
     <v-navigation-drawer
       v-if="mobile"
       @click.stop="drawer = !drawer"
@@ -164,7 +169,6 @@ const items = [
       </v-list>
     </v-navigation-drawer>
 
-    <!-- Main content -->
     <v-main>
       <slot />
     </v-main>
@@ -179,7 +183,7 @@ const items = [
 }
 .nav-btn {
   width: 120px;
-  justify-content: center; /* Căn giữa nội dung */
+  justify-content: center;
 }
 .header-actions {
   display: flex;
