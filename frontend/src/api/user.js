@@ -8,7 +8,6 @@ export const fetchUser = async () => {
       const response = await api.get('/api/users/me')
       
  return response 
-      // return response.data
     } catch (error) {
       authStore.logout() // Logout if fetching user fails
       throw error // Re-throw the error to handle it in the component
@@ -19,6 +18,7 @@ export const fetchUser = async () => {
 }
 
 export const getUserById = async (userId) => {
+  
   try {
     const response = await api.get(`/api/users/${userId}`)
     return response.data
@@ -26,4 +26,5 @@ export const getUserById = async (userId) => {
     throw error // Re-throw the error to handle it in the component
   }
 }
+
 

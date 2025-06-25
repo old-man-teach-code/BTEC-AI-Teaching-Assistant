@@ -82,9 +82,17 @@ const items = [
 <template>
   <v-app>
     <v-app-bar color="primary" app>
-      <v-app-bar-nav-icon v-if="mobile" @click.stop="drawer = !drawer" />
+
+      <!-- Chỉ hiển thị nav icon khi ở mobile -->
+      <v-btn icon v-if="mobile" @click.stop="drawer = !drawer">
+        <i class="fas fa-bars"></i>
+      </v-btn>
+
       <v-toolbar-title class="me-4">Logo</v-toolbar-title>
       <v-spacer />
+
+
+      <!-- Các nút điều hướng -->
       <v-toolbar-items class="nav-links" v-show="!mobile">
         <v-btn to="/" text class="nav-btn">HOME</v-btn>
         <v-btn to="/about" text class="nav-btn">ABOUT</v-btn>
@@ -92,17 +100,19 @@ const items = [
       </v-toolbar-items>
       <v-spacer />
 
+
+      <!-- Actions: Notification + Account + Logout -->
       <div class="header-actions">
         <!-- Notifications -->
         <v-menu offset-y>
           <template #activator="{ props }">
             <v-badge :content="unreadCount" color="red" v-if="unreadCount > 0" overlap>
               <v-btn icon v-bind="props">
-                <v-icon color="orange">mdi-bell-alert</v-icon>
+                <i class="fas fa-bell"></i>
               </v-btn>
             </v-badge>
             <v-btn v-else icon v-bind="props">
-              <v-icon>mdi-bell</v-icon>
+              <i class="fas fa-bell"></i>
             </v-btn>
           </template>
 
@@ -119,8 +129,11 @@ const items = [
                   v-for="(n, i) in notifications"
                   :key="i"
                   :title="n.message"
-                  prepend-icon="mdi-bell-ring-outline"
-                />
+                >
+                  <template #prepend>
+                    <i class="fas fa-bell"></i>
+                  </template>
+                </v-list-item>
               </v-list>
             </v-card-text>
             <v-card-actions>
@@ -132,12 +145,22 @@ const items = [
         <!-- User -->
         <v-menu>
           <template #activator="{ props }">
-            <v-btn icon v-bind="props"><v-icon>mdi-account</v-icon></v-btn>
+            <v-btn icon v-bind="props"><i class="fas fa-user"></i></v-btn>
           </template>
           <v-list>
-            <v-list-item title="Thông tin cá nhân" prepend-icon="mdi-account-circle" />
-            <v-list-item title="Đổi mật khẩu" prepend-icon="mdi-lock-reset" />
-            <v-list-item title="Đăng xuất" prepend-icon="mdi-logout" @click="logout" />
+
+            <v-list-item
+              title="Thông tin cá nhân"
+              @click="home"
+            >
+              <template #prepend><i class="fas fa-user-circle"></i></template>
+            </v-list-item>
+            <v-list-item title="Đổi mật khẩu" @click="home">
+              <template #prepend><i class="fas fa-key"></i></template>
+            </v-list-item>
+            <v-list-item title="Đăng xuất" @click="logout">
+              <template #prepend><i class="fas fa-sign-out-alt"></i></template>
+            </v-list-item>
           </v-list>
         </v-menu>
       </div>
@@ -159,12 +182,20 @@ const items = [
             v-else
             :key="'item-' + index"
             :title="item.title"
-            :prepend-icon="item.icon"
             :to="item.to"
             :active="route.path === item.to"
             active-class="v-list-item--active"
             exact
-          />
+          >
+            <template #prepend>
+              <i v-if="item.icon === 'mdi-home'" class="fas fa-home"></i>
+              <i v-else-if="item.icon === 'mdi-file-document'" class="fas fa-file-alt"></i>
+              <i v-else-if="item.icon === 'mdi-bell'" class="fas fa-bell"></i>
+              <i v-else-if="item.icon === 'mdi-calendar'" class="fas fa-calendar-alt"></i>
+              <i v-else-if="item.icon === 'mdi-chat'" class="fas fa-comments"></i>
+              <i v-else-if="item.icon === 'mdi-cog'" class="fas fa-cog"></i>
+            </template>
+          </v-list-item>
         </template>
       </v-list>
     </v-navigation-drawer>
@@ -188,5 +219,37 @@ const items = [
 .header-actions {
   display: flex;
   align-items: center;
+}
+
+/* Fix icon and text alignment in sidebar */
+.v-list-item__prepend {
+  min-width: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.v-list-item__content {
+  margin-left: 0 !important;
+}
+.v-list-item .fas {
+  font-size: 22px;
+  min-width: 24px;
+  margin-right: 10px;
+}
+.v-list-item {
+  align-items: center;
+}
+
+.logout-btn {
+  background: #7494ec;
+  color: #fff;
+  border-radius: 6px;
+  margin-left: 12px;
+  font-weight: 600;
+  text-transform: none;
+  transition: background 0.2s;
+}
+.logout-btn:hover {
+  background: #4a6ed6;
 }
 </style>

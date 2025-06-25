@@ -52,68 +52,36 @@ onMounted(async () => {
       </v-row>
     </v-container>
 
-    <!-- Thống kê -->
-    <v-container fluid class="py-6 px-4 px-sm-6">
-      <v-row justify="center" align="stretch" dense>
-        <v-col
-          v-for="(stat, index) in [
-            { icon: 'mdi-file-document-outline', value: stats.documents, label: 'Tài liệu đã đăng', color: 'primary' },
-            { icon: 'mdi-help-circle-outline', value: stats.questionsAnswered, label: 'Câu hỏi đã trả lời', color: 'success' },
-            { icon: 'mdi-account-group-outline', value: stats.usersJoined, label: 'Người dùng tham gia', color: 'indigo' },
-          ]"
-          :key="index"
-          cols="12"
-          sm="6"
-          md="4"
-          class="d-flex"
-        >
-          <v-card
-            elevation="3"
-            class="pa-4 text-center rounded-xl flex-grow-1 d-flex flex-column align-center justify-space-evenly"
-            style="min-height: 150px;"
-          >
-            <v-icon :color="stat.color" size="32">{{ stat.icon }}</v-icon>
-            <div class="text-subtitle-1 font-weight-bold mt-2">{{ stat.value }}</div>
-            <div class="text-caption text-grey-darken-1">{{ stat.label }}</div>
+
+    <v-container fluid class="py-6">
+      <v-row justify="center" align="center">
+        <v-col cols="12" sm="4">
+          <v-card elevation="3" class="pa-6 text-center rounded-xl">
+            <i class="fas fa-file-alt" style="font-size:36px; color: #1976d2;"></i>
+            <div class="text-h5 font-weight-bold mt-2">{{ stats.documents }}</div>
+            <div class="text-subtitle-2">Tài liệu đã đăng</div>
+
           </v-card>
         </v-col>
       </v-row>
     </v-container>
 
-    <v-container fluid class="py-10 px-4 px-sm-6" style="background-color: #fff8f1;">
-      <v-row
-        class="d-flex flex-column-reverse flex-md-row"
-        align="center"
-        justify="center"
-      >
-        <!-- Blockquote text -->
-        <v-col
-          cols="12"
-          md="6"
-          class="text-center text-md-left"
-        >
-          <blockquote
-            class="text-body-1 text-md-h6 font-weight-medium mx-auto"
-            style="line-height: 1.6; max-width: 500px;"
-          >
-            “However difficult life may seem, there is
-            <strong class="text-orange-darken-2"> always something you can do </strong>
-            and <strong> succeed at. </strong>”
-          </blockquote>
-          <div class="text-center text-md-right text-grey-darken-2 mt-2 font-weight-medium">
-            – STEVEN HAWKING
-          </div>
+
+        <v-col cols="12" sm="4">
+          <v-card elevation="3" class="pa-6 text-center rounded-xl">
+            <i class="fas fa-question-circle" style="font-size:36px; color: #2e7d32;"></i>
+            <div class="text-h5 font-weight-bold mt-2">{{ stats.questionsAnswered }}</div>
+            <div class="text-subtitle-2">Câu hỏi đã trả lời</div>
+          </v-card>
         </v-col>
 
-        <!-- Image -->
-        <v-col cols="12" md="6" class="text-center mb-6 mb-md-0">
-          <v-img
-            src="https://www.jobsterritory.com/images/raas-hero.png"
-           
-            class="mx-auto rounded"
-            alt="Inspiration Image"
-            cover
-          />
+        <v-col cols="12" sm="4">
+          <v-card elevation="3" class="pa-6 text-center rounded-xl">
+            <i class="fas fa-users" style="font-size:36px; color: #3f51b5;"></i>
+            <div class="text-h5 font-weight-bold mt-2">{{ stats.usersJoined }}</div>
+            <span class="text-subtitle-2">Người dùng tham gia</span>
+          </v-card>
+
         </v-col>
       </v-row>
     </v-container>
