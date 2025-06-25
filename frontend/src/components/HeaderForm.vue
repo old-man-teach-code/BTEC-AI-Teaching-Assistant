@@ -1,26 +1,36 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
+import axios from 'axios'
 import { useAuthStore } from '@/stores/auth'
-import { fetchNotifications, markAllAsRead } from '@/api/notification'
 import { useDisplay } from 'vuetify'
 import { useRoute } from 'vue-router'
 
 const authStore = useAuthStore()
 const drawer = ref(true)
+
 const { mobile } = useDisplay()
 const route = useRoute()
 
 const notifications = ref([])
 const unreadCount = computed(() => notifications.value.length)
-const userId = computed(() => authStore.user?.id || '')
+const userId = computed(() => authStore.currentUser?.id || '')
 
-
-async function handleMarkAllAsRead() {
+async function fetchNotifications() {
+  if (!userId.value) return
   try {
-    await markAllAsRead(userId.value)
+    const response = await axios.get(`/api/notifications/${userId.value}`)
+    notifications.value = response.data
+  } catch (error) {
+    console.error('Lỗi lấy thông báo:', error)
+  }
+}
+
+async function markAllAsRead() {
+  try {
+    await axios.post(`http://localhost:5000/api/notifications/${userId.value}/mark-all-read`)
     notifications.value = []
-  } catch (e) {
-    console.error('❌ Lỗi khi đánh dấu đã đọc:', e)
+  } catch (error) {
+    console.error('Lỗi cập nhật thông báo:', error)
   }
 }
 
@@ -28,42 +38,14 @@ function logout() {
   authStore.logout()
 }
 
-// Load thông báo sau khi đăng nhập
-onMounted(async () => {
+onMounted(() => {
   if (!authStore.isAuthenticated) {
     authStore.logout()
-    return
   }
-
   drawer.value = !mobile.value
-
-  if (userId.value) {
-    try {
-      const data = await fetchNotifications(userId.value)
-      notifications.value = data
-    } catch (e) {
-      console.error('❌ Lỗi khi fetch thông báo trong onMounted:', e)
-    }
-  }
+  fetchNotifications()
 })
 
-// Nếu user thay đổi (sau login), load lại thông báo
-watch(
-  () => authStore.currentUser,
-  async (user) => {
-    if (user?.id) {
-      try {
-        const data = await fetchNotifications(user.id)
-        notifications.value = data
-      } catch (e) {
-        console.error('❌ Lỗi khi fetch thông báo khi user thay đổi:', e)
-      }
-    }
-  },
-  { immediate: true }
-)
-
-// Responsive drawer
 watch(mobile, (newVal) => {
   drawer.value = !newVal
 })
@@ -82,15 +64,14 @@ const items = [
 <template>
   <v-app>
     <v-app-bar color="primary" app>
-
       <!-- Chỉ hiển thị nav icon khi ở mobile -->
       <v-btn icon v-if="mobile" @click.stop="drawer = !drawer">
         <i class="fas fa-bars"></i>
       </v-btn>
 
       <v-toolbar-title class="me-4">Logo</v-toolbar-title>
-      <v-spacer />
 
+      <v-spacer />
 
       <!-- Các nút điều hướng -->
       <v-toolbar-items class="nav-links" v-show="!mobile">
@@ -98,8 +79,8 @@ const items = [
         <v-btn to="/about" text class="nav-btn">ABOUT</v-btn>
         <v-btn to="/contact" text class="nav-btn">CONTACT US</v-btn>
       </v-toolbar-items>
-      <v-spacer />
 
+      <v-spacer />
 
       <!-- Actions: Notification + Account + Logout -->
       <div class="header-actions">
@@ -137,18 +118,17 @@ const items = [
               </v-list>
             </v-card-text>
             <v-card-actions>
-              <v-btn color="primary" @click="handleMarkAllAsRead">Đánh dấu đã đọc</v-btn>
+              <v-btn color="primary" @click="markAllAsRead">Đánh dấu đã đọc</v-btn>
             </v-card-actions>
           </v-card>
         </v-menu>
 
-        <!-- User -->
+        <!-- User Menu -->
         <v-menu>
           <template #activator="{ props }">
             <v-btn icon v-bind="props"><i class="fas fa-user"></i></v-btn>
           </template>
           <v-list>
-
             <v-list-item
               title="Thông tin cá nhân"
               @click="home"
@@ -166,6 +146,7 @@ const items = [
       </div>
     </v-app-bar>
 
+    <!-- Sidebar -->
     <v-navigation-drawer
       v-if="mobile"
       @click.stop="drawer = !drawer"
@@ -200,6 +181,7 @@ const items = [
       </v-list>
     </v-navigation-drawer>
 
+    <!-- Main content -->
     <v-main>
       <slot />
     </v-main>
@@ -214,7 +196,7 @@ const items = [
 }
 .nav-btn {
   width: 120px;
-  justify-content: center;
+  justify-content: center; /* Căn giữa nội dung */
 }
 .header-actions {
   display: flex;
