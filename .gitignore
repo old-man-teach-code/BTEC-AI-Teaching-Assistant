@@ -22,8 +22,10 @@ frontend/.env
 frontend/dist
 discord_bot/venv
 */__pycache__
-backend/app/routes/__pycache__
+backend/app/ro
 */*.cpython-311.pyc
 *.*.pyc
 */*.pyo
 */*.pyd
+
+
