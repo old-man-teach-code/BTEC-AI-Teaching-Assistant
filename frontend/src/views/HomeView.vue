@@ -1,7 +1,7 @@
 <script setup>
 import HeaderForm from '@/components/HeaderForm.vue'
 import { ref, computed, onMounted } from 'vue'
-import axios from 'axios'
+import { fetchStats } from '@/api/stats' //
 import { useAuthStore } from '@/stores/auth'
 
 const authStore = useAuthStore()
@@ -26,12 +26,10 @@ onMounted(async () => {
 
   // Fetch stats
   try {
-    const response = await axios.get('/api/stats')
-    if (response?.data) {
-      Object.assign(stats.value, response.data) // Gộp dữ liệu vào stats có sẵn
-    }
+       const data = await fetchStats()
+    Object.assign(stats.value, data)
   } catch (error) {
-    console.error('Failed to fetch stats:', error)
+     console.error('Lỗi khi fetch stats:', error)
   }
 })
 </script>
@@ -98,4 +96,4 @@ onMounted(async () => {
     </v-row>
   </v-container>
   </HeaderForm>
-</template>
+</template> 

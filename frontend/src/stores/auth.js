@@ -40,7 +40,7 @@ export const useAuthStore = defineStore('auth', {
       this.user = null
       this.setJwt(null) // Clear JWT token
       this.$patch({ isAuthenticated: false })
-      router.push('/auth') 
+      router.push('/login') // Redirect to login page
     },
     setUser(user) {
       this.user = user

@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
-import axios from 'axios'
+import { fetchNotifications, markAllAsRead } from '@/api/notification'
 import { useAuthStore } from '@/stores/auth'
 import { useDisplay } from 'vuetify'
 import { useRoute } from 'vue-router'
@@ -15,19 +15,11 @@ const notifications = ref([])
 const unreadCount = computed(() => notifications.value.length)
 const userId = computed(() => authStore.currentUser?.id || '')
 
-async function fetchNotifications() {
-  if (!userId.value) return
-  try {
-    const response = await axios.get(`/api/notifications/${userId.value}`)
-    notifications.value = response.data
-  } catch (error) {
-    console.error('Lỗi lấy thông báo:', error)
-  }
-}
 
-async function markAllAsRead() {
+
+async function handleMarkAllAsRead() {
   try {
-    await axios.post(`http://localhost:5000/api/notifications/${userId.value}/mark-all-read`)
+    await markAllAsRead(userId.value)
     notifications.value = []
   } catch (error) {
     console.error('Lỗi cập nhật thông báo:', error)
@@ -38,13 +30,37 @@ function logout() {
   authStore.logout()
 }
 
-onMounted(() => {
+// Load thông báo sau khi đăng nhập
+// Load thông báo sau khi đăng nhập
+onMounted(async () => {
   if (!authStore.isAuthenticated) {
     authStore.logout()
+    return
   }
   drawer.value = !mobile.value
-  fetchNotifications()
+    if (userId.value) {
+    try {
+      const data = await fetchNotifications(userId.value)
+      notifications.value = data
+    } catch (e) {
+      console.error('❌ Lỗi khi fetch thông báo trong onMounted:', e)
+    }
+  }
 })
+watch(
+  () => authStore.currentUser,
+  async (user) => {
+    if (user?.id) {
+      try {
+        const data = await fetchNotifications(user.id)
+        notifications.value = data
+      } catch (e) {
+        console.error('❌ Lỗi khi fetch thông báo khi user thay đổi:', e)
+      }
+    }
+  },
+  { immediate: true }
+)
 
 watch(mobile, (newVal) => {
   drawer.value = !newVal
@@ -118,7 +134,7 @@ const items = [
               </v-list>
             </v-card-text>
             <v-card-actions>
-              <v-btn color="primary" @click="markAllAsRead">Đánh dấu đã đọc</v-btn>
+              <v-btn color="primary" @click="handleMarkAllAsRead">Đánh dấu đã đọc</v-btn>
             </v-card-actions>
           </v-card>
         </v-menu>
