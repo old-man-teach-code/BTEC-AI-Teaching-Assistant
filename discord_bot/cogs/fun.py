@@ -1,3 +1,4 @@
+
 from discord.ext import commands
 import random
 
@@ -20,8 +21,7 @@ class Fun(commands.Cog):
 
     @commands.command()
     async def hello(self, ctx):
-        """Chào bot."""
         await ctx.send(f"Xin chào, {ctx.author.mention}!")
 
-def setup(bot):
-    bot.add_cog(Fun(bot))
+async def setup(bot):
+    await bot.add_cog(Fun(bot))
