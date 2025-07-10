@@ -40,7 +40,7 @@ export const useAuthStore = defineStore('auth', {
       this.user = null
       this.setJwt(null) // Clear JWT token
       this.$patch({ isAuthenticated: false })
-      router.push('/login') // Redirect to login page
+      router.push('/auth') // Redirect to login page
     },
     setUser(user) {
       this.user = user
@@ -49,12 +49,14 @@ export const useAuthStore = defineStore('auth', {
       if (this.isAuthenticated) {
         try {
           const response = await userApi.fetchUser()
-          this.setUser(response.data)
+          this.setUser(response.data) 
+          return response.data
         } catch (error) {
-          this.logout() // Logout if fetching user fails
-          throw error // Re-throw the error to handle it in the component
+          
+          this.logout()
+          throw error
         }
-      }else {
+      } else {
         this.user = null
       }
     }

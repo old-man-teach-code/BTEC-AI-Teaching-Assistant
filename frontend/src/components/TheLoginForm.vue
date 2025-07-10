@@ -1,76 +1,90 @@
 <template>
-  <v-container class="fill-height" fluid>
-    <v-row align="center" justify="center">
-      <v-col cols="12" md="8">
-        <v-card>
-          <v-card-title class="justify-center">Đăng nhập</v-card-title>
-          <v-card-text>
-            <v-form @submit.prevent="onSubmit" ref="formRef">
-              <v-text-field
-                label="Tên đăng nhập"
-                v-model="username"
-                :disabled="loading"
-                prepend-inner-icon="mdi-account"
-                required
-              />
-              <v-text-field
-                label="Mật khẩu"
-                v-model="password"
-                type="password"
-                :disabled="loading"
-                prepend-inner-icon="mdi-lock"
-                required
-              />
-              <v-btn
-                type="submit"
-                color="primary"
-                block
-                class="mt-3"
-                :loading="loading"
-              >Đăng nhập</v-btn>
-              <v-alert
-                v-if="error"
-                type="error"
-                class="mt-3"
-                dense
-                border="start"
-                border-color="red"
-              >{{ error }}</v-alert>
-            </v-form>
-          </v-card-text>
-        </v-card>
-      </v-col>
-    </v-row>
-  </v-container>
+  <div class="form-section">
+    <h2>Login</h2>
+    <div v-if="error" class="error-message">{{ error }}</div>
+    
+    <div class="form-input">
+      <div class="form-input-wrapper">
+        <input type="email" v-model="form.email" placeholder="Email" />
+        <i class="fas fa-envelope"></i>
+      </div>
+    </div>
+
+    <div class="form-input">
+      <div class="form-input-wrapper">
+        <input type="password" v-model="form.password" placeholder="Password" />
+        <i class="fas fa-lock"></i>
+      </div>
+    </div>
+    
+    <button class="login-btn" @click="handleLogin" :disabled="loading">
+      <span v-if="loading" class="spinner"></span>
+      <span v-else>Login</span>
+    </button>
+    
+    <div class="options">
+      <label class="remember">
+        <input type="checkbox" />
+        Remember me
+      </label>
+      <a href="#" class="forgot">Forgot Password?</a>
+    </div>
+    
+    <div class="social"><span>Or Sign-up with social platform</span></div>
+    <div class="social-icons">
+      <i class="fab fa-facebook"></i>
+      <i class="fab fa-github"></i>
+      <i class="fab fa-google"></i>
+      <i class="fab fa-twitter"></i>
+    </div>
+  </div>
 </template>
 
-<script setup>
-import { nextTick, ref } from 'vue'
-// import { useRouter } from 'vue-router'
+<script>
 import { useAuthStore } from '../stores/auth'
-import router from '../router'
+import { useRouter } from 'vue-router'
 
-const username = ref('linhhn13@fpt.edu.vn') // Mặc định tên đăng nhập
-const password = ref('12345678')
-const error = ref('')
-const loading = ref(false)
+export default {
+  name: 'LoginForm',
+  data() {
+    return {
+      form: {
+        email: '',
+        password: ''
+      },
+      loading: false,
+      error: ''
+    }
+  },
+  setup() {
+    const authStore = useAuthStore()
+    const router = useRouter()
 
-const formRef = ref(null)
-const authStore = useAuthStore()
-
-
-const onSubmit = async () => {
-  error.value = ''
-  loading.value = true
-  try {
-    await authStore.login({ username: username.value, password: password.value })
-    loading.value = false
-    await nextTick();
-    router.push({ name: 'home' }) // Chuyển hướng đến trang chính sau khi đăng nhập thành công
-  } catch (err) {
-    error.value = err?.response?.data?.detail || 'Đăng nhập thất bại'
-    loading.value = false
-    throw new Error(error.value)
+    return { authStore, router }
+  },
+  methods: {
+    async handleLogin() {
+      this.error = ''
+      // Validate trước khi gọi API
+      if (!this.form.email || !this.form.password) {
+        this.error = 'Email and password are required.'
+        return
+      }
+      this.loading = true
+      try {
+        await this.authStore.login({
+          username: this.form.email, 
+          password: this.form.password
+        })
+        console.log('JWT:', this.authStore.jwt)
+        console.log('JWT in localStorage:', localStorage.getItem('jwt_token'))
+        this.loading = false
+        this.router.push({ path: '/home' }) 
+      } catch (err) {
+        this.error = err?.response?.data?.detail || 'Login failed. Please try again.'
+        this.loading = false
+      }
+    },
   }
 }
 </script>
