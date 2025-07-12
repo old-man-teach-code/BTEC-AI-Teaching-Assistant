@@ -14,3 +14,5 @@ class User(Base):
     
     # Thêm relationship với Document model
     documents = relationship("Document", back_populates="owner", cascade="all, delete-orphan")
+    
+    discord_user_id = Column(String(64), nullable=True) 

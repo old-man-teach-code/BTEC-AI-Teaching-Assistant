@@ -38,7 +38,8 @@ async def on_message(message):
 initial_extensions = [
     "cogs.moderation",
     "cogs.fun",
-    "cogs.utility"
+    "cogs.utility",
+    "cogs.reminder"
 ]
 
 async def main():
