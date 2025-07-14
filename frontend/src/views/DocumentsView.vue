@@ -21,9 +21,25 @@
           <td>{{ formatSize(doc.size) }}</td>
           <td>{{ formatDate(doc.created_at) }}</td>
           <td>
-            <button class="action-btn">View</button>
-            <button class="action-btn">Download</button>
-            <button class="action-btn">Delete</button>
+            <div class="dropdown">
+              <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" :disabled="processing">
+                Actions
+              </button>
+              <ul class="dropdown-menu">
+                <li>
+                  <button class="dropdown-item" @click="handleView(doc)" :disabled="processing">View</button>
+                </li>
+                <li>
+                  <button class="dropdown-item" @click="handleDownload(doc)" :disabled="processing">Download</button>
+                </li>
+                <li>
+                  <button class="dropdown-item" @click="handleProcess(doc)" :disabled="processing">Process</button>
+                </li>
+                <li>
+                  <button class="dropdown-item text-danger" @click="handleDelete(doc)" :disabled="processing">Delete</button>
+                </li>
+              </ul>
+            </div>
           </td>
         </tr>
         <tr v-if="documents.length === 0">
@@ -40,6 +56,7 @@ import api from '../api/http'
 import '../assets/documents.css'
 
 const documents = ref([])
+const processing = ref(false)
 
 const fetchDocuments = async () => {
   try {
@@ -64,6 +81,54 @@ const formatDate = (dateStr) => {
 
 const onUpload = () => {
   alert('The upload feature will be added soon!')
+}
+
+function handleView(doc) {
+  // Nếu có URL public thì mở tab mới, nếu không thì có thể dùng API để lấy link
+  window.open(doc.url || `/files/${doc.filename}`, '_blank')
+}
+
+async function handleDownload(doc) {
+  processing.value = true
+  try {
+    const res = await api.get(`/files/${doc.filename}`, { responseType: 'blob' })
+    const url = window.URL.createObjectURL(new Blob([res.data]))
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', doc.filename)
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.URL.revokeObjectURL(url)
+  } catch  {
+    alert('Download failed!')
+  }
+  processing.value = false
+}
+
+async function handleProcess(doc) {
+  processing.value = true
+  try {
+    await api.post(`/documents/process/${doc.id}`)
+    alert('Processing successful!')
+    } catch (e) {
+    console.error(e)
+    alert('Processing failed!')
+  }
+  processing.value = false
+}
+
+async function handleDelete(doc) {
+  if (!confirm('Are you sure you want to delete this file?')) return
+  processing.value = true
+  try {
+    await api.delete(`/documents/${doc.id}`)
+    alert('File deleted!')
+    fetchDocuments()
+  } catch  {
+    alert('Delete failure!')
+  }
+  processing.value = false
 }
 
 onMounted(fetchDocuments)
