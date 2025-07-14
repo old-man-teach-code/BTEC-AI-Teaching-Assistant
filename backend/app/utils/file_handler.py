@@ -1,6 +1,7 @@
 import os
 import uuid
 import shutil
+import time
 from pathlib import Path
 from typing import List, Optional
 from fastapi import UploadFile, HTTPException
@@ -67,12 +68,13 @@ def validate_file(file: UploadFile) -> Optional[str]:
     
     return None
 
-def save_file(file: UploadFile) -> str:
+def save_file(file: UploadFile, user_id: int) -> str:
     """
-    Lưu file đã tải lên vào hệ thống
+    Lưu file đã tải lên vào hệ thống với tên theo format {user_id}_{unix_timestamp}.*
     
     Args:
         file: File cần lưu
+        user_id: ID của user để tạo tên file unique
         
     Returns:
         str: Đường dẫn đến file đã lưu
@@ -87,9 +89,10 @@ def save_file(file: UploadFile) -> str:
     if not upload_dir.exists():
         upload_dir.mkdir(parents=True)
     
-    # Tạo tên file duy nhất
+    # Tạo tên file theo format {user_id}_{unix_timestamp}.*
     ext = get_file_extension(file.filename)
-    unique_filename = f"{uuid.uuid4()}{ext}"
+    unix_timestamp = int(time.time())
+    unique_filename = f"{user_id}_{unix_timestamp}{ext}"
     file_path = upload_dir / unique_filename
     
     # Lưu file

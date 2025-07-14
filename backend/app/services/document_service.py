@@ -49,7 +49,7 @@ async def service_upload_document(
     
     try:
         # Lưu file và lấy đường dẫn trả về
-        file_path = save_file(file)
+        file_path = save_file(file, owner_id)
         
         # Lấy thông tin file để lưu vào DB
         file_size = get_file_size(file)
