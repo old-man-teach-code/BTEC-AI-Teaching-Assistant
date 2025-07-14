@@ -47,6 +47,7 @@
         </tr>
       </tbody>
     </table>
+    <EmptyDocuments v-if="documents.length === 0" @upload="onUpload" />
   </div>
 </template>
 
