@@ -1,49 +1,81 @@
 .documents-page {
-  max-width: 800px;
+  max-width: 1100px; /* tăng thêm chút */
   margin: 40px auto;
   background: #fff;
   border-radius: 16px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
-  padding: 32px 24px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
+  padding: 40px 32px;
+  min-height: 500px;
 }
+
 .header-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 18px;
+  margin-bottom: 24px;
 }
+
 .upload-btn {
   background: #7494ec;
   color: #fff;
   border: none;
   border-radius: 8px;
-  padding: 10px 22px;
+  padding: 10px 24px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s;
 }
-.upload-btn:hover { background: #4a6fd6; }
+
+.upload-btn:hover {
+  background-color: #a0bfff;
+}
+
 .doc-table {
   width: 100%;
-  border-collapse: collapse;
-  font-size: 16px;
+  border-collapse: separate;
+  border-spacing: 0 10px; /* tạo khoảng cách giữa các dòng */
+  table-layout: fixed;
 }
-.doc-table th, .doc-table td {
-  padding: 10px 8px;
+
+.doc-table th,
+.doc-table td {
+  padding: 16px 12px; /* tăng padding */
   border-bottom: 1px solid #eee;
+  vertical-align: middle; /* Căn giữa chiều dọc */
+  text-align: center; /* căn giữa ngang nếu bạn muốn */
+  word-wrap: break-word;
 }
+
 .doc-table th {
   background: #f5f7fa;
   font-weight: 700;
+  font-size: 16px;
 }
-.action-btn {
-  background: #f5f7fa;
+
+.doc-table tbody tr:hover {
+  background-color: #f8faff;
+  transition: background 0.2s ease;
+}
+
+.action-buttons {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 0;
+  flex-wrap: wrap; 
+}
+
+.btn-upload-preview,
+.btn-cancel-preview {
+  background-color: #a0bfff;
+  color: white;
+  border-radius: 30px;
+  padding: 10px 20px;
+  font-weight: 600;
+  min-width: 100px;
   border: none;
-  border-radius: 6px;
-  margin-right: 6px;
-  padding: 6px 12px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: background 0.2s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
-.action-btn:hover { background: #e0e7ff; }
+
+

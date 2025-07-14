@@ -2,7 +2,8 @@
   <div class="documents-page">
     <div class="header-row">
       <h2>Your Documents</h2>
-      <button class="upload-btn" @click="onUpload">Upload</button>
+      <input type="file" accept=".pdf,.docx,.pptx" @change="handleFileSelect" style="display:none" ref="fileInput" />
+      <button class="upload-btn" @click="triggerFileInput">Upload</button>
     </div>
     <table class="doc-table">
       <thead>
@@ -15,6 +16,21 @@
         </tr>
       </thead>
       <tbody>
+        <!-- Dòng preview file vừa chọn -->
+        <tr v-if="selectedFile">
+          <td>{{ selectedFile.name }}</td>
+          <td>{{ getFileType(selectedFile) }}</td>
+          <td>{{ formatSize(selectedFile.size) }}</td>
+          <td>Not uploaded yet</td>
+          <td>
+  <div class="action-buttons">
+    <button class="btn btn-success btn-sm btn-upload-preview" @click="uploadFile">Upload</button>
+    <button class="btn btn-secondary btn-sm btn-cancel-preview" @click="cancelFile">Cancel</button>
+  </div>
+</td>
+
+        </tr>
+        <!-- Các dòng tài liệu đã upload -->
         <tr v-for="doc in documents" :key="doc.filename">
           <td>{{ doc.filename }}</td>
           <td>{{ doc.extension }}</td>
@@ -42,12 +58,11 @@
             </div>
           </td>
         </tr>
-        <tr v-if="documents.length === 0">
+        <tr v-if="documents.length === 0 && !selectedFile">
           <td colspan="5" style="text-align:center; color:#888;">No documents available</td>
         </tr>
       </tbody>
     </table>
-    <EmptyDocuments v-if="documents.length === 0" @upload="onUpload" />
   </div>
 </template>
 
@@ -57,15 +72,23 @@ import api from '../api/http'
 import '../assets/documents.css'
 
 const documents = ref([])
+const selectedFile = ref(null)
+const fileInput = ref(null)
 const processing = ref(false)
 
-const fetchDocuments = async () => {
-  try {
-    const res = await api.get('/documents')
-    documents.value = res.data
-  } catch  {
-    documents.value = []
-  }
+const triggerFileInput = () => fileInput.value.click()
+
+function handleFileSelect(e) {
+  const f = e.target.files[0]
+  if (!f) return
+  selectedFile.value = f
+}
+
+function getFileType(file) {
+  if (file.type.includes('pdf')) return 'PDF'
+  if (file.type.includes('word')) return 'DOCX'
+  if (file.type.includes('presentation')) return 'PPTX'
+  return file.type
 }
 
 const formatSize = (size) => {
@@ -80,11 +103,43 @@ const formatDate = (dateStr) => {
   return d.toLocaleDateString() + ' ' + d.toLocaleTimeString()
 }
 
-const onUpload = () => {
-  alert('The upload feature will be added soon!')
+function cancelFile() {
+  selectedFile.value = null
+  fileInput.value.value = null
 }
 
-function handleView(doc) {
+async function uploadFile() {
+  if (!selectedFile.value) return
+  processing.value = true
+  const formData = new FormData()
+  formData.append('file', selectedFile.value)
+  try {
+    await api.post('/api/documents/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
+    alert('Upload successful!')
+    selectedFile.value = null
+    fileInput.value.value = null
+    fetchDocuments() // Refresh danh sách tài liệu sau khi upload thành công
+  } catch (e) {
+    console.error(e)
+    alert('Upload failed!')
+  }
+  processing.value = false
+}
+
+const fetchDocuments = async () => {
+  try {
+    const res = await api.get('/documents')
+    documents.value = res.data
+  } catch  {
+    documents.value = []
+  }
+}
+
+async function handleView(doc) {
   // Nếu có URL public thì mở tab mới, nếu không thì có thể dùng API để lấy link
   window.open(doc.url || `/files/${doc.filename}`, '_blank')
 }
@@ -134,3 +189,4 @@ async function handleDelete(doc) {
 
 onMounted(fetchDocuments)
 </script>
+
