@@ -67,12 +67,12 @@ watch(mobile, (newVal) => {
 })
 
 const items = [
-  { title: 'Trang chủ', icon: 'mdi-home', to: '/' },
-  { title: 'Tài liệu', icon: 'mdi-file-document', to: '/about' },
-  { title: 'Mẫu phản hồi', icon: 'mdi-bell', to: '/feedback' },
-  { title: 'Lịch', icon: 'mdi-calendar', to: '/calendar' },
-  { title: 'Chattest', icon: 'mdi-chat', to: '/chat' },
-  { title: 'Cài đặt', icon: 'mdi-cog', to: '/settings' },
+  { title: 'Home', icon: 'mdi-home', to: '/' },
+  { title: 'Documents', icon: 'mdi-file-document', to: '/documents' },
+  { title: 'Feedback Form', icon: 'mdi-bell', to: '/feedback' },
+  { title: 'Calendar', icon: 'mdi-calendar', to: '/calendar' },
+  { title: 'Chat Test', icon: 'mdi-chat', to: '/chat' },
+  { title: 'Settings', icon: 'mdi-cog', to: '/settings' },
   { divider: true },
 ]
 </script>
@@ -120,7 +120,7 @@ const items = [
             </v-card-title>
             <v-divider />
             <v-card-text style="max-height: 300px; overflow-y: auto">
-              <div v-if="notifications.length === 0">Không có thông báo mới.</div>
+              <div v-if="notifications.length === 0">No new notifications</div>
               <v-list v-else>
                 <v-list-item
                   v-for="(n, i) in notifications"
@@ -134,7 +134,7 @@ const items = [
               </v-list>
             </v-card-text>
             <v-card-actions>
-              <v-btn color="primary" @click="handleMarkAllAsRead">Đánh dấu đã đọc</v-btn>
+              <v-btn color="primary" @click="handleMarkAllAsRead">Mask as read</v-btn>
             </v-card-actions>
           </v-card>
         </v-menu>
@@ -146,15 +146,16 @@ const items = [
           </template>
           <v-list>
             <v-list-item
-              title="Thông tin cá nhân"
+              title="Personal Information"
               @click="home"
+             
             >
               <template #prepend><i class="fas fa-user-circle"></i></template>
             </v-list-item>
-            <v-list-item title="Đổi mật khẩu" @click="home">
+            <v-list-item title="Change Password" @click="home">
               <template #prepend><i class="fas fa-key"></i></template>
             </v-list-item>
-            <v-list-item title="Đăng xuất" @click="logout">
+            <v-list-item title="Logout" @click="logout">
               <template #prepend><i class="fas fa-sign-out-alt"></i></template>
             </v-list-item>
           </v-list>

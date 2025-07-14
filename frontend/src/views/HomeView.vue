@@ -40,7 +40,7 @@ onMounted(async () => {
       <v-row justify="center">
         <v-col cols="12" class="text-center">
           <h1 class="text-h4 font-weight-bold">Welcome back, {{ username }}!</h1>
-          <p class="text-subtitle-1">Chúc bạn một ngày tuyệt vời và năng suất!</p>
+          <p class="text-subtitle-1">Have a wonderful and productive day!</p>
         </v-col>
       </v-row>
     </v-container>
@@ -51,7 +51,7 @@ onMounted(async () => {
           <v-card elevation="3" class="pa-6 text-center rounded-xl">
             <i class="fas fa-file-alt" style="font-size:36px; color: #1976d2;"></i>
             <div class="text-h5 font-weight-bold mt-2">{{ stats.documents }}</div>
-            <div class="text-subtitle-2">Tài liệu đã đăng</div>
+            <div class="text-subtitle-2">Posted Documents</div>
           </v-card>
         </v-col>
 
@@ -59,7 +59,7 @@ onMounted(async () => {
           <v-card elevation="3" class="pa-6 text-center rounded-xl">
             <i class="fas fa-question-circle" style="font-size:36px; color: #2e7d32;"></i>
             <div class="text-h5 font-weight-bold mt-2">{{ stats.questionsAnswered }}</div>
-            <div class="text-subtitle-2">Câu hỏi đã trả lời</div>
+            <div class="text-subtitle-2">Answered Questions</div>
           </v-card>
         </v-col>
 
@@ -67,7 +67,7 @@ onMounted(async () => {
           <v-card elevation="3" class="pa-6 text-center rounded-xl">
             <i class="fas fa-users" style="font-size:36px; color: #3f51b5;"></i>
             <div class="text-h5 font-weight-bold mt-2">{{ stats.usersJoined }}</div>
-            <span class="text-subtitle-2">Người dùng tham gia</span>
+            <span class="text-subtitle-2">Joined Users</span>
           </v-card>
         </v-col>
       </v-row>
