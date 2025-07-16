@@ -31,33 +31,26 @@
 
         </tr>
         <!-- Các dòng tài liệu đã upload -->
-        <tr v-for="doc in documents" :key="doc.filename">
-          <td>{{ doc.filename }}</td>
-          <td>{{ doc.extension }}</td>
-          <td>{{ formatSize(doc.size) }}</td>
-          <td>{{ formatDate(doc.created_at) }}</td>
-          <td>
-            <div class="dropdown">
-              <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" :disabled="processing">
-                Actions
-              </button>
-              <ul class="dropdown-menu">
-                <li>
-                  <button class="dropdown-item" @click="handleView(doc)" :disabled="processing">View</button>
-                </li>
-                <li>
-                  <button class="dropdown-item" @click="handleDownload(doc)" :disabled="processing">Download</button>
-                </li>
-                <li>
-                  <button class="dropdown-item" @click="handleProcess(doc)" :disabled="processing">Process</button>
-                </li>
-                <li>
-                  <button class="dropdown-item text-danger" @click="handleDelete(doc)" :disabled="processing">Delete</button>
-                </li>
-              </ul>
-            </div>
-          </td>
-        </tr>
+       <tr v-for="doc in documents" :key="doc.id">
+  <td>{{ doc.original_name }}</td>
+  <td>{{ getFileType(doc.file_type) }}</td>
+  <td>{{ formatSize(doc.file_size) }}</td>
+  <td>{{ formatDate(doc.created_at) }}</td>
+  <td>
+    <div class="dropdown">
+      <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" :disabled="processing">
+        Actions
+      </button>
+      <ul class="dropdown-menu">
+        <li><button class="dropdown-item" @click="handleView(doc)" :disabled="processing">View</button></li>
+        <li><button class="dropdown-item" @click="handleDownload(doc)" :disabled="processing">Download</button></li>
+        <li><button class="dropdown-item" @click="handleProcess(doc)" :disabled="processing">Process</button></li>
+        <li><button class="dropdown-item text-danger" @click="handleDelete(doc)" :disabled="processing">Delete</button></li>
+      </ul>
+    </div>
+  </td>
+</tr>
+
         <tr v-if="documents.length === 0 && !selectedFile">
           <td colspan="5" style="text-align:center; color:#888;">No documents available</td>
         </tr>
@@ -85,10 +78,21 @@ function handleFileSelect(e) {
 }
 
 function getFileType(file) {
-  if (file.type.includes('pdf')) return 'PDF'
-  if (file.type.includes('word')) return 'DOCX'
-  if (file.type.includes('presentation')) return 'PPTX'
-  return file.type
+  // Nếu là object File (khi chọn file mới)
+  if (file && typeof file === 'object' && file.type) {
+    if (file.type.includes('pdf')) return 'PDF'
+    if (file.type.includes('word')) return 'DOCX'
+    if (file.type.includes('presentation')) return 'PPTX'
+    return file.type
+  }
+  // Nếu là string (khi lấy từ backend)
+  if (typeof file === 'string') {
+    if (file.includes('pdf')) return 'PDF'
+    if (file.includes('word')) return 'DOCX'
+    if (file.includes('presentation')) return 'PPTX'
+    return file
+  }
+  return ''
 }
 
 const formatSize = (size) => {
@@ -132,8 +136,8 @@ async function uploadFile() {
 
 const fetchDocuments = async () => {
   try {
-    const res = await api.get('/documents')
-    documents.value = res.data
+    const res = await api.get('/api/documents')
+    documents.value = res.data.items
   } catch  {
     documents.value = []
   }
@@ -156,7 +160,8 @@ async function handleDownload(doc) {
     link.click()
     link.remove()
     window.URL.revokeObjectURL(url)
-  } catch  {
+  } catch (e)  {
+    console.log(e)
     alert('Download failed!')
   }
   processing.value = false
@@ -178,10 +183,11 @@ async function handleDelete(doc) {
   if (!confirm('Are you sure you want to delete this file?')) return
   processing.value = true
   try {
-    await api.delete(`/documents/${doc.id}`)
+    await api.delete(`/api/documents/${doc.id}`)
     alert('File deleted!')
-    fetchDocuments()
-  } catch  {
+      documents.value = documents.value.filter(d => d.id !== doc.id)
+  } catch (e) {
+    console.log(e)
     alert('Delete failure!')
   }
   processing.value = false
