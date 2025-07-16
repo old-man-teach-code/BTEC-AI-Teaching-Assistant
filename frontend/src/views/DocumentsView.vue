@@ -23,33 +23,35 @@
           <td>{{ formatSize(selectedFile.size) }}</td>
           <td>Not uploaded yet</td>
           <td>
-  <div class="action-buttons">
-    <button class="btn btn-success btn-sm btn-upload-preview" @click="uploadFile">Upload</button>
-    <button class="btn btn-secondary btn-sm btn-cancel-preview" @click="cancelFile">Cancel</button>
-  </div>
+
 </td>
 
         </tr>
         <!-- Các dòng tài liệu đã upload -->
-       <tr v-for="doc in documents" :key="doc.id">
-  <td>{{ doc.original_name }}</td>
-  <td>{{ getFileType(doc.file_type) }}</td>
-  <td>{{ formatSize(doc.file_size) }}</td>
-  <td>{{ formatDate(doc.created_at) }}</td>
-  <td>
-    <div class="dropdown">
-      <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" :disabled="processing">
-        Actions
-      </button>
-      <ul class="dropdown-menu">
-        <li><button class="dropdown-item" @click="handleView(doc)" :disabled="processing">View</button></li>
-        <li><button class="dropdown-item" @click="handleDownload(doc)" :disabled="processing">Download</button></li>
-        <li><button class="dropdown-item" @click="handleProcess(doc)" :disabled="processing">Process</button></li>
-        <li><button class="dropdown-item text-danger" @click="handleDelete(doc)" :disabled="processing">Delete</button></li>
+ <tr v-for="doc in documents" :key="doc.id" @mouseleave="activeDropdown = null">
+    <td>{{ doc.original_name }}</td>
+    <td>{{ getFileType(doc.file_type) }}</td>
+    <td>{{ formatSize(doc.file_size) }}</td>
+    <td>{{ formatDate(doc.created_at) }}</td>
+
+    <td class="hover-action-cell" @mouseenter="activeDropdown = doc.id">
+      ☰
+      <ul v-if="activeDropdown === doc.id" class="hover-dropdown">
+        <li @click="handleView(doc)">View</li>
+        <li @click="handleDownload(doc)">Download</li>
+        <li @click="handleProcess(doc)">Process</li>
+        <li class="danger" @click="handleDelete(doc)">Delete</li>
       </ul>
-    </div>
+    </td>
+  </tr>
+
+<!-- View result below row -->
+<tr v-if="viewingDoc && viewingDoc.id === doc.id">
+  <td colspan="5" class="view-box">
+     You are viewing file: <strong>{{ viewingDoc.original_name }}</strong>
   </td>
 </tr>
+
 
         <tr v-if="documents.length === 0 && !selectedFile">
           <td colspan="5" style="text-align:center; color:#888;">No documents available</td>
@@ -71,21 +73,23 @@ const processing = ref(false)
 
 const triggerFileInput = () => fileInput.value.click()
 
-function handleFileSelect(e) {
+async function handleFileSelect(e) {
   const f = e.target.files[0]
   if (!f) return
   selectedFile.value = f
-}
+  await uploadFile() 
+} 
+
 
 function getFileType(file) {
-  // Nếu là object File (khi chọn file mới)
+
   if (file && typeof file === 'object' && file.type) {
     if (file.type.includes('pdf')) return 'PDF'
     if (file.type.includes('word')) return 'DOCX'
     if (file.type.includes('presentation')) return 'PPTX'
     return file.type
   }
-  // Nếu là string (khi lấy từ backend)
+  
   if (typeof file === 'string') {
     if (file.includes('pdf')) return 'PDF'
     if (file.includes('word')) return 'DOCX'
@@ -107,10 +111,6 @@ const formatDate = (dateStr) => {
   return d.toLocaleDateString() + ' ' + d.toLocaleTimeString()
 }
 
-function cancelFile() {
-  selectedFile.value = null
-  fileInput.value.value = null
-}
 
 async function uploadFile() {
   if (!selectedFile.value) return
@@ -137,25 +137,24 @@ async function uploadFile() {
 const fetchDocuments = async () => {
   try {
     const res = await api.get('/api/documents')
-    documents.value = res.data.items
+      documents.value = res.data.items.filter(doc => doc.status === 'uploaded')
   } catch  {
     documents.value = []
   }
 }
 
 async function handleView(doc) {
-  // Nếu có URL public thì mở tab mới, nếu không thì có thể dùng API để lấy link
   window.open(doc.url || `/files/${doc.filename}`, '_blank')
 }
 
 async function handleDownload(doc) {
   processing.value = true
   try {
-    const res = await api.get(`/files/${doc.filename}`, { responseType: 'blob' })
+    const res = await api.get(`/api/documents/${doc.id}/download`, { responseType: 'blob' })
     const url = window.URL.createObjectURL(new Blob([res.data]))
     const link = document.createElement('a')
     link.href = url
-    link.setAttribute('download', doc.filename)
+    link.setAttribute('download', doc.original_name || doc.filename)
     document.body.appendChild(link)
     link.click()
     link.remove()
@@ -194,5 +193,8 @@ async function handleDelete(doc) {
 }
 
 onMounted(fetchDocuments)
+const activeDropdown = ref(null)
+const viewingDoc = ref(null)
+
 </script>
 
