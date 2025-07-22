@@ -86,11 +86,11 @@ backend/
 
 ## Ví dụ thêm module mới: "Course"
 
-- `models/course.py`  → Định nghĩa bảng `Course`
-- `schemas/course.py` → Định nghĩa schema `CourseCreate`, `CourseRead`
-- `crud/course.py`   → Hàm tạo/xem/sửa/xoá Course
+- `models/course.py`  → Định nghĩa bảng `Course`
+- `schemas/course.py` → Định nghĩa schema `CourseCreate`, `CourseRead`
+- `crud/course.py`   → Hàm tạo/xem/sửa/xoá Course
 - `services/course_service.py` (nếu cần nghiệp vụ riêng)
-- `routes/course.py`  → Định nghĩa các endpoint `/courses`
+- `routes/course.py`  → Định nghĩa các endpoint `/courses`
 - Import router course vào `main.py`  
   ```python
   from routes.course import router as course_router
@@ -162,3 +162,60 @@ app.add_middleware(JWTAuthMiddleware)
 - Không dùng middleware toàn cục nếu có cả public/private API.
 
 ---
+
+## Tính năng Event Types và Colors
+
+Module này được phát triển để hỗ trợ yêu cầu "Different colors cho event types" từ task 20.3. 
+
+### Model và Cấu trúc
+
+- **EventType**: Mô hình cho các loại sự kiện và màu sắc
+  - `id`: ID của loại event
+  - `name`: Tên loại event (VD: "Bài giảng", "Thi"...)
+  - `color`: Mã màu dạng hex (VD: "#1976d2")
+  - `description`: Mô tả về loại event
+  - `code`: Mã enum để phân biệt loại event
+
+- **Quan hệ với Event**:
+  - Event có trường `event_type_id` liên kết với EventType
+  - Relationship để lấy thông tin `event_type` từ Event
+
+### API Endpoints
+
+- `GET /api/event-types`: Lấy danh sách loại events
+- `GET /api/event-types/{id}`: Lấy chi tiết một loại event
+- `POST /api/event-types`: Tạo loại event mới
+- `PUT /api/event-types/{id}`: Cập nhật loại event
+- `DELETE /api/event-types/{id}`: Xóa loại event
+- `POST /api/event-types/seed-defaults`: Seed dữ liệu mặc định
+
+### Dữ liệu mặc định
+
+Hệ thống cung cấp các loại event mặc định kèm màu sắc:
+- Bài giảng (xanh dương): #1976d2
+- Bài tập (cam): #ff9800
+- Thi (đỏ): #f44336
+- Họp (tím): #9c27b0
+- Deadline (đỏ đậm): #d32f2f
+- Sự kiện (xanh lá): #4caf50
+- Khác (xám xanh): #607d8b
+
+### Khởi tạo và Sử dụng
+
+1. **Khởi tạo database với dữ liệu mặc định**:
+   ```bash
+   python -m app.init_db
+   ```
+
+2. **Tạo sự kiện với loại event**:
+   ```json
+   {
+     "title": "Bài giảng OOP",
+     "start_time": "2024-01-15T08:00:00",
+     "end_time": "2024-01-15T10:00:00",
+     "event_type_id": 1
+   }
+   ```
+
+3. **Xem event với thông tin màu sắc**:
+   API trả về thông tin `event_type` trong response của event, frontend có thể sử dụng trường `color` để hiển thị.
