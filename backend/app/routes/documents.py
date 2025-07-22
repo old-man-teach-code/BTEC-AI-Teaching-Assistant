@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, UploadFile, File, Query, Path, HTTPException, status, Response
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
-from typing import Optional
+from typing import Optional, Dict, Any
 import os
 
 from dependencies.deps import get_db, get_current_user
@@ -12,7 +12,8 @@ from services.document_service import (
     service_get_document,
     service_update_document,
     service_delete_document,
-    service_download_document
+    service_download_document,
+    service_process_document
 )
 from models.user import User
 
@@ -150,4 +151,24 @@ def download_document(
         path=file_info["file_path"],
         filename=file_info["filename"],
         media_type=file_info["content_type"]
-    ) 
+    )
+
+
+@router.post("/{document_id}/process")
+def process_document(
+    document_id: int = Path(..., gt=0, description="ID của document cần xử lý"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+) -> Dict[str, Any]:
+    """
+    Gửi document sang AI để xử lý
+    
+    Args:
+        document_id: ID của document cần xử lý
+        db: Database session
+        current_user: User hiện tại (từ token)
+        
+    Returns:
+        Dict: Kết quả xử lý document
+    """
+    return service_process_document(db, document_id, current_user.id) 
