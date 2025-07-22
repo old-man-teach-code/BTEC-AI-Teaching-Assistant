@@ -3,6 +3,7 @@ from sqlalchemy import desc
 from models.document import Document
 from schemas.document import DocumentCreate, DocumentUpdate
 from typing import List, Optional
+from utils.db_utils import reset_auto_increment
 
 
 def create_document(db: Session, document_data: dict, owner_id: int) -> Document:
@@ -136,6 +137,9 @@ def delete_document(db: Session, document: Document) -> None:
     """
     db.delete(document)
     db.commit()
+    
+    # Reset auto-increment để ID tiếp theo bắt đầu từ ID cao nhất hiện có + 1
+    reset_auto_increment(db, "documents")
 
 
 def soft_delete_document(db: Session, document: Document) -> Document:
