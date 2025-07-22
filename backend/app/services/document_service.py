@@ -1,9 +1,10 @@
 from fastapi import UploadFile, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Tuple
 import os
 import uuid
 from datetime import datetime
+import requests
 
 from models.document import Document, DocumentStatus
 from schemas.document import DocumentCreate, DocumentUpdate, DocumentListResponse, DocumentResponse
@@ -18,6 +19,42 @@ from crud.document import (
 )
 from utils.file_handler import save_file, get_file_extension, get_file_size, validate_file
 from core.config import settings
+
+
+def _validate_document_access(db: Session, document_id: int, owner_id: int, action_name: str = "truy cập") -> Document:
+    """
+    Kiểm tra document tồn tại và quyền sở hữu
+    
+    Args:
+        db: Database session
+        document_id: ID của document cần kiểm tra
+        owner_id: ID của user để kiểm tra quyền sở hữu
+        action_name: Tên hành động để hiển thị trong thông báo lỗi
+        
+    Returns:
+        Document: Document đã được kiểm tra
+        
+    Raises:
+        HTTPException: Nếu document không tồn tại hoặc user không có quyền
+    """
+    # Lấy document từ database
+    document = get_document(db, document_id)
+    
+    # Kiểm tra document tồn tại
+    if not document:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Document với ID {document_id} không tồn tại"
+        )
+    
+    # Kiểm tra quyền sở hữu
+    if document.owner_id != owner_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Bạn không có quyền {action_name} document này"
+        )
+    
+    return document
 
 
 async def service_upload_document(
@@ -125,22 +162,8 @@ def service_get_document(db: Session, document_id: int, owner_id: int) -> Docume
     Raises:
         HTTPException: Nếu document không tồn tại hoặc user không có quyền
     """
-    # Lấy document từ database
-    document = get_document(db, document_id)
-    
-    # Kiểm tra document tồn tại
-    if not document:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Document với ID {document_id} không tồn tại"
-        )
-    
-    # Kiểm tra quyền sở hữu
-    if document.owner_id != owner_id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Bạn không có quyền truy cập document này"
-        )
+    # Kiểm tra document và quyền truy cập
+    document = _validate_document_access(db, document_id, owner_id)
     
     # Trả về thông tin document
     return DocumentResponse.from_orm(document)
@@ -167,22 +190,8 @@ def service_update_document(
     Raises:
         HTTPException: Nếu document không tồn tại hoặc user không có quyền
     """
-    # Lấy document từ database
-    document = get_document(db, document_id)
-    
-    # Kiểm tra document tồn tại
-    if not document:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Document với ID {document_id} không tồn tại"
-        )
-    
-    # Kiểm tra quyền sở hữu
-    if document.owner_id != owner_id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Bạn không có quyền cập nhật document này"
-        )
+    # Kiểm tra document và quyền truy cập
+    document = _validate_document_access(db, document_id, owner_id, "cập nhật")
     
     # Cập nhật document
     updated_document = update_document(db, document, document_update)
@@ -207,22 +216,8 @@ def service_delete_document(db: Session, document_id: int, owner_id: int, hard_d
     Raises:
         HTTPException: Nếu document không tồn tại hoặc user không có quyền
     """
-    # Lấy document từ database
-    document = get_document(db, document_id)
-    
-    # Kiểm tra document tồn tại
-    if not document:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Document với ID {document_id} không tồn tại"
-        )
-    
-    # Kiểm tra quyền sở hữu
-    if document.owner_id != owner_id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Bạn không có quyền xóa document này"
-        )
+    # Kiểm tra document và quyền truy cập
+    document = _validate_document_access(db, document_id, owner_id, "xóa")
     
     if hard_delete:
         # Xóa cứng document khỏi database
@@ -250,22 +245,8 @@ def service_download_document(db: Session, document_id: int, owner_id: int) -> D
     Raises:
         HTTPException: Nếu document không tồn tại hoặc user không có quyền
     """
-    # Lấy document từ database
-    document = get_document(db, document_id)
-    
-    # Kiểm tra document tồn tại
-    if not document:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Document với ID {document_id} không tồn tại"
-        )
-    
-    # Kiểm tra quyền sở hữu
-    if document.owner_id != owner_id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Bạn không có quyền download document này"
-        )
+    # Kiểm tra document và quyền truy cập
+    document = _validate_document_access(db, document_id, owner_id, "download")
     
     # Kiểm tra file có tồn tại không
     file_path = document.file_path
@@ -280,4 +261,44 @@ def service_download_document(db: Session, document_id: int, owner_id: int) -> D
         "file_path": file_path,
         "filename": document.original_name,
         "content_type": document.file_type
+    } 
+
+
+def service_process_document(db: Session, document_id: int, owner_id: int) -> Dict[str, Any]:
+    """
+    Gửi document sang AI để xử lý
+    
+    Args:
+        db: Database session
+        document_id: ID của document cần xử lý
+        owner_id: ID của user để kiểm tra quyền sở hữu
+        
+    Returns:
+        Dict: Kết quả xử lý document
+        
+    Raises:
+        HTTPException: Nếu document không tồn tại hoặc user không có quyền
+    """
+    # Kiểm tra document và quyền truy cập
+    document = _validate_document_access(db, document_id, owner_id, "xử lý")
+    
+    # Kiểm tra trạng thái hiện tại
+    if document.status == DocumentStatus.READY.value:
+        return {
+            "message": f"Document {document_id} đã được xử lý trước đó",
+            "status": document.status
+        }
+    
+    # Cập nhật trạng thái document sang processing
+    document_update = DocumentUpdate(status=DocumentStatus.PROCESSING.value)
+    updated_document = update_document(db, document, document_update)
+    
+    # TODO: Gọi API sang AI để xử lý document
+    # Trong thực tế, đây là nơi sẽ gọi API sang AI service
+    
+    # Trả về kết quả 
+    return {
+        "id": document_id,
+        "status": "processing",
+        "message": f"Document {document_id} đang được xử lý"
     } 
