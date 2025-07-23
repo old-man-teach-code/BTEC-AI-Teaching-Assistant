@@ -1,8 +1,9 @@
 from routes.api import user
-from fastapi import FastAPI
 from routes import auth, info, files, documents
+from fastapi import FastAPI
 from core.jwt_middleware import JWTAuthMiddleware
 from fastapi.middleware.cors import CORSMiddleware
+from routes.api import templates 
 
 app = FastAPI()
 protected_app = FastAPI(
@@ -34,6 +35,7 @@ protected_app.add_middleware(
 protected_app.include_router(user.router, prefix="/users", tags=["users"])
 protected_app.include_router(files.router, prefix="/files", tags=["files"])
 protected_app.include_router(documents.router, prefix="/documents", tags=["documents"])
+protected_app.include_router(templates.router, prefix="/templates", tags=["templates"])
 
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(info.router, prefix="/info", tags=["info"])
