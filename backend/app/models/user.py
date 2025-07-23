@@ -14,3 +14,6 @@ class User(Base):
     
     # Thêm relationship với Document model
     documents = relationship("Document", back_populates="owner", cascade="all, delete-orphan")
+
+    # Thêm relationship với Event model
+    events = relationship("Event", back_populates="owner", cascade="all, delete-orphan")
