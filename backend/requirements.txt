@@ -5,6 +5,7 @@ sqlalchemy
 pymysql
 cryptography
 python-jose
+bcrypt==4.0.1
 passlib[bcrypt]
 python-multipart
 redis
