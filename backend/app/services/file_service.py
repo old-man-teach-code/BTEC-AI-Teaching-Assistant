@@ -6,64 +6,10 @@ from typing import List, Optional, Tuple, Dict, Any
 from fastapi import UploadFile, HTTPException
 from core.config import settings
 
-def get_file_extension(filename: str) -> str:
-    """
-    Lấy phần mở rộng của file
-    
-    Args:
-        filename: Tên file cần lấy phần mở rộng
-        
-    Returns:
-        Phần mở rộng của file (bao gồm dấu chấm)
-    """
-    return os.path.splitext(filename)[1].lower()
+# Import from utils to avoid duplication
+from utils.file_handler import get_file_extension, get_file_size, validate_file
 
-def get_file_size(file: UploadFile) -> int:
-    """
-    Lấy kích thước của file
-    
-    Args:
-        file: File cần kiểm tra kích thước
-        
-    Returns:
-        Kích thước của file (bytes)
-    """
-    # Lưu vị trí hiện tại của con trỏ file
-    current_position = file.file.tell()
-    
-    # Di chuyển đến cuối file để lấy kích thước
-    file.file.seek(0, os.SEEK_END)
-    size = file.file.tell()
-    
-    # Trở lại vị trí ban đầu
-    file.file.seek(current_position)
-    
-    return size
-
-def validate_file(file: UploadFile) -> Tuple[bool, Optional[str]]:
-    """
-    Kiểm tra tính hợp lệ của file
-    
-    Args:
-        file: File cần kiểm tra
-        
-    Returns:
-        Tuple[bool, Optional[str]]: (file có hợp lệ không, thông báo lỗi nếu không hợp lệ)
-    """
-    # Kiểm tra phần mở rộng
-    extension = get_file_extension(file.filename)
-    if extension not in settings.ALLOWED_EXTENSIONS:
-        return False, f"Định dạng file không được hỗ trợ. Chỉ chấp nhận: {', '.join(settings.ALLOWED_EXTENSIONS)}"
-    
-    # Kiểm tra kích thước
-    size = get_file_size(file)
-    if size > settings.MAX_FILE_SIZE:
-        max_size_mb = settings.MAX_FILE_SIZE / (1024 * 1024)
-        return False, f"Kích thước file vượt quá giới hạn cho phép ({max_size_mb:.1f}MB)"
-    
-    return True, None
-
-async def save_file(file: UploadFile, subfolder: str = "") -> Dict[str, Any]:
+async def save_file_to_subfolder(file: UploadFile, subfolder: str = "") -> Dict[str, Any]:
     """
     Lưu file tải lên vào thư mục uploads
     
@@ -78,8 +24,8 @@ async def save_file(file: UploadFile, subfolder: str = "") -> Dict[str, Any]:
         HTTPException: Nếu file không hợp lệ
     """
     # Kiểm tra tính hợp lệ của file
-    is_valid, error_message = validate_file(file)
-    if not is_valid:
+    error_message = validate_file(file)
+    if error_message:
         raise HTTPException(status_code=400, detail=error_message)
     
     # Tạo tên file duy nhất
