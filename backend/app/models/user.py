@@ -8,7 +8,7 @@ class User(Base):
     name = Column(String(64), index=True)
     email = Column(String(120), unique=True, index=True)
     hashed_password = Column(String(256))
-    discord_user_id = Column(String(64), nullable=True) 
+
     # Thêm trường created_at (thời gian tạo tài khoản)
     created_at = Column(DateTime(timezone=True), default=func.now(), nullable=False)
     
