@@ -3,6 +3,7 @@ import HeaderForm from '@/components/HeaderForm.vue'
 import { ref, computed, onMounted } from 'vue'
 import { fetchStats } from '@/api/stats' //
 import { useAuthStore } from '@/stores/auth'
+import api from '../api/http'
 
 const authStore = useAuthStore()
 
@@ -32,6 +33,18 @@ onMounted(async () => {
      console.error('Lỗi khi fetch stats:', error)
   }
 })
+
+const fetchDocumentStats = async () => {
+  try {
+    const res = await api.get('/api/documents')
+    stats.value.documents = res.data.items.filter(doc => doc.status === 'uploaded').length
+  } catch (e) {
+    console.error('Failed to fetch documents', e)
+    stats.value.documents = 0
+  }
+}
+
+onMounted(fetchDocumentStats)
 </script>
 
 <template>
@@ -97,3 +110,5 @@ onMounted(async () => {
   </v-container>
   </HeaderForm>
 </template> 
+<script>
+</script>

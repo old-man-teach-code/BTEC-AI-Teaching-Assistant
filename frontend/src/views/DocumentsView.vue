@@ -1,200 +1,181 @@
 <template>
-  <div class="documents-page">
-    <div class="header-row">
-      <h2>Your Documents</h2>
-      <input type="file" accept=".pdf,.docx,.pptx" @change="handleFileSelect" style="display:none" ref="fileInput" />
-      <button class="upload-btn" @click="triggerFileInput">Upload</button>
-    </div>
-    <table class="doc-table">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Size</th>
-          <th>Uploaded At</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <!-- Dòng preview file vừa chọn -->
-        <tr v-if="selectedFile">
-          <td>{{ selectedFile.name }}</td>
-          <td>{{ getFileType(selectedFile) }}</td>
-          <td>{{ formatSize(selectedFile.size) }}</td>
-          <td>Not uploaded yet</td>
-          <td>
+  <div class="page-wrapper">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="collapse-icon">«</div>
+      </div>
+      <ul class="menu">
+        <li v-for="item in sidebarItemsTop" :key="item.label"
+>          <v-icon>{{ item.icon }}</v-icon>
 
-</td>
-
-        </tr>
-        <!-- Các dòng tài liệu đã upload -->
- <tr v-for="doc in documents" :key="doc.id" @mouseleave="activeDropdown = null">
-    <td>{{ doc.original_name }}</td>
-    <td>{{ getFileType(doc.file_type) }}</td>
-    <td>{{ formatSize(doc.file_size) }}</td>
-    <td>{{ formatDate(doc.created_at) }}</td>
-
-    <td class="hover-action-cell" @mouseenter="activeDropdown = doc.id">
-      ☰
-      <ul v-if="activeDropdown === doc.id" class="hover-dropdown">
-        <li @click="handleView(doc)">View</li>
-        <li @click="handleDownload(doc)">Download</li>
-        <li @click="handleProcess(doc)">Process</li>
-        <li class="danger" @click="handleDelete(doc)">Delete</li>
+          <span>{{ item.label }}</span>
+        </li>
       </ul>
-    </td>
-  </tr>
 
-<!-- View result below row -->
-<tr v-if="viewingDoc && viewingDoc.id === doc.id">
-  <td colspan="5" class="view-box">
-     You are viewing file: <strong>{{ viewingDoc.original_name }}</strong>
-  </td>
-</tr>
+      <ul class="menu menu-bottom">
+        <li v-for="item in sidebarItemsBottom" :key="item.label"
+          @click="handleSidebar(item)">
+          <v-icon>{{ item.icon }}</v-icon>
 
+          <span>{{ item.label }}</span>
+        </li>
+      </ul>
+    </aside>
 
-        <tr v-if="documents.length === 0 && !selectedFile">
-          <td colspan="5" style="text-align:center; color:#888;">No documents available</td>
-        </tr>
-      </tbody>
-    </table>
+    <main class="main-content">
+      <div class="documents-page">
+        <div class="documents-header">
+          <h2>Documents</h2>
+          <div class="button-group">
+            <button class="btn-primary" @click="triggerFileInput">
+              <v-icon small class="mr-1">mdi-plus</v-icon>
+              New
+            </button>
+
+            <v-menu offset-y>
+              <template #activator="{ props }">
+                <button class="btn-secondary" v-bind="props">
+                  <v-icon small class="mr-1">mdi-filter-menu-outline</v-icon> Filters
+                </button>
+              </template>
+
+              <v-list>
+                <v-list-item @click="filterByType('all')">All</v-list-item>
+                <v-list-item @click="filterByType('PDF')">PDF</v-list-item>
+                <v-list-item @click="filterByType('DOCX')">DOCX</v-list-item>
+                <v-list-item @click="filterByType('PPTX')">PPTX</v-list-item>
+              </v-list>
+            </v-menu>
+
+            <v-menu offset-y>
+              <template #activator="{ props }">
+                <button class="btn-secondary" v-bind="props">
+                  <v-icon small class="mr-1">mdi-sort</v-icon>Sort By
+                </button>
+              </template>
+
+              <v-list>
+                <v-list-item @click="sortBy = 'latest'">Latest</v-list-item>
+                <v-list-item @click="sortBy = 'oldest'">Oldest</v-list-item>
+                <v-list-item @click="sortBy = 'size_asc'">Small → Large</v-list-item>
+                <v-list-item @click="sortBy = 'size_desc'">Large → Small</v-list-item>
+                <v-list-item @click="sortBy = 'name_az'">Name A → Z</v-list-item>
+              </v-list>
+            </v-menu>
+          </div>
+        </div>
+
+        <input
+          type="file"
+          accept=".pdf,.docx,.pptx"
+          @change="handleFileSelect"
+          style="display: none"
+          ref="fileInput"
+        />
+
+        <div class="folders-section" v-if="folders.length">
+          <div class="folder" v-for="folder in folders" :key="folder.name">
+            <div class="folder-icon" />
+            <div class="folder-name">{{ folder.name }}</div>
+            <div class="folder-meta">{{ folder.files }} Files ・ {{ folder.size }}</div>
+          </div>
+        </div>
+
+        <div class="recent-section" v-if="recentFiles.length">
+          <h4>Recent</h4>
+          <div class="recent-items">
+            <div class="recent-card" v-for="r in recentFiles" :key="r.name">
+              <div class="recent-card-content">
+                <div class="icon-wrapper" @click="handleView(doc)" style="cursor: pointer">
+                  <v-icon small>mdi-file-document-outline</v-icon>
+                </div>
+                <div class="recent-text">
+                  <div class="recent-name">{{ r.name }}</div>
+                  <div class="recent-meta">
+                    <span>{{ r.date }}</span>
+                    <span>・</span>
+                    <span>{{ r.size }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="files-table">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Size</th>
+                <th>Upload At</th>
+                <th>Upload By</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-if="selectedFile">
+                <td>{{ selectedFile.name }}</td>
+                <td>{{ getFileType(selectedFile) }}</td>
+              </tr>
+              <tr v-for="doc in sortedAndFilteredDocuments" :key="doc.id">
+                <td class="file-cell">
+                  <div class="file-content">
+                    <div class="icon-wrapper" @click="handleView(doc)" style="cursor: pointer">
+                      <v-icon small>mdi-file-document-outline</v-icon>
+                    </div>
+                    <span class="file-name">{{ doc.original_name }}</span>
+                  </div>
+                </td>
+                <td>{{ formatSize(doc.file_size) }}</td>
+                <td>{{ formatDate(doc.created_at) }}</td>
+                <td>{{ doc.upload_by || 'Unknown' }}</td>
+                <td class="action-icons">
+                  <v-icon small class="mr-2" color="primary" @click="handleDownload(doc)"
+                    >mdi-cloud-download-outline</v-icon
+                  >
+                  <v-icon small class="mr-2" color="blue" @click="handleProcess(doc)"
+                    >mdi-autorenew</v-icon
+                  >
+                  <v-icon small color="red" @click="handleDelete(doc)">mdi-delete-outline</v-icon>
+                </td>
+              </tr>
+              <tr v-if="sortedAndFilteredDocuments.length === 0 && !selectedFile">
+                <td colspan="5" class="empty-text">No documents available</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import api from '../api/http'
-import '../assets/documents.css'
+import { processDocument }  from '../composables/processDocument'
 
-const documents = ref([])
-const selectedFile = ref(null)
-const fileInput = ref(null)
-const processing = ref(false)
-
-const triggerFileInput = () => fileInput.value.click()
-
-async function handleFileSelect(e) {
-  const f = e.target.files[0]
-  if (!f) return
-  selectedFile.value = f
-  await uploadFile() 
-} 
-
-
-function getFileType(file) {
-
-  if (file && typeof file === 'object' && file.type) {
-    if (file.type.includes('pdf')) return 'PDF'
-    if (file.type.includes('word')) return 'DOCX'
-    if (file.type.includes('presentation')) return 'PPTX'
-    return file.type
-  }
-  
-  if (typeof file === 'string') {
-    if (file.includes('pdf')) return 'PDF'
-    if (file.includes('word')) return 'DOCX'
-    if (file.includes('presentation')) return 'PPTX'
-    return file
-  }
-  return ''
-}
-
-const formatSize = (size) => {
-  if (size >= 1024 * 1024) return (size / (1024 * 1024)).toFixed(2) + ' MB'
-  if (size >= 1024) return (size / 1024).toFixed(1) + ' KB'
-  return size + ' B'
-}
-
-const formatDate = (dateStr) => {
-  if (!dateStr) return ''
-  const d = new Date(dateStr)
-  return d.toLocaleDateString() + ' ' + d.toLocaleTimeString()
-}
-
-
-async function uploadFile() {
-  if (!selectedFile.value) return
-  processing.value = true
-  const formData = new FormData()
-  formData.append('file', selectedFile.value)
-  try {
-    await api.post('/api/documents/upload', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    })
-    alert('Upload successful!')
-    selectedFile.value = null
-    fileInput.value.value = null
-    fetchDocuments() // Refresh danh sách tài liệu sau khi upload thành công
-  } catch (e) {
-    console.error(e)
-    alert('Upload failed!')
-  }
-  processing.value = false
-}
-
-const fetchDocuments = async () => {
-  try {
-    const res = await api.get('/api/documents')
-      documents.value = res.data.items.filter(doc => doc.status === 'uploaded')
-  } catch  {
-    documents.value = []
-  }
-}
-
-async function handleView(doc) {
-  window.open(doc.url || `/files/${doc.filename}`, '_blank')
-}
-
-async function handleDownload(doc) {
-  processing.value = true
-  try {
-    const res = await api.get(`/api/documents/${doc.id}/download`, { responseType: 'blob' })
-    const url = window.URL.createObjectURL(new Blob([res.data]))
-    const link = document.createElement('a')
-    link.href = url
-    link.setAttribute('download', doc.original_name || doc.filename)
-    document.body.appendChild(link)
-    link.click()
-    link.remove()
-    window.URL.revokeObjectURL(url)
-  } catch (e)  {
-    console.log(e)
-    alert('Download failed!')
-  }
-  processing.value = false
-}
-
-async function handleProcess(doc) {
-  processing.value = true
-  try {
-    await api.post(`/documents/process/${doc.id}`)
-    alert('Processing successful!')
-    } catch (e) {
-    console.error(e)
-    alert('Processing failed!')
-  }
-  processing.value = false
-}
-
-async function handleDelete(doc) {
-  if (!confirm('Are you sure you want to delete this file?')) return
-  processing.value = true
-  try {
-    await api.delete(`/api/documents/${doc.id}`)
-    alert('File deleted!')
-      documents.value = documents.value.filter(d => d.id !== doc.id)
-  } catch (e) {
-    console.log(e)
-    alert('Delete failure!')
-  }
-  processing.value = false
-}
-
-onMounted(fetchDocuments)
-const activeDropdown = ref(null)
-const viewingDoc = ref(null)
-
+const {
+  selectedFile,
+  fileInput,
+  sidebarItemsTop,
+  sidebarItemsBottom,
+  triggerFileInput,
+  handleFileSelect,
+  handleDownload,
+  handleProcess,
+  handleDelete,
+  handleView,
+  handleSidebar,
+  formatSize,
+  formatDate,
+  getFileType,
+  filterByType,
+  sortBy,
+  folders,
+  recentFiles,
+  sortedAndFilteredDocuments,
+} = processDocument()
 </script>
 
+
+<style scoped src="../assets/documents.css"></style>
