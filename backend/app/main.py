@@ -1,6 +1,6 @@
-from routes.api import user
+from routes.api import user, templates
 from fastapi import FastAPI
-from routes import auth, info, files, documents, calendar, folders
+from routes import auth, info, files, documents, trash, folders, calendar
 from core.jwt_middleware import JWTAuthMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -35,7 +35,13 @@ protected_app.include_router(user.router, prefix="/users", tags=["users"])
 protected_app.include_router(files.router, prefix="/files", tags=["files"])
 protected_app.include_router(documents.router, prefix="/documents", tags=["documents"])
 protected_app.include_router(folders.router, prefix="/documents/folders", tags=["folders"])
+protected_app.include_router(trash.router, prefix="/trash", tags=["trash"])
 protected_app.include_router(calendar.router, prefix="/calendar", tags=["calendar"])
+protected_app.include_router(templates.router, prefix="/templates", tags=["templates"])
+
+
+
+
 
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(info.router, prefix="/info", tags=["info"])

@@ -79,6 +79,15 @@ class FolderTreeResponse(BaseModel):
         from_attributes = True
 
 
+class FolderTrashResponse(BaseModel):
+    """Schema cho response danh sách folders trong trash"""
+    total: int
+    items: List[FolderResponse]
+
+    class Config:
+        from_attributes = True
+
+
 class DocumentMove(BaseModel):
     """Schema cho việc di chuyển document vào folder"""
     folder_id: Optional[int] = Field(None, description="ID của folder đích (None = root level)")

@@ -7,12 +7,13 @@ from models.folder import Folder
 from models.document import Document
 from schemas.folder import (
     FolderCreate, FolderUpdate, FolderResponse, FolderListResponse,
-    FolderTreeResponse, FolderTreeNode, FolderMove
+    FolderTreeResponse, FolderTreeNode, FolderMove, FolderTrashResponse
 )
 from crud.folder import (
     create_folder, get_active_folder, get_user_folders, get_total_user_folders,
     update_folder, soft_delete_folder, restore_folder, delete_folder,
-    get_folder_with_counts, get_expired_folders, get_folder_tree
+    get_folder_with_counts, get_expired_folders, get_folder_tree,
+    get_user_trash_folders, get_total_user_trash_folders
 )
 from crud.document import get_user_documents
 
@@ -429,6 +430,60 @@ def service_restore_folder(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Không thể khôi phục folder: {str(e)}"
+        )
+
+
+def service_get_user_trash_folders(
+    db: Session,
+    owner_id: int,
+    skip: int = 0,
+    limit: int = 100
+) -> FolderTrashResponse:
+    """
+    Lấy danh sách folders trong trash của user
+
+    Args:
+        db: Database session
+        owner_id: ID của user
+        skip: Số folders bỏ qua
+        limit: Số folders tối đa
+
+    Returns:
+        FolderTrashResponse: Danh sách folders trong trash
+    """
+    try:
+        # Lấy folders trong trash
+        folders = get_user_trash_folders(db, owner_id, skip, limit)
+        total = get_total_user_trash_folders(db, owner_id)
+
+        # Chuyển đổi sang response format
+        folder_responses = []
+        for folder in folders:
+            # Lấy thông tin counts cho folder trong trash
+            folder_data = get_folder_with_counts(db, folder.id, owner_id)
+            if folder_data:
+                folder_responses.append(FolderResponse(
+                    **folder.__dict__,
+                    document_count=folder_data["document_count"],
+                    subfolder_count=folder_data["subfolder_count"]
+                ))
+            else:
+                # Fallback nếu không lấy được counts
+                folder_responses.append(FolderResponse(
+                    **folder.__dict__,
+                    document_count=0,
+                    subfolder_count=0
+                ))
+
+        return FolderTrashResponse(
+            total=total,
+            items=folder_responses
+        )
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Không thể lấy danh sách folders trong trash: {str(e)}"
         )
 
 
