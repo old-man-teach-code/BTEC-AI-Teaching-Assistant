@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, func
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Boolean, func
 from sqlalchemy.orm import relationship
 from database.session import Base
 import enum
@@ -8,6 +8,7 @@ class DocumentStatus(str, enum.Enum):
     UPLOADED = "uploaded"    # Trạng thái khi mới upload
     PROCESSING = "processing"  # Trạng thái đang xử lý
     READY = "ready"          # Trạng thái đã xử lý xong, sẵn sàng sử dụng
+    DELETED = "deleted"      # Trạng thái đã bị xóa mềm
 
 class Document(Base):
     """
@@ -46,6 +47,19 @@ class Document(Base):
     
     # Thời gian cập nhật document
     updated_at = Column(DateTime(timezone=True), default=func.now(), onupdate=func.now())
-    
+
+    # Trash system fields
+    # Đánh dấu document đã bị xóa mềm
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
+
+    # Thời gian xóa mềm (để tính toán auto-cleanup)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
+
+    # Folder system field với proper foreign key
+    folder_id = Column(Integer, ForeignKey("folders.id"), nullable=True, index=True)
+
     # Relationship với User model - back_populates sẽ map với thuộc tính tương ứng ở User model
     owner = relationship("User", back_populates="documents")
+
+    # Relationship với Folder model
+    folder = relationship("Folder", back_populates="documents")

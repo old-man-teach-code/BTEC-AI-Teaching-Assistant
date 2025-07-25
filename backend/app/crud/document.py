@@ -1,8 +1,9 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import desc
-from models.document import Document
+from sqlalchemy import desc, and_
+from models.document import Document, DocumentStatus
 from schemas.document import DocumentCreate, DocumentUpdate
 from typing import List, Optional
+from datetime import datetime, timedelta
 
 
 def create_document(db: Session, document_data: dict, owner_id: int) -> Document:
@@ -30,16 +31,32 @@ def create_document(db: Session, document_data: dict, owner_id: int) -> Document
 
 def get_document(db: Session, document_id: int) -> Optional[Document]:
     """
-    Lấy document theo ID
-    
+    Lấy document theo ID (bao gồm cả deleted documents)
+
     Args:
         db: Database session
         document_id: ID của document cần lấy
-        
+
     Returns:
         Document hoặc None nếu không tìm thấy
     """
     return db.query(Document).filter(Document.id == document_id).first()
+
+
+def get_active_document(db: Session, document_id: int) -> Optional[Document]:
+    """
+    Lấy document theo ID (chỉ active documents)
+
+    Args:
+        db: Database session
+        document_id: ID của document cần lấy
+
+    Returns:
+        Document hoặc None nếu không tìm thấy hoặc đã bị xóa
+    """
+    return db.query(Document).filter(
+        and_(Document.id == document_id, Document.is_deleted == False)
+    ).first()
 
 
 def get_document_by_filename(db: Session, filename: str) -> Optional[Document]:
@@ -57,43 +74,75 @@ def get_document_by_filename(db: Session, filename: str) -> Optional[Document]:
 
 
 def get_user_documents(
-    db: Session, 
-    owner_id: int, 
-    skip: int = 0, 
-    limit: int = 100
+    db: Session,
+    owner_id: int,
+    skip: int = 0,
+    limit: int = 100,
+    include_deleted: bool = False,
+    folder_id: Optional[int] = None
 ) -> List[Document]:
     """
     Lấy danh sách documents của một user, có phân trang
-    
+
     Args:
         db: Database session
         owner_id: ID của user sở hữu
         skip: Số documents bỏ qua (phân trang)
         limit: Số documents tối đa trả về
-        
+        include_deleted: Có bao gồm deleted documents không
+        folder_id: Lọc theo folder (None = root level, "all" = tất cả)
+
     Returns:
         Danh sách các document của user
     """
-    return db.query(Document)\
-        .filter(Document.owner_id == owner_id)\
-        .order_by(desc(Document.created_at))\
-        .offset(skip)\
-        .limit(limit)\
-        .all()
+    # Query cơ bản
+    query = db.query(Document).filter(Document.owner_id == owner_id)
+
+    # Filter deleted documents
+    if not include_deleted:
+        query = query.filter(Document.is_deleted == False)
+
+    # Filter by folder_id
+    if folder_id is not None:
+        query = query.filter(Document.folder_id == folder_id)
+    elif folder_id != "all":  # Nếu không phải "all", lọc root level
+        query = query.filter(Document.folder_id.is_(None))
+
+    return query.order_by(desc(Document.created_at)).offset(skip).limit(limit).all()
 
 
-def get_total_user_documents(db: Session, owner_id: int) -> int:
+def get_total_user_documents(
+    db: Session,
+    owner_id: int,
+    include_deleted: bool = False,
+    folder_id: Optional[int] = None
+) -> int:
     """
     Đếm tổng số documents của một user
-    
+
     Args:
         db: Database session
         owner_id: ID của user sở hữu
-        
+        include_deleted: Có bao gồm deleted documents không
+        folder_id: Lọc theo folder
+
     Returns:
         Số lượng documents
     """
-    return db.query(Document).filter(Document.owner_id == owner_id).count()
+    # Query cơ bản
+    query = db.query(Document).filter(Document.owner_id == owner_id)
+
+    # Filter deleted documents
+    if not include_deleted:
+        query = query.filter(Document.is_deleted == False)
+
+    # Filter by folder_id
+    if folder_id is not None:
+        query = query.filter(Document.folder_id == folder_id)
+    elif folder_id != "all":
+        query = query.filter(Document.folder_id.is_(None))
+
+    return query.count()
 
 
 def update_document(
@@ -136,22 +185,139 @@ def delete_document(db: Session, document: Document) -> None:
     """
     db.delete(document)
     db.commit()
+    
+   
 
 
 def soft_delete_document(db: Session, document: Document) -> Document:
     """
     Soft delete document bằng cách cập nhật trạng thái
-    
+
     Args:
         db: Database session
         document: Document cần xóa mềm
-        
+
     Returns:
         Document sau khi cập nhật trạng thái
     """
-    # Cập nhật trạng thái thành 'deleted' hoặc tương tự
-    document.status = "deleted"
+    # Cập nhật trạng thái và đánh dấu deleted
+    document.status = DocumentStatus.DELETED.value
+    document.is_deleted = True
+    document.deleted_at = datetime.utcnow()
+
     db.commit()
     db.refresh(document)
-    
-    return document 
+
+    return document
+
+
+def restore_document(db: Session, document: Document, folder_id: Optional[int] = None) -> Document:
+    """
+    Khôi phục document từ trash
+
+    Args:
+        db: Database session
+        document: Document cần khôi phục
+        folder_id: Folder đích khi khôi phục (None = root level)
+
+    Returns:
+        Document sau khi khôi phục
+    """
+    # Khôi phục trạng thái
+    document.status = DocumentStatus.READY.value  # Hoặc trạng thái phù hợp
+    document.is_deleted = False
+    document.deleted_at = None
+
+    # Đặt folder_id nếu được chỉ định
+    if folder_id is not None:
+        document.folder_id = folder_id
+
+    db.commit()
+    db.refresh(document)
+
+    return document
+
+
+def get_user_trash_documents(
+    db: Session,
+    owner_id: int,
+    skip: int = 0,
+    limit: int = 100
+) -> List[Document]:
+    """
+    Lấy danh sách documents trong trash của user
+
+    Args:
+        db: Database session
+        owner_id: ID của user sở hữu
+        skip: Số documents bỏ qua (phân trang)
+        limit: Số documents tối đa trả về
+
+    Returns:
+        Danh sách documents trong trash
+    """
+    return db.query(Document).filter(
+        and_(
+            Document.owner_id == owner_id,
+            Document.is_deleted == True
+        )
+    ).order_by(desc(Document.deleted_at)).offset(skip).limit(limit).all()
+
+
+def get_total_user_trash_documents(db: Session, owner_id: int) -> int:
+    """
+    Đếm tổng số documents trong trash của user
+
+    Args:
+        db: Database session
+        owner_id: ID của user sở hữu
+
+    Returns:
+        Số lượng documents trong trash
+    """
+    return db.query(Document).filter(
+        and_(
+            Document.owner_id == owner_id,
+            Document.is_deleted == True
+        )
+    ).count()
+
+
+def get_expired_documents(db: Session, days: int = 30) -> List[Document]:
+    """
+    Lấy danh sách documents đã hết hạn trong trash (để auto-cleanup)
+
+    Args:
+        db: Database session
+        days: Số ngày hết hạn (mặc định 30 ngày)
+
+    Returns:
+        List[Document]: Danh sách documents hết hạn
+    """
+    expiry_date = datetime.utcnow() - timedelta(days=days)
+
+    return db.query(Document).filter(
+        and_(
+            Document.is_deleted == True,
+            Document.deleted_at <= expiry_date
+        )
+    ).all()
+
+
+def move_document_to_folder(db: Session, document: Document, folder_id: Optional[int]) -> Document:
+    """
+    Di chuyển document vào folder khác
+
+    Args:
+        db: Database session
+        document: Document cần di chuyển
+        folder_id: ID của folder đích (None = root level)
+
+    Returns:
+        Document sau khi di chuyển
+    """
+    document.folder_id = folder_id
+    db.commit()
+    db.refresh(document)
+
+    return document
