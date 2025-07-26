@@ -6,12 +6,13 @@ from dependencies.deps import get_db, get_current_user
 from models.user import User
 from schemas.folder import (
     FolderCreate, FolderUpdate, FolderResponse, FolderListResponse,
-    FolderTreeResponse, FolderMove
+    FolderTreeResponse, FolderMove, FolderTrashResponse
 )
 from services.folder_service import (
     service_create_folder, service_get_user_folders, service_get_folder_tree,
     service_get_folder_details, service_update_folder, service_delete_folder,
-    service_restore_folder, service_move_folder, service_cleanup_expired_folders
+    service_restore_folder, service_move_folder, service_cleanup_expired_folders,
+    service_get_user_trash_folders
 )
 
 router = APIRouter()
@@ -77,6 +78,28 @@ def get_folder_tree(
         FolderTreeResponse: Cây thư mục
     """
     return service_get_folder_tree(db, current_user.id)
+
+
+@router.get("/trash", response_model=FolderTrashResponse)
+def get_trash_folders(
+    skip: int = Query(0, ge=0, description="Số lượng records bỏ qua"),
+    limit: int = Query(100, ge=1, le=1000, description="Số lượng records lấy tối đa"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Lấy danh sách folders trong trash của user hiện tại
+
+    Args:
+        skip: Số records bỏ qua (phân trang)
+        limit: Số records tối đa trả về
+        db: Database session
+        current_user: User hiện tại (từ token)
+
+    Returns:
+        FolderTrashResponse: Danh sách folders trong trash
+    """
+    return service_get_user_trash_folders(db, current_user.id, skip, limit)
 
 
 @router.get("/{folder_id}", response_model=FolderResponse)

@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import and_, or_
+from sqlalchemy import and_, or_, desc
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timedelta
 
@@ -263,19 +263,115 @@ def get_folder_with_counts(db: Session, folder_id: int, owner_id: int) -> Option
     }
 
 
+def get_user_trash_folders(
+    db: Session,
+    owner_id: int,
+    skip: int = 0,
+    limit: int = 100
+) -> List[Folder]:
+    """
+    Lấy danh sách folders trong trash của user
+
+    Args:
+        db: Database session
+        owner_id: ID của user sở hữu
+        skip: Số folders bỏ qua (phân trang)
+        limit: Số folders tối đa trả về
+
+    Returns:
+        Danh sách folders trong trash
+    """
+    return db.query(Folder).filter(
+        and_(
+            Folder.owner_id == owner_id,
+            Folder.is_deleted == True
+        )
+    ).order_by(desc(Folder.deleted_at)).offset(skip).limit(limit).all()
+
+
+def get_total_user_trash_folders(db: Session, owner_id: int) -> int:
+    """
+    Đếm tổng số folders trong trash của user
+
+    Args:
+        db: Database session
+        owner_id: ID của user sở hữu
+
+    Returns:
+        Số lượng folders trong trash
+    """
+    return db.query(Folder).filter(
+        and_(
+            Folder.owner_id == owner_id,
+            Folder.is_deleted == True
+        )
+    ).count()
+
+
+def get_trash_folder_by_id(db: Session, folder_id: int, owner_id: int) -> Optional[Folder]:
+    """
+    Lấy folder trong trash theo ID và owner
+
+    Args:
+        db: Database session
+        folder_id: ID của folder
+        owner_id: ID của user sở hữu
+
+    Returns:
+        Optional[Folder]: Folder nếu tìm thấy trong trash, None nếu không
+    """
+    return db.query(Folder).filter(
+        and_(
+            Folder.id == folder_id,
+            Folder.owner_id == owner_id,
+            Folder.is_deleted == True
+        )
+    ).first()
+
+
+def bulk_hard_delete_folders(db: Session, folders: List[Folder]) -> int:
+    """
+    Xóa cứng nhiều folders khỏi database (bao gồm cả documents bên trong)
+
+    Args:
+        db: Database session
+        folders: Danh sách folders cần xóa cứng
+
+    Returns:
+        int: Số lượng folders đã xóa thành công
+    """
+    deleted_count = 0
+    for folder in folders:
+        try:
+            # Xóa tất cả documents trong folder trước
+            documents = db.query(Document).filter(Document.folder_id == folder.id).all()
+            for doc in documents:
+                db.delete(doc)
+
+            # Xóa folder
+            db.delete(folder)
+            deleted_count += 1
+        except Exception as e:
+            print(f"Lỗi khi xóa folder {folder.id}: {str(e)}")
+            continue
+
+    db.commit()
+    return deleted_count
+
+
 def get_expired_folders(db: Session, days: int = 30) -> List[Folder]:
     """
     Lấy danh sách folders đã hết hạn trong trash (để auto-cleanup)
-    
+
     Args:
         db: Database session
         days: Số ngày hết hạn (mặc định 30 ngày)
-        
+
     Returns:
         List[Folder]: Danh sách folders hết hạn
     """
     expiry_date = datetime.utcnow() - timedelta(days=days)
-    
+
     return db.query(Folder).filter(
         and_(
             Folder.is_deleted == True,

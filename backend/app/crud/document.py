@@ -283,6 +283,51 @@ def get_total_user_trash_documents(db: Session, owner_id: int) -> int:
     ).count()
 
 
+def get_trash_document_by_id(db: Session, document_id: int, owner_id: int) -> Optional[Document]:
+    """
+    Lấy document trong trash theo ID và owner
+
+    Args:
+        db: Database session
+        document_id: ID của document
+        owner_id: ID của user sở hữu
+
+    Returns:
+        Optional[Document]: Document nếu tìm thấy trong trash, None nếu không
+    """
+    return db.query(Document).filter(
+        and_(
+            Document.id == document_id,
+            Document.owner_id == owner_id,
+            Document.is_deleted == True
+        )
+    ).first()
+
+
+def bulk_hard_delete_documents(db: Session, documents: List[Document]) -> int:
+    """
+    Xóa cứng nhiều documents khỏi database
+
+    Args:
+        db: Database session
+        documents: Danh sách documents cần xóa cứng
+
+    Returns:
+        int: Số lượng documents đã xóa thành công
+    """
+    deleted_count = 0
+    for document in documents:
+        try:
+            db.delete(document)
+            deleted_count += 1
+        except Exception as e:
+            print(f"Lỗi khi xóa document {document.id}: {str(e)}")
+            continue
+
+    db.commit()
+    return deleted_count
+
+
 def get_expired_documents(db: Session, days: int = 30) -> List[Document]:
     """
     Lấy danh sách documents đã hết hạn trong trash (để auto-cleanup)
