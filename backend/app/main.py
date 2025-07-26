@@ -4,6 +4,7 @@ from routes import auth, info, files, documents, trash, folders, calendar
 from core.jwt_middleware import JWTAuthMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 
+
 app = FastAPI()
 protected_app = FastAPI(
     title="FastAPI + MySQL + Docker Compose",

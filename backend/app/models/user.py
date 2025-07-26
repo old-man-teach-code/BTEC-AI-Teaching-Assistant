@@ -20,3 +20,5 @@ class User(Base):
 
     # Thêm relationship với Folder model
     folders = relationship("Folder", back_populates="owner", cascade="all, delete-orphan")
+
+    templates = relationship("Template", back_populates="owner", cascade="all, delete-orphan")
