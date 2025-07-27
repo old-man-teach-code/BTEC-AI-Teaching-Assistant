@@ -18,14 +18,18 @@
           />
           <v-text-field
             v-model="localEvent.startTime"
-            label="Thời gian bắt đầu (YYYY-MM-DD HH:mm)"
-            :rules="[validateDateTimeFormat, validateStartBeforeEnd]"
+            label="Thời gian bắt đầu"
+            type="datetime-local"
+            :rules="[validateStartBeforeEnd]"
           />
+
           <v-text-field
             v-model="localEvent.endTime"
-            label="Thời gian kết thúc (YYYY-MM-DD HH:mm)"
-            :rules="[validateDateTimeFormat, validateEndAfterStart]"
+            label="Thời gian kết thúc"
+            type="datetime-local"
+            :rules="[validateEndAfterStart]"
           />
+
           <v-text-field v-model="localEvent.location" label="Địa điểm" />
           <v-text-field
             v-model.number="localEvent.remind"
@@ -57,25 +61,48 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'save', 'delete'])
 
 const internalDialog = ref(false)
-watch(() => props.modelValue, (v) => (internalDialog.value = v))
-watch(() => internalDialog.value, (v) => emit('update:modelValue', v))
+watch(
+  () => props.modelValue,
+  (v) => (internalDialog.value = v)
+)
+watch(
+  () => internalDialog.value,
+  (v) => emit('update:modelValue', v)
+)
 
 const localEvent = ref({ ...props.eventData })
-watch(() => props.eventData, (val) => (localEvent.value = { ...val }))
+watch(
+  () => props.eventData,
+  (val) => {
+    localEvent.value = { ...val }
+
+    // Định dạng lại nếu là Date object
+    if (val.start instanceof Date) {
+      localEvent.value.startTime = formatDatetime(val.start)
+      localEvent.value.endTime = formatDatetime(val.end)
+    } else {
+      localEvent.value.startTime = val.start || ''
+      localEvent.value.endTime = val.end || ''
+    }
+  }
+)
+
+function formatDatetime(date) {
+  const d = new Date(date)
+  const yyyy = d.getFullYear()
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  const hh = String(d.getHours()).padStart(2, '0')
+  const min = String(d.getMinutes()).padStart(2, '0')
+  return `${yyyy}-${mm}-${dd}T${hh}:${min}`
+}
 
 const isEditMode = computed(() => !!localEvent.value?.id)
 
 const formRef = ref(null)
 const formValid = ref(true)
 
-const DATETIME_REGEX = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/
 
-function validateDateTimeFormat(value) {
-  if (!DATETIME_REGEX.test(value)) return 'Định dạng không hợp lệ (YYYY-MM-DD HH:mm)'
-  const date = new Date(value.replace(' ', 'T'))
-  if (isNaN(date.getTime())) return 'Ngày giờ không hợp lệ'
-  return true
-}
 
 function validateStartBeforeEnd() {
   const s = new Date(localEvent.value.startTime.replace(' ', 'T'))
