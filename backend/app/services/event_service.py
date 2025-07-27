@@ -37,10 +37,11 @@ def service_create_event(
         HTTPException: Nếu có xung đột thời gian với event khác
     """
     try:
-        # Kiểm tra xung đột thời gian trước khi tạo
+        # Kiểm tra xung đột thời gian trước khi tạo (chỉ với cùng loại event)
         overlap_check = EventOverlapCheck(
             start_time=event_data.start_time,
-            end_time=event_data.end_time
+            end_time=event_data.end_time,
+            event_type=event_data.event_type
         )
         
         conflicting_events = check_event_overlap(db, owner_id, overlap_check)
@@ -50,7 +51,7 @@ def service_create_event(
             first_conflict = conflicting_events[0]
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail=f"Event bị xung đột thời gian với event '{first_conflict.title}' từ {first_conflict.start_time} đến {first_conflict.end_time}"
+                detail=f"Event loại '{event_data.event_type}' bị xung đột thời gian với event '{first_conflict.title}' (cùng loại) từ {first_conflict.start_time} đến {first_conflict.end_time}"
             )
         
         # Tạo event mới nếu không có xung đột
@@ -197,15 +198,17 @@ def service_update_event(
                 detail="Bạn không có quyền cập nhật event này"
             )
         
-        # Kiểm tra xung đột thời gian nếu có cập nhật thời gian
-        if event_update.start_time is not None or event_update.end_time is not None:
+        # Kiểm tra xung đột thời gian nếu có cập nhật thời gian hoặc loại event
+        if event_update.start_time is not None or event_update.end_time is not None or event_update.event_type is not None:
             # Sử dụng thời gian mới nếu có, ngược lại dùng thời gian cũ
             new_start_time = event_update.start_time if event_update.start_time is not None else db_event.start_time
             new_end_time = event_update.end_time if event_update.end_time is not None else db_event.end_time
-            
+            new_event_type = event_update.event_type if event_update.event_type is not None else db_event.event_type
+
             overlap_check = EventOverlapCheck(
                 start_time=new_start_time,
                 end_time=new_end_time,
+                event_type=new_event_type,
                 exclude_event_id=event_id  # Loại trừ event hiện tại
             )
             
@@ -215,7 +218,7 @@ def service_update_event(
                 first_conflict = conflicting_events[0]
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
-                    detail=f"Event bị xung đột thời gian với event '{first_conflict.title}' từ {first_conflict.start_time} đến {first_conflict.end_time}"
+                    detail=f"Event loại '{new_event_type}' bị xung đột thời gian với event '{first_conflict.title}' (cùng loại) từ {first_conflict.start_time} đến {first_conflict.end_time}"
                 )
         
         # Cập nhật event

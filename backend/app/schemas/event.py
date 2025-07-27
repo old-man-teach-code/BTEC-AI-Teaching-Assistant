@@ -76,11 +76,12 @@ class EventOverlapCheck(BaseModel):
     """Schema để kiểm tra xung đột thời gian"""
     start_time: datetime = Field(..., description="Thời gian bắt đầu để kiểm tra")
     end_time: datetime = Field(..., description="Thời gian kết thúc để kiểm tra")
+    event_type: Optional[str] = Field(None, max_length=50, description="Loại event để kiểm tra xung đột (chỉ kiểm tra với cùng loại)")
     exclude_event_id: Optional[int] = Field(None, description="ID event cần loại trừ khi kiểm tra (dùng khi update)")
-    
+
     @validator('end_time')
     def validate_end_time(cls, v, values):
         """Kiểm tra thời gian kết thúc phải sau thời gian bắt đầu"""
         if 'start_time' in values and v <= values['start_time']:
             raise ValueError('Thời gian kết thúc phải sau thời gian bắt đầu')
-        return v 
+        return v

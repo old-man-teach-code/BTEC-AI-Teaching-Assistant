@@ -154,20 +154,23 @@ def delete_event(db: Session, event: Event) -> None:
     
 
 def check_event_overlap(
-    db: Session, 
+    db: Session,
     owner_id: int,
     overlap_check: EventOverlapCheck
 ) -> List[Event]:
     """
     Kiểm tra xung đột thời gian với các events khác
-    
+
+    Chỉ kiểm tra xung đột nếu cùng loại event (event_type).
+    Các loại event khác nhau có thể trùng thời gian.
+
     Args:
         db: Database session
         owner_id: ID của user sở hữu events
         overlap_check: Dữ liệu để kiểm tra xung đột
-        
+
     Returns:
-        List[Event]: Danh sách events bị xung đột
+        List[Event]: Danh sách events bị xung đột (cùng loại)
     """
     # Query để tìm events xung đột
     query = db.query(Event).filter(
@@ -178,11 +181,15 @@ def check_event_overlap(
             Event.end_time > overlap_check.start_time
         )
     )
-    
+
+    # 🆕 CHỈ KIỂM TRA XUNG ĐỘT NẾU CÙNG LOẠI EVENT
+    if hasattr(overlap_check, 'event_type') and overlap_check.event_type:
+        query = query.filter(Event.event_type == overlap_check.event_type)
+
     # Loại trừ event hiện tại nếu đang update
     if overlap_check.exclude_event_id:
         query = query.filter(Event.id != overlap_check.exclude_event_id)
-    
+
     return query.all()
 
 
