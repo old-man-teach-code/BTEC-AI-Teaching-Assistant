@@ -31,7 +31,6 @@ import '@schedule-x/theme-default/dist/index.css'
 import EventModal from '@/components/EventModal.vue'
 import { fetchEvents, createEvent, updateEvent, deleteEvent } from '@/api/events.js'
 
-
 const typeColors = reactive({})
 const getColorByType = (type) => {
   if (!typeColors[type]) {
@@ -50,27 +49,34 @@ const calendarApp = createCalendar({
   selectedDate: new Date().toISOString().split('T')[0],
   views: [viewMonthGrid, viewMonthAgenda, viewWeek, viewDay],
   defaultView: viewMonthAgenda.name,
+  onViewChange: (newView) => {
+    console.log('View vừa chuyển thành:', newView)
+    // Nếu bạn cần xử lý gì đặc biệt khi đổi view (VD: load thêm dữ liệu), thêm ở đây
+  },
   events: [],
+
   callbacks: {
     onEventClick: handleEventClick,
   },
 })
+
 function handleEventClick(event) {
   console.log('Clicked event:', event)
   editEvent.value = { ...event }
   showDialog.value = true
 }
-// 📥 Load danh sách sự kiện từ backend
+// Load danh sách sự kiện từ backend
 const loadEvents = async () => {
   try {
     console.log('Đang tải sự kiện từ backend...')
     const raw = await fetchEvents()
 
-    events.value = raw.map(e => ({
+    events.value = raw.map((e) => ({
       id: e.id,
       title: e.title,
-      start: new Date(e.start_time).toISOString().slice(0, 16),
-      end: new Date(e.end_time).toISOString().slice(0, 16),
+     
+      start: new Date(e.start_time).toISOString().replace("T"," ").slice(0,16), 
+      end: new Date(e.end_time).toISOString().replace("T"," ").slice(0,16),
       description: e.description,
       location: e.location,
       type: e.event_type,
@@ -78,14 +84,15 @@ const loadEvents = async () => {
       calendarId: e.event_type,
       color: getColorByType(e.event_type),
     }))
+    console.log('Sự kiện đã tải:')
+    console.log(events.value)
 
     calendarApp.events.set(events.value)
-    console.log('✅ Sự kiện đã tải:', events.value)
+    console.log('Sự kiện đã tải:', events.value)
   } catch (e) {
-    console.error('🚫 Lỗi tải sự kiện:', e)
+    console.error('Lỗi tải sự kiện:', e)
   }
 }
-
 
 const handleCreate = () => {
   const now = new Date()
@@ -135,12 +142,12 @@ const handleDelete = async (eventId) => {
   try {
     if (eventId) {
       await deleteEvent(eventId)
-      console.log('🗑️ Deleted:', eventId)
+      console.log(' Deleted:', eventId)
       showDialog.value = false
       await loadEvents()
     }
   } catch (e) {
-    console.error('❌ Lỗi xoá:', e)
+    console.error(' Lỗi xoá:', e)
   }
 }
 

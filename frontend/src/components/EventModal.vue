@@ -8,19 +8,24 @@
             v-model="localEvent.title"
             label="Tiêu đề"
             :rules="[(v) => !!v || 'Tiêu đề là bắt buộc']"
+            required
           />
+
           <v-combobox
             v-model="localEvent.type"
             label="Loại sự kiện"
             :items="Object.keys(typeColorMap)"
             :rules="[(v) => !!v || 'Vui lòng chọn loại sự kiện']"
             clearable
+            required
           />
+
           <v-text-field
             v-model="localEvent.startTime"
             label="Thời gian bắt đầu"
             type="datetime-local"
             :rules="[validateStartBeforeEnd]"
+            required
           />
 
           <v-text-field
@@ -28,6 +33,7 @@
             label="Thời gian kết thúc"
             type="datetime-local"
             :rules="[validateEndAfterStart]"
+            required
           />
 
           <v-text-field v-model="localEvent.location" label="Địa điểm" />
@@ -61,55 +67,38 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'save', 'delete'])
 
 const internalDialog = ref(false)
-watch(
-  () => props.modelValue,
-  (v) => (internalDialog.value = v)
-)
-watch(
-  () => internalDialog.value,
-  (v) => emit('update:modelValue', v)
-)
+watch(() => props.modelValue, (v) => internalDialog.value = v)
+watch(() => internalDialog.value, (v) => emit('update:modelValue', v))
 
 const localEvent = ref({ ...props.eventData })
-watch(
-  () => props.eventData,
-  (val) => {
-    localEvent.value = { ...val }
 
-    // Định dạng lại nếu là Date object
-    if (val.start instanceof Date) {
-      localEvent.value.startTime = formatDatetime(val.start)
-      localEvent.value.endTime = formatDatetime(val.end)
-    } else {
-      localEvent.value.startTime = val.start || ''
-      localEvent.value.endTime = val.end || ''
-    }
+watch(() => props.eventData, (val) => {
+  localEvent.value = {
+    ...val,
+    startTime: formatDatetime(val.start),
+    endTime: formatDatetime(val.end),
   }
-)
+})
 
-function formatDatetime(date) {
-  const d = new Date(date)
-  const yyyy = d.getFullYear()
-  const mm = String(d.getMonth() + 1).padStart(2, '0')
-  const dd = String(d.getDate()).padStart(2, '0')
-  const hh = String(d.getHours()).padStart(2, '0')
-  const min = String(d.getMinutes()).padStart(2, '0')
-  return `${yyyy}-${mm}-${dd}T${hh}:${min}`
+// format "yyyy-MM-ddTHH:mm"
+function formatDatetime(input) {
+  if (!input) return ''
+  const date = new Date(input)
+  if (isNaN(date)) return ''
+  return date.toISOString().slice(0, 16)
 }
 
 const isEditMode = computed(() => !!localEvent.value?.id)
-
 const formRef = ref(null)
 const formValid = ref(true)
 
-
-
 function validateStartBeforeEnd() {
-  const s = new Date(localEvent.value.startTime.replace(' ', 'T'))
-  const e = new Date(localEvent.value.endTime.replace(' ', 'T'))
+  const s = new Date(localEvent.value.startTime)
+  const e = new Date(localEvent.value.endTime)
   if (s >= e) return 'Thời gian bắt đầu phải trước thời gian kết thúc'
   return true
 }
+
 function validateEndAfterStart() {
   return validateStartBeforeEnd()
 }
@@ -119,8 +108,8 @@ function handleSave() {
     if (!ok) return
     emit('save', {
       ...localEvent.value,
-      start: localEvent.value.startTime,
-      end: localEvent.value.endTime,
+      start: new Date(localEvent.value.startTime).toISOString(),
+      end: new Date(localEvent.value.endTime).toISOString(),
     })
   })
 }
