@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from cache.redis_client import get_cache, set_cache
 from datetime import datetime
 import time
-from services.file_service import validate_file
+from utils.file_handler import validate_file
 
 router = APIRouter()
 
@@ -60,8 +60,9 @@ async def validate_file_endpoint(file: UploadFile = File(...)):
     
     - **file**: File cần kiểm tra
     """
-    is_valid, error_message = validate_file(file)
-    
+    error_message = validate_file(file)
+    is_valid = error_message is None
+
     return {
         "valid": is_valid,
         "filename": file.filename,

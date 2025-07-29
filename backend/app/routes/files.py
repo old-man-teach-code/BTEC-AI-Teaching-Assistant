@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, Query, Path
 from typing import List, Optional
-from services.file_service import save_file, delete_file, list_files, validate_file
+from services.file_service import save_file_to_subfolder, delete_file, list_files
 from schemas.file import FileResponse, FileListResponse, FileDeleteResponse
 from dependencies.deps import get_current_user
 
@@ -18,7 +18,7 @@ async def upload_file(
     - **file**: File cần upload
     - **subfolder**: (Tùy chọn) Thư mục con trong uploads để lưu file
     """
-    result = await save_file(file, subfolder)
+    result = await save_file_to_subfolder(file, subfolder)
     return result
 
 @router.get("/list", response_model=FileListResponse)
