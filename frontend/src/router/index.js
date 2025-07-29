@@ -4,7 +4,7 @@ import NotFoundView from '../views/NotFoundView.vue'
 import { useAuthStore } from '../stores/auth' 
 import Authen from '../views/Authen.vue'
 import DocumentsView from '../views/DocumentsView.vue'
-
+import TrashVIew from '../views/TrashVIew.vue'
 
 
 const router = createRouter({
@@ -28,6 +28,11 @@ const router = createRouter({
       path: '/auth',
       name: 'authen',
       component: Authen,
+    },
+    {
+      path: '/trash',
+      name: 'trash',
+      component: TrashVIew,
     },
     {
       path: '/about',

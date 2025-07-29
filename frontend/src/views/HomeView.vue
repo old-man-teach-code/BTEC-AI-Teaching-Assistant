@@ -37,7 +37,7 @@ onMounted(async () => {
 const fetchDocumentStats = async () => {
   try {
     const res = await api.get('/api/documents')
-    stats.value.documents = res.data.items.filter(doc => doc.status === 'uploaded').length
+    stats.value.documents = res.data.items.filter(doc => doc.status === 'uploaded'|| doc.status === 'ready').length
   } catch (e) {
     console.error('Failed to fetch documents', e)
     stats.value.documents = 0

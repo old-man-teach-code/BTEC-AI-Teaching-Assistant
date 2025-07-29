@@ -8,20 +8,22 @@ export function processDocument() {
   const documents = ref([])
   const selectedFile = ref(null)
   const fileInput = ref(null)
+  const foldersList = ref([]) 
+  const selectedFolderId = ref(null)
   const processing = ref(false)
   const selectedType = ref('all')
   const sortBy = ref('latest')
 
   const sidebarItemsTop = [
     { label: 'Welcome', icon: 'mdi-home-outline' },
-    { label: 'Document', icon: 'mdi-file-document-outline' },
+    { label: 'Document', icon: 'mdi-file-document-outline', route: '/documents' },
     { label: 'Calendar', icon: 'mdi-calendar-clock-outline' },
     { label: 'Class', icon: 'mdi-account-group-outline' },
     { label: 'Statistical', icon: 'mdi-chart-line' },
   ]
 
   const sidebarItemsBottom = [
-    { label: 'Trash', icon: 'mdi-delete-clock-outline' },
+    { label: 'Trash', icon: 'mdi-delete-clock-outline', route: '/trash'},
     { label: 'Help Centre', icon: 'mdi-help-circle-outline' },
     { label: 'Setting', icon: 'mdi-cog-outline', action: 'setting' },
     { label: 'Logout', icon: 'mdi-logout', action: 'logout' },
@@ -76,7 +78,7 @@ export function processDocument() {
       alert('Upload successful!')
       selectedFile.value = null
       fileInput.value.value = null
-      fetchDocuments()
+      await fetchDocumentsByFolder()
     } catch (e) {
       console.error(e)
       alert('Upload failed!')
@@ -84,19 +86,24 @@ export function processDocument() {
     processing.value = false
   }
 
-  const fetchDocuments = async () => {
-    try {
-      const res = await api.get('/api/documents')
-      documents.value = res.data.items.filter((doc) => doc.status === 'uploaded')
-    } catch {
-      documents.value = []
-    }
+const fetchDocumentsByFolder = async (folderId) => {
+  try {
+    const res = await api.get('/api/documents', {
+      params: { folder_id: folderId }
+    })
+    console.log('[fetchDocumentsByFolder] folderId:', folderId)
+    console.log('[fetchDocumentsByFolder] files:', res.data.items)
+    documents.value = res.data.items.filter(doc => doc.status === 'uploaded' || doc.status === 'ready')
+  } catch (err) {
+    console.error('Lỗi khi lấy documents theo folder:', err)
+    documents.value = []
   }
+}
 
-  const handleView = (doc) => {
-    if (!doc.filename) return alert('File không hợp lệ')
-    window.open(`/files/${doc.filename}`, '_blank')
-  }
+  // const handleView = (doc) => {
+  //   if (!doc.filename) return alert('File không hợp lệ')
+  //   window.open(`/files/${doc.filename}`, '_blank')
+  // }
 
   async function handleDownload(doc) {
     processing.value = true
@@ -128,11 +135,10 @@ export function processDocument() {
   }
 
   async function handleDelete(doc) {
-    if (!confirm('Are you sure you want to delete this file?')) return
     processing.value = true
     try {
-      await api.delete(`/api/documents/${doc.id}?hard_delete=true`)
-      alert('File deleted!')
+      await api.delete(`/api/documents/${doc.id}`)
+      alert('File has been moved to trash')
       documents.value = documents.value.filter((d) => d.id !== doc.id)
     } catch {
       alert('Delete failure!')
@@ -140,11 +146,14 @@ export function processDocument() {
     processing.value = false
   }
 
-  const handleSidebar = (item) => {
-    if (item.action === 'logout') {
-      router.push({ path: '/home' })
-    }
+ function handleSidebar(item) {
+  if (item.route) {
+    router.push(item.route) 
+  } else if (item.action === 'logout') {
+     router.push({ path: '/home' })
+
   }
+}
 
   const recentFiles = computed(() =>
     documents.value
@@ -177,6 +186,7 @@ export function processDocument() {
   const filterByType = (type) => {
     selectedType.value = type
   }
+  
 
   const sortedAndFilteredDocuments = computed(() => {
     let list = [...documents.value]
@@ -203,8 +213,6 @@ export function processDocument() {
     return list
   })
 
-  onMounted(fetchDocuments)
-
   return {
     documents,
     selectedFile,
@@ -217,9 +225,10 @@ export function processDocument() {
     handleDownload,
     handleProcess,
     handleDelete,
-    handleView,
+    // handleView,
     handleSidebar,
-    fetchDocuments,
+    selectedFolderId,
+    fetchDocumentsByFolder,
     formatSize,
     formatDate,
     getFileType,
@@ -227,6 +236,7 @@ export function processDocument() {
     selectedType,
     sortBy,
     folders,
+    foldersList,
     recentFiles,
     sortedAndFilteredDocuments,
   }

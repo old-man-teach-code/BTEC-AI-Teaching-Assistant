@@ -125,96 +125,6 @@
   cursor: pointer;
 }
 
-.folders-section {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  margin-bottom: 2rem;
-}
-
-.folder {
-  background-color: #f9fafb;
-  padding: 1rem;
-  border-radius: 12px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
-  width: 180px;
-  text-align: left;
-  transition: box-shadow 0.2s ease;
-  cursor: pointer;
-}
-
-.folder:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-}
-
-.folder-icon {
-  width: 48px;
-  height: 40px;
-  background: #e0e7ff; /* nền xanh nhạt */
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 0.75rem;
-}
-
-.folder-name {
-  font-weight: 600;
-  color: #1f2937;
-  font-size: 15px;
-  margin-bottom: 4px;
-}
-
-.folder-meta {
-  font-size: 13px;
-  color: #6b7280;
-}
-
-
-/* Recent Section */
-.recent-section h4 {
-  margin-bottom: 1rem;
-  font-weight: 600;
-  color: #111827;
-}
-
-.recent-items {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 2rem;
-}
-
-.recent-card {
-  padding: 12px 16px;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-  background-color: #fff;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 4px;
-  min-width: unset;
-}
-.recent-card-content {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.recent-name {
-  font-weight: 600;
-  color: #111827;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.recent-meta {
-  color: #6b7280;
-  font-size: 0.875rem;
-}
-
-/* File Table */
 .files-table {
   background-color: white;
   border-radius: 12px;
@@ -241,6 +151,25 @@
   display: flex;
   align-items: center;
   gap: 10px; /* Khoảng cách giữa icon và chữ */
+}
+.white-search-input .v-field {
+  background-color: #ffffff !important;    /* Nền trắng */
+  border-radius: 999px !important;         /* Bo góc tối đa */
+  border: 1px solid #ddd !important;       /* Viền mờ */
+  box-shadow: none !important;
+}
+
+.white-search-input .v-field__input {
+  color: #000 !important;                  /* Text đen */
+}
+
+.white-search-input .v-icon {
+  color: #555 !important;                  /* Icon xám đen */
+}
+
+.white-search-input input::placeholder {
+  color: #999 !important;                  /* Placeholder xám nhạt */
+  opacity: 1;
 }
 
 .file-icon {
