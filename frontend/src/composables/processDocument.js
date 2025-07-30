@@ -15,7 +15,7 @@ export function processDocument() {
   const sortBy = ref('latest')
 
   const sidebarItemsTop = [
-    { label: 'Welcome', icon: 'mdi-home-outline' },
+    { label: 'Home', icon: 'mdi-home-outline' },
     { label: 'Document', icon: 'mdi-file-document-outline', route: '/documents' },
     { label: 'Calendar', icon: 'mdi-calendar-clock-outline' },
     { label: 'Class', icon: 'mdi-account-group-outline' },
@@ -26,7 +26,7 @@ export function processDocument() {
     { label: 'Trash', icon: 'mdi-delete-clock-outline', route: '/trash'},
     { label: 'Help Centre', icon: 'mdi-help-circle-outline' },
     { label: 'Setting', icon: 'mdi-cog-outline', action: 'setting' },
-    { label: 'Logout', icon: 'mdi-logout', action: 'logout' },
+    { label: 'Return', icon: 'mdi-logout', action: 'logout' },
   ]
 
   const triggerFileInput = () => fileInput.value.click()

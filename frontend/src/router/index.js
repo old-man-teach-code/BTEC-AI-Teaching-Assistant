@@ -5,6 +5,7 @@ import { useAuthStore } from '../stores/auth'
 import Authen from '../views/Authen.vue'
 import DocumentsView from '../views/DocumentsView.vue'
 import TrashVIew from '../views/TrashVIew.vue'
+import CalendarView from '@/views/CalendarView.vue'
 
 
 const router = createRouter({
@@ -28,6 +29,11 @@ const router = createRouter({
       path: '/auth',
       name: 'authen',
       component: Authen,
+    },
+    {
+      path:'/calendar',
+      name: 'calendar',
+      component: CalendarView ,
     },
     {
       path: '/trash',
