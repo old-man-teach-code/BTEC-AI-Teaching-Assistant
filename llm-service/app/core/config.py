@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     """
     
     # MySQL Configuration (kết nối đến backend database)
-    mysql_host: str = Field(default="backend-db", env="MYSQL_HOST")
+    mysql_host: str = Field(default="fastapi_mysql_db", env="MYSQL_HOST")
     mysql_user: str = Field(default="testuser", env="MYSQL_USER")
     mysql_password: str = Field(default="testpass", env="MYSQL_PASSWORD")
     mysql_database: str = Field(default="testdb", env="MYSQL_DATABASE")
