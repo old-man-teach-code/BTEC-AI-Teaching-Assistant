@@ -15,12 +15,13 @@ services:
     networks:
       - ai_network
       - backend_default  # Network của backend service
-    depends_on:
-      - backend-db
+    # depends_on:
+    #   - backend-db
     environment:
       - PYTHONUNBUFFERED=1
       - TRANSFORMERS_CACHE=/home/appuser/.cache/transformers
       - HF_HOME=/home/appuser/.cache/huggingface
+      - PYTHONPATH=/app/app
     deploy:
       resources:
         limits:
@@ -29,11 +30,11 @@ services:
           memory: 2G
 
   # External services reference (từ backend)
-  backend-db:
-    external_links:
-      - fastapi_mysql_db:backend-db
-    networks:
-      - backend_default
+  # backend-db:
+  #   external_links:
+  #     - fastapi_mysql_db:backend-db
+  #   networks:
+  #     - backend_default
 
 volumes:
   model_cache:

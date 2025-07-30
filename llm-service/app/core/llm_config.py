@@ -39,7 +39,7 @@ class LLMManager:
             
             # Cấu hình model parameters
             model_kwargs = {
-                "model_path": str(model_path),
+                # Remove "model_path" from here since LlamaCPP will pass it separately
                 "n_ctx": settings.llm_context_size,  # Context window
                 "n_threads": 4,  # Số threads CPU sử dụng
                 "n_gpu_layers": settings.llm_n_gpu_layers,  # GPU layers (0 = CPU only)
@@ -53,7 +53,7 @@ class LLMManager:
             }
             
             # Khởi tạo raw model (llama-cpp-python)
-            self.raw_model = Llama(**model_kwargs)
+            self.raw_model = Llama(model_path=str(model_path), **model_kwargs)
             
             # Wrap với LlamaIndex interface
             self.llm = LlamaCPP(

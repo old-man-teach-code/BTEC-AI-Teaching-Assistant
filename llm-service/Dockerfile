@@ -35,6 +35,7 @@ WORKDIR /app
 
 # Copy Python packages từ builder
 COPY --from=builder /root/.local /home/appuser/.local
+COPY --from=builder /root/.local /root/.local
 
 # Copy application code
 COPY ./app ./app
@@ -47,7 +48,8 @@ RUN mkdir -p /app/data/models /app/data/chroma_db && \
 USER appuser
 
 # Update PATH
-ENV PATH=/home/appuser/.local/bin:$PATH
+ENV PATH=/home/appuser/.local/bin:/root/.local/bin:$PATH
+ENV PYTHONPATH=/app/app
 
 # Expose port
 EXPOSE 8001
