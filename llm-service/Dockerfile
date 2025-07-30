@@ -49,6 +49,7 @@ USER appuser
 
 # Update PATH
 ENV PATH=/home/appuser/.local/bin:/root/.local/bin:$PATH
+ENV PYTHONPATH=/app/app
 
 # Expose port
 EXPOSE 8001

@@ -21,6 +21,7 @@ services:
       - PYTHONUNBUFFERED=1
       - TRANSFORMERS_CACHE=/home/appuser/.cache/transformers
       - HF_HOME=/home/appuser/.cache/huggingface
+      - PYTHONPATH=/app/app
     deploy:
       resources:
         limits:
