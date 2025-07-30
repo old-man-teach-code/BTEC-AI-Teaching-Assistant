@@ -1,15 +1,15 @@
 <template>
   <div>
-    <!-- Nút thêm sự kiện -->
     <v-btn color="primary" class="mb-4" @click="handleCreate">Thêm sự kiện</v-btn>
+    <div class="sx-vue-calendar-wrapper">
+  <ScheduleXCalendar :calendar-app="calendarApp" />
+</div>
 
-    <!-- Lịch -->
-    <ScheduleXCalendar :calendar-app="calendarApp" />
 
-    <!-- Dialog thêm/sửa sự kiện -->
     <EventModal
       v-model="showDialog"
       :eventData="editEvent"
+      :typeColorMap="typeColorMap"
       @save="saveEvent"
       @delete="handleDelete"
     />
@@ -31,66 +31,88 @@ import '@schedule-x/theme-default/dist/index.css'
 import EventModal from '@/components/EventModal.vue'
 import { fetchEvents, createEvent, updateEvent, deleteEvent } from '@/api/events.js'
 
-const typeColors = reactive({})
-const getColorByType = (type) => {
-  if (!typeColors[type]) {
-    const randomColor = '#' + Math.floor(Math.random() * 16777215).toString(16)
-    typeColors[type] = randomColor
+// 🎨 Danh sách màu và mapping type -> color
+const colorList = [
+  '#f94144', '#f3722c', '#f9c74f', '#90be6d',
+  '#43aa8b', '#577590', '#277da1', '#9b5de5',
+  '#ff006e', '#fb5607', '#ffbe0b'
+]
+const typeColorMap = reactive({})
+
+function getColorForType(type) {
+  if (!typeColorMap[type]) {
+    const available = colorList.filter(c => !Object.values(typeColorMap).includes(c))
+    const random = available.length > 0
+      ? available[Math.floor(Math.random() * available.length)]
+      : colorList[Math.floor(Math.random() * colorList.length)]
+    typeColorMap[type] = random
   }
-  return typeColors[type]
+  return typeColorMap[type]
 }
 
+// 📅 Sự kiện và calendar
 const events = ref([])
 const showDialog = ref(false)
 const editEvent = ref(null)
 
-// Khởi tạo lịch 1 lần duy nhất
 const calendarApp = createCalendar({
   selectedDate: new Date().toISOString().split('T')[0],
   views: [viewMonthGrid, viewMonthAgenda, viewWeek, viewDay],
   defaultView: viewMonthAgenda.name,
-  onViewChange: (newView) => {
-    console.log('View vừa chuyển thành:', newView)
-    // Nếu bạn cần xử lý gì đặc biệt khi đổi view (VD: load thêm dữ liệu), thêm ở đây
-  },
   events: [],
-
   callbacks: {
     onEventClick: handleEventClick,
   },
+ config: {
+  eventDisplay: {
+    colorSource: 'event.color'  // ✅ Đảm bảo dùng màu từ event
+  }
+}
 })
 
 function handleEventClick(event) {
-  console.log('Clicked event:', event)
-  editEvent.value = { ...event }
+  console.log('🟢 Sự kiện được nhấp:', event)
+  editEvent.value = {
+    ...event,
+    startTime: event.start.replace(' ', 'T'),
+    endTime: event.end.replace(' ', 'T'),
+  }
   showDialog.value = true
 }
-// Load danh sách sự kiện từ backend
+
+function formatDatetimeLocal(input) {
+  const date = new Date(input)
+  const yyyy = date.getFullYear()
+  const mm = String(date.getMonth() + 1).padStart(2, '0')
+  const dd = String(date.getDate()).padStart(2, '0')
+  const hh = String(date.getHours()).padStart(2, '0')
+  const mi = String(date.getMinutes()).padStart(2, '0')
+  return `${yyyy}-${mm}-${dd} ${hh}:${mi}`
+}
+
 const loadEvents = async () => {
   try {
-    console.log('Đang tải sự kiện từ backend...')
     const raw = await fetchEvents()
-
-    events.value = raw.map((e) => ({
-      id: e.id,
-      title: e.title,
+    events.value = raw.map((e) => {
+      const type = e.event_type
+      return {
+        id: e.id,
+        title: e.title,
+        start: formatDatetimeLocal(e.start_time),
+        end: formatDatetimeLocal(e.end_time),
+        description: e.description,
+        location: e.location,
+        type,
+        remind: e.reminder_minutes,
      
-      start: new Date(e.start_time).toISOString().replace("T"," ").slice(0,16), 
-      end: new Date(e.end_time).toISOString().replace("T"," ").slice(0,16),
-      description: e.description,
-      location: e.location,
-      type: e.event_type,
-      remind: e.reminder_minutes,
-      calendarId: e.event_type,
-      color: getColorByType(e.event_type),
-    }))
-    console.log('Sự kiện đã tải:')
-    console.log(events.value)
+        color: getColorForType(type), 
+      }
+    })
 
+    console.log('🎨 Events mapped:', events.value)
     calendarApp.events.set(events.value)
-    console.log('Sự kiện đã tải:', events.value)
   } catch (e) {
-    console.error('Lỗi tải sự kiện:', e)
+    console.error('❌ Lỗi tải sự kiện:', e)
   }
 }
 
@@ -101,10 +123,11 @@ const handleCreate = () => {
   editEvent.value = {
     title: '',
     type: '',
-    start: now,
-    end: oneHourLater,
+    startTime: now.toISOString().slice(0, 16),
+    endTime: oneHourLater.toISOString().slice(0, 16),
     description: '',
     location: '',
+    color: '',
     remind: 15,
   }
   showDialog.value = true
@@ -124,36 +147,28 @@ const saveEvent = async (eventData) => {
 
     if (eventData.id) {
       await updateEvent(eventData.id, payload)
-      console.log('Updated')
     } else {
       await createEvent(payload)
-      console.log('Created')
     }
 
     showDialog.value = false
     await loadEvents()
   } catch (e) {
-    console.error('Lỗi lưu sự kiện:', e)
+    console.error('❌ Lỗi lưu sự kiện:', e)
   }
 }
 
-// 🗑️ Xoá
 const handleDelete = async (eventId) => {
   try {
-    if (eventId) {
-      await deleteEvent(eventId)
-      console.log(' Deleted:', eventId)
-      showDialog.value = false
-      await loadEvents()
-    }
+    await deleteEvent(eventId)
+    showDialog.value = false
+    await loadEvents()
   } catch (e) {
-    console.error(' Lỗi xoá:', e)
+    console.error('❌ Lỗi xoá sự kiện:', e)
   }
 }
 
-onMounted(() => {
-  loadEvents()
-})
+onMounted(loadEvents)
 </script>
 
 <style scoped>
@@ -162,5 +177,8 @@ onMounted(() => {
   max-width: 100vw;
   height: 800px;
   max-height: 90vh;
+}
+.sx-vue-calendar-wrapper .event {
+  border: 1px solid black;
 }
 </style>

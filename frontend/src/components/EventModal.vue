@@ -2,6 +2,7 @@
   <v-dialog v-model="internalDialog" max-width="600" @keydown.esc="close">
     <v-card>
       <v-card-title>{{ isEditMode ? 'Chỉnh sửa sự kiện' : 'Tạo sự kiện mới' }}</v-card-title>
+
       <v-card-text>
         <v-form ref="formRef" v-model="formValid">
           <v-text-field
@@ -13,18 +14,20 @@
 
           <v-combobox
             v-model="localEvent.type"
+            :items="eventTypes"
             label="Loại sự kiện"
-            :items="Object.keys(typeColorMap)"
             :rules="[(v) => !!v || 'Vui lòng chọn loại sự kiện']"
             clearable
             required
+            hide-no-data
+            hide-selected
           />
 
           <v-text-field
             v-model="localEvent.startTime"
             label="Thời gian bắt đầu"
             type="datetime-local"
-            :rules="[validateStartBeforeEnd]"
+            :rules="[(v) => !!v || 'Bắt đầu là bắt buộc']"
             required
           />
 
@@ -37,7 +40,7 @@
           />
 
           <v-text-field v-model="localEvent.location" label="Địa điểm" />
-          <v-text-field
+           <v-text-field
             v-model.number="localEvent.remind"
             label="Nhắc trước (phút)"
             type="number"
@@ -45,7 +48,9 @@
           />
         </v-form>
       </v-card-text>
-      <v-card-actions>
+      
+
+       <v-card-actions>
         <v-btn color="error" @click="handleDelete" v-if="isEditMode">Xoá</v-btn>
         <v-spacer />
         <v-btn color="primary" @click="handleSave">Lưu</v-btn>
@@ -60,66 +65,87 @@ import { ref, watch, computed } from 'vue'
 
 const props = defineProps({
   modelValue: Boolean,
-  eventData: { type: Object, default: () => ({}) },
-  typeColorMap: { type: Object, default: () => ({}) },
+  eventData: Object,
 })
+const eventTypes =ref( ['Cuộc họp', 'Thuyết trình', 'Thi cử', 'Báo cáo', 'Sinh hoạt', 'Workshop'])
+
 
 const emit = defineEmits(['update:modelValue', 'save', 'delete'])
 
-const internalDialog = ref(false)
-watch(() => props.modelValue, (v) => internalDialog.value = v)
-watch(() => internalDialog.value, (v) => emit('update:modelValue', v))
+const internalDialog = ref(props.modelValue)
+const formValid = ref(true)
+const formRef = ref(null)
+const localEvent = ref({})
 
-const localEvent = ref({ ...props.eventData })
-
-watch(() => props.eventData, (val) => {
-  localEvent.value = {
-    ...val,
-    startTime: formatDatetime(val.start),
-    endTime: formatDatetime(val.end),
+watch(
+  () => props.modelValue,
+  (val) => {
+    internalDialog.value = val
+    if (val && props.eventData) {
+      localEvent.value = {
+        ...props.eventData,
+        startTime: toDatetimeLocalInput(props.eventData.start),
+        endTime: toDatetimeLocalInput(props.eventData.end),
+      }
+    }
   }
-})
-
-// format "yyyy-MM-ddTHH:mm"
-function formatDatetime(input) {
-  if (!input) return ''
-  const date = new Date(input)
-  if (isNaN(date)) return ''
-  return date.toISOString().slice(0, 16)
+)
+function toDatetimeLocalInput(date) {
+  if (!(date instanceof Date)) date = new Date(date)
+  const yyyy = date.getFullYear()
+  const mm = String(date.getMonth() + 1).padStart(2, '0')
+  const dd = String(date.getDate()).padStart(2, '0')
+  const hh = String(date.getHours()).padStart(2, '0')
+  const mi = String(date.getMinutes()).padStart(2, '0')
+  return `${yyyy}-${mm}-${dd}T${hh}:${mi}`
 }
 
+watch(internalDialog, (val) => emit('update:modelValue', val))
+watch(() => localEvent.value.type, (newType) => {
+  if (newType && !eventTypes.value.includes(newType)) {
+    eventTypes.value.push(newType)
+  }
+})
 const isEditMode = computed(() => !!localEvent.value?.id)
-const formRef = ref(null)
-const formValid = ref(true)
 
-function validateStartBeforeEnd() {
-  const s = new Date(localEvent.value.startTime)
-  const e = new Date(localEvent.value.endTime)
-  if (s >= e) return 'Thời gian bắt đầu phải trước thời gian kết thúc'
+const validateEndAfterStart = (v) => {
+  if (!v) return 'Thời gian kết thúc là bắt buộc'
+  if (localEvent.value.startTime && v < localEvent.value.startTime)
+    return 'Kết thúc phải sau bắt đầu'
   return true
 }
 
-function validateEndAfterStart() {
-  return validateStartBeforeEnd()
+const formatLocalDatetime = (datetimeStr) => {
+  const date = new Date(datetimeStr)
+  const yyyy = date.getFullYear()
+  const mm = String(date.getMonth() + 1).padStart(2, '0')
+  const dd = String(date.getDate()).padStart(2, '0')
+  const hh = String(date.getHours()).padStart(2, '0')
+  const mi = String(date.getMinutes()).padStart(2, '0')
+  return `${yyyy}-${mm}-${dd} ${hh}:${mi}`
 }
 
-function handleSave() {
-  formRef.value.validate().then((ok) => {
-    if (!ok) return
-    emit('save', {
-      ...localEvent.value,
-      start: new Date(localEvent.value.startTime).toISOString(),
-      end: new Date(localEvent.value.endTime).toISOString(),
-    })
+
+const handleSave = () => {
+  if (!formRef.value?.validate()) return
+
+  emit('save', {
+    ...localEvent.value,
+    start: formatLocalDatetime(localEvent.value.startTime),
+    end: formatLocalDatetime(localEvent.value.endTime),
+    
   })
+
+  internalDialog.value = false
 }
 
+const close = () => {
+  internalDialog.value = false
+}
 function handleDelete() {
   emit('delete', localEvent.value.id)
   internalDialog.value = false
 }
 
-function close() {
-  internalDialog.value = false
-}
+
 </script>
