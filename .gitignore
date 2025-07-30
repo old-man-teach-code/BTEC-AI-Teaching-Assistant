@@ -261,3 +261,4 @@ Thumbs.db
 # Application specific
 request.log
 *.cpython-*.pyc
+llm-service/data/models/Arcee-VyLinh-Q4_K_M.gguf

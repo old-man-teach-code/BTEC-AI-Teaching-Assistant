@@ -1,0 +1,47 @@
+version: "3.9"
+
+services:
+  ai-service:
+    build: .
+    container_name: ai_service
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./data:/app/data
+      - model_cache:/home/appuser/.cache
+    networks:
+      - ai_network
+      - backend_default  # Network của backend service
+    depends_on:
+      - backend-db
+    environment:
+      - PYTHONUNBUFFERED=1
+      - TRANSFORMERS_CACHE=/home/appuser/.cache/transformers
+      - HF_HOME=/home/appuser/.cache/huggingface
+    deploy:
+      resources:
+        limits:
+          memory: 4G  # Giới hạn RAM cho AI service
+        reservations:
+          memory: 2G
+
+  # External services reference (từ backend)
+  backend-db:
+    external_links:
+      - fastapi_mysql_db:backend-db
+    networks:
+      - backend_default
+
+volumes:
+  model_cache:
+    name: ai_model_cache
+
+networks:
+  ai_network:
+    driver: bridge
+  backend_default:
+    external: true
+    name: backend_default
