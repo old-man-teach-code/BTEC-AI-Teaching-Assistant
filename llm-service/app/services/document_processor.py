@@ -29,21 +29,23 @@ class DocumentProcessor:
     """
     
     def __init__(self):
-        # Text splitter cho việc chia document thành chunks
-        self.text_splitter = SentenceSplitter(
+        # Node parser sử dụng cho việc chia nhỏ văn bản thành các chunk
+        # Trong phiên bản mới của ``llama_index`` lớp ``SimpleNodeParser`` đã
+        # được thay thế bởi ``SentenceSplitter``. Do đó chúng ta khởi tạo trực
+        # tiếp ``SentenceSplitter`` với các tham số cần thiết và dùng nó như
+        # node parser.
+        self.node_parser = SentenceSplitter(
             chunk_size=settings.chunk_size,
             chunk_overlap=settings.chunk_overlap,
             separator=" ",
             paragraph_separator="\n\n",
-            secondary_chunking_regex="[.!?]"  # Chia theo câu
-        )
-        
-        # Node parser cho LlamaIndex
-        self.node_parser = SimpleNodeParser.from_defaults(
-            text_splitter=self.text_splitter,
+            secondary_chunking_regex="[.!?]",
             include_metadata=True,
-            include_prev_next_rel=True  # Include relationships
+            include_prev_next_rel=True,
         )
+
+        # Giữ ``text_splitter`` để tương thích với các phần khác của code
+        self.text_splitter = self.node_parser
     
     async def process_document(
         self,
