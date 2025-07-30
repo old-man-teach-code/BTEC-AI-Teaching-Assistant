@@ -183,9 +183,11 @@ const fetchDocumentsByFolder = async (folderId) => {
     }))
   })
 
-  const filterByType = (type) => {
-    selectedType.value = type
-  }
+const filterByType = (type) => {
+  console.log('Gọi filterByType:', type)
+  selectedType.value = type
+}
+
   
 
   const sortedAndFilteredDocuments = computed(() => {

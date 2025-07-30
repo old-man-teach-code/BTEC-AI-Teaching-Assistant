@@ -5,8 +5,10 @@ import { processDocument } from './processDocument' // sử dụng các ref & co
 const fileInput = ref(null)
 const folderUploadTarget = ref(null)
 
-export function processFolder(folderFileInput,fetchDocumentsByFolder, documents) {
-  // 📁 Folder state
+export function processFolder(folderFileInput, fetchDocumentsByFolder, documentsRef, selectedTypeRef) {
+  const documents = documentsRef
+  const selectedType = selectedTypeRef 
+
   const foldersList = ref([])
   const newFolderName = ref('')
   const newFolderDescription = ref('')
@@ -20,8 +22,8 @@ export function processFolder(folderFileInput,fetchDocumentsByFolder, documents)
 
   const {
     sortedAndFilteredDocuments,
-    selectedType,
     sortBy,
+    getFileType,
   } = processDocument()
 
   const fetchFolders = async () => {
@@ -109,45 +111,109 @@ function goToFolder(folderId) {
     console.log('Mở folder ID:', folderId)
   }
 const sortedAndFilteredItems = computed(() => {
-  if (selectedFolderId.value) {
-    const filesInFolder = documents.value.filter(doc => doc.folder_id === selectedFolderId.value)
+  console.log('[sortedAndFilteredItems] selectedType:', selectedType.value)
+  console.log('[sortedAndFilteredItems] selectedFolderId:', selectedFolderId.value)
 
-    console.log('selectedFolderId:', selectedFolderId.value)
-    console.log('documents.value:', documents.value)
-    console.log('filesInFolder:', filesInFolder)
+  // Nếu đang trong 1 folder
+  if (selectedFolderId.value) {
+    // Nếu đang lọc "Folder" thì không hiển thị file trong folder
+    if (selectedType.value === 'Folder') {
+      return []
+    }
+
+    let filesInFolder = documents.value.filter(doc => doc.folder_id === selectedFolderId.value)
+
+    // Filter theo selectedType
+    if (selectedType.value !== 'all') {
+      filesInFolder = filesInFolder.filter(doc => {
+        const type = getFileType(doc.file_type)
+        return type === selectedType.value
+      })
+    }
+
+    // Sort trong folder
+    switch (sortBy.value) {
+      case 'latest':
+        filesInFolder.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
+        break
+      case 'oldest':
+        filesInFolder.sort((a, b) => new Date(a.created_at || 0) - new Date(b.created_at || 0))
+        break
+      case 'size_asc':
+        filesInFolder.sort((a, b) => (a.file_size || 0) - (b.file_size || 0))
+        break
+      case 'size_desc':
+        filesInFolder.sort((a, b) => (b.file_size || 0) - (a.file_size || 0))
+        break
+      case 'name_az':
+        filesInFolder.sort((a, b) => (a.original_name || '').localeCompare(b.original_name || ''))
+        break
+    }
 
     return filesInFolder.map(doc => ({
       ...doc,
       name: doc.original_name,
       type: 'file',
-    })).sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
+    }))
   }
 
-  // Nếu không chọn folder nào: hiển thị folder + file chưa gán folder
-  const folders = foldersList.value.map(folder => ({
-    id: folder.id,
-    name: folder.name,
-    size: '-',
-    created_at: folder.created_at || null,
-    type: 'folder',
+  // Nếu KHÔNG trong folder → hiển thị folder + file chưa gán
+  let folders = []
+  if (selectedType.value === 'all' || selectedType.value === 'Folder') {
+    folders = foldersList.value.map(folder => ({
+      id: folder.id,
+      name: folder.name,
+      size: '-',
+      created_at: folder.created_at || null,
+      type: 'folder',
+    }))
+  }
+
+  let filteredFiles = documents.value.filter(doc => !doc.folder_id)
+
+  if (selectedType.value !== 'all' && selectedType.value !== 'Folder') {
+    filteredFiles = filteredFiles.filter(doc => {
+      const type = getFileType(doc.file_type)
+      return type === selectedType.value
+    })
+  }
+
+  const files = filteredFiles.map(doc => ({
+    ...doc,
+    name: doc.original_name,
+    type: 'file',
   }))
 
-  const files = documents.value
-    .filter(doc => !doc.folder_id)
-    .map(doc => ({
-      ...doc,
-      name: doc.original_name,
-      type: 'file',
-    }))
+  let result = [...folders, ...files]
 
-  return [...folders, ...files].sort((a, b) => {
+  // Sort toàn bộ danh sách
+  switch (sortBy.value) {
+    case 'latest':
+      result.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
+      break
+    case 'oldest':
+      result.sort((a, b) => new Date(a.created_at || 0) - new Date(b.created_at || 0))
+      break
+    case 'size_asc':
+      result.sort((a, b) => (a.file_size || 0) - (b.file_size || 0))
+      break
+    case 'size_desc':
+      result.sort((a, b) => (b.file_size || 0) - (a.file_size || 0))
+      break
+    case 'name_az':
+      result.sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+      break
+  }
+
+  // folder luôn hiển thị trước file
+  result.sort((a, b) => {
     if (a.type === 'folder' && b.type === 'file') return -1
     if (a.type === 'file' && b.type === 'folder') return 1
-    return new Date(b.created_at || 0) - new Date(a.created_at || 0)
+    return 0
   })
+
+  return result
 })
-
-
 
 
 const FolderDelete = async (item) => {
@@ -202,7 +268,7 @@ async function uploadFileToFolder() {
     // 1. Upload file
     const uploadRes = await api.post('/api/documents/upload', formData)
     const documentId = uploadRes.data.id
-    console.log('📄 File đã upload xong, documentId:', documentId)
+    console.log('File đã upload xong, documentId:', documentId)
 
     // 2. Gọi API move document vào folder
     await api.post(
@@ -210,7 +276,7 @@ async function uploadFileToFolder() {
       { folder_id: targetFolderId.value },
       { headers: { 'Content-Type': 'application/json' } }
     )
-console.log('📦 Assigned to folder:', targetFolderId.value)
+console.log('Assigned to folder:', targetFolderId.value)
 
 alert('Upload & assign to folder successful!')
 
@@ -227,8 +293,6 @@ await fetchFolders?.()
 }
 
 }
-
-
 
   onMounted(() => {
     fetchFolders()
@@ -253,5 +317,6 @@ await fetchFolders?.()
     uploadFileToFolder,
     handleFolderUpload,
     folderFileInput,
+    
   }
 }

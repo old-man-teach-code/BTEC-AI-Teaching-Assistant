@@ -25,7 +25,7 @@
       <div class="documents-page">
         <div class="documents-header">
           <h2>Documents</h2>
-          
+
           <div class="button-group">
             <v-menu offset-y>
               <template #activator="{ props }">
@@ -38,32 +38,31 @@
                 <v-list-item @click="triggerFileInput('file')">New file</v-list-item>
                 <v-list-item @click="openCreateFolder('forder')">New folder</v-list-item>
               </v-list>
-              <v-dialog v-model="createFolderDialog" width="400">
-                <v-card>
-                  <v-card-title>New folder</v-card-title>
-                  <v-card-text>
-                    <v-text-field v-model="newFolderName" label="Name Folder" />
-                    <v-text-field v-model="newFolderDescription" label="Description" />
-                    <input type="file" @change="onFileChange" />
-                  </v-card-text>
-                  <v-card-actions>
-                    <v-btn @click="createFolderDialog = false">Cancel</v-btn>
-                    <v-btn
-                      @click="
-                        () => {
-                          createFolder()
-                          createFolderDialog = false
-                        }
-                      "
-                      color="primary"
-                    >
-                      Create
-                    </v-btn>
-                  </v-card-actions>
-                </v-card>
-              </v-dialog>
             </v-menu>
-
+            <v-dialog v-model="createFolderDialog" width="400">
+              <v-card>
+                <v-card-title>New folder</v-card-title>
+                <v-card-text>
+                  <v-text-field v-model="newFolderName" label="Name Folder" />
+                  <v-text-field v-model="newFolderDescription" label="Description" />
+                  <input type="file" @change="onFileChange" />
+                </v-card-text>
+                <v-card-actions>
+                  <v-btn @click="createFolderDialog = false">Cancel</v-btn>
+                  <v-btn
+                    @click="
+                      () => {
+                        createFolder()
+                        createFolderDialog = false
+                      }
+                    "
+                    color="primary"
+                  >
+                    Create
+                  </v-btn>
+                </v-card-actions>
+              </v-card>
+            </v-dialog>
             <v-menu offset-y>
               <template #activator="{ props }">
                 <button class="btn-secondary" v-bind="props">
@@ -76,6 +75,7 @@
                 <v-list-item @click="filterByType('PDF')">PDF</v-list-item>
                 <v-list-item @click="filterByType('DOCX')">DOCX</v-list-item>
                 <v-list-item @click="filterByType('PPTX')">PPTX</v-list-item>
+                <v-list-item @click="filterByType('Folder')">Folder</v-list-item>
               </v-list>
             </v-menu>
 
@@ -189,7 +189,7 @@
                     >
                   </template>
                   <template v-else>
-                    <v-icon small class ="mr-2" color="primary" @click="FolderUpfile(item)">
+                    <v-icon small class="mr-2" color="primary" @click="FolderUpfile(item)">
                       mdi-file-upload-outline
                     </v-icon>
 
@@ -242,8 +242,9 @@ const {
   filterByType,
   sortBy,
   recentFiles,
-   documents,
+  documents,
   fetchDocumentsByFolder,
+  selectedType,
 } = processDocument()
 const {
   foldersList,
@@ -256,7 +257,7 @@ const {
   onFileChange,
   FolderUpfile,
   handleFolderUpload,
-} = processFolder(folderFileInput, fetchDocumentsByFolder, documents)
+} = processFolder(folderFileInput, fetchDocumentsByFolder, documents, selectedType)
 </script>
 
 <style scoped src="../assets/documents.css"></style>
