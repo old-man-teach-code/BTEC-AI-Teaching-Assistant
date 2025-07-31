@@ -1,8 +1,11 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import NotFoundView from '../views/NotFoundView.vue'
-import { useAuthStore } from '../stores/auth' 
+import { useAuthStore } from '@/stores/auth' 
 import Authen from '../views/Authen.vue'
+import CalendarView from '@/views/CalendarView.vue'
+import AboutView from '@/views/AboutView.vue'
+
 
 
 
@@ -24,23 +27,40 @@ const router = createRouter({
       component: Authen,
     },
     {
+      path: '/login',
+      name: 'login',
+      component: Authen,
+    },
+    {
       path: '/about',
       name: 'about',
-      component: () => import('../views/AboutView.vue'),
+      component:AboutView, 
     },
+    {
+      path:'/calendar',
+      name: 'calendar',
+      component: CalendarView ,
+    },
+    {
+      path:'/test',
+      name: 'test',
+      component: () => import('@/views/TestView.vue'),
+
+    },
+  
     {
       path: '/logout',
       name: 'logout',
       beforeEnter: (to, from, next) => {
         const authStore = useAuthStore()
         authStore.logout()
-        next({ name: 'authen' }) // Redirect to /auth after logout
+        next({ name: 'authen' })
       }
     },
     {
       path: '/:catchAll(.*)',
       name: 'not-found',
-      component: NotFoundView // Catch-all route for 404 Not Found
+      component: NotFoundView 
     }
   ],
 })

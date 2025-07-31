@@ -1,18 +1,26 @@
 <template>
-  <div>
-    <v-btn color="primary" class="mb-4" @click="handleCreate">Thêm sự kiện</v-btn>
-    <div class="sx-vue-calendar-wrapper">
-  <ScheduleXCalendar :calendar-app="calendarApp" />
-</div>
+  <div class="calendar-layout">
+    <!-- Sidebar bên trái -->
+    <LeftSidebar />
 
+    <!-- Nội dung chính -->
+    <div class="calendar-main">
+       <v-btn icon color="primary" style="width: 32px; height: 32px;" @click="handleCreate" class="add-event-btn">
+          <v-icon>mdi-plus</v-icon>
+        </v-btn>
 
-    <EventModal
-      v-model="showDialog"
-      :eventData="editEvent"
-      :typeColorMap="typeColorMap"
-      @save="saveEvent"
-      @delete="handleDelete"
-    />
+      <div class="sx-vue-calendar-wrapper">
+        <ScheduleXCalendar :calendar-app="calendarApp" />
+      </div>
+
+      <EventModal
+        v-model="showDialog"
+        :eventData="editEvent"
+        :typeColorMap="typeColorMap"
+        @save="saveEvent"
+        @delete="handleDelete"
+      />
+    </div>
   </div>
 </template>
 
@@ -29,16 +37,21 @@ import {
 import '@schedule-x/theme-default/dist/index.css'
 
 import EventModal from '@/components/EventModal.vue'
-import { fetchEvents, createEvent, updateEvent, deleteEvent } from '@/api/events.js'
+import LeftSidebar from '@/components/LeftSidebar.vue'
+import {
+  fetchEvents,
+  createEvent,
+  updateEvent,
+  deleteEvent,
+} from '@/api/events.js'
 
-// 🎨 Danh sách màu và mapping type -> color
+// Mapping màu cho loại sự kiện
 const colorList = [
   '#f94144', '#f3722c', '#f9c74f', '#90be6d',
   '#43aa8b', '#577590', '#277da1', '#9b5de5',
   '#ff006e', '#fb5607', '#ffbe0b'
 ]
 const typeColorMap = reactive({})
-
 function getColorForType(type) {
   if (!typeColorMap[type]) {
     const available = colorList.filter(c => !Object.values(typeColorMap).includes(c))
@@ -50,7 +63,7 @@ function getColorForType(type) {
   return typeColorMap[type]
 }
 
-// 📅 Sự kiện và calendar
+// State & calendar setup
 const events = ref([])
 const showDialog = ref(false)
 const editEvent = ref(null)
@@ -63,15 +76,15 @@ const calendarApp = createCalendar({
   callbacks: {
     onEventClick: handleEventClick,
   },
- config: {
-  eventDisplay: {
-    colorSource: 'event.color'  // ✅ Đảm bảo dùng màu từ event
+  config: {
+    eventDisplay: {
+      colorSource: 'event.color',
+    }
   }
-}
 })
 
 function handleEventClick(event) {
-  console.log('🟢 Sự kiện được nhấp:', event)
+  console.log('Clicked event:', event)
   editEvent.value = {
     ...event,
     startTime: event.start.replace(' ', 'T'),
@@ -93,7 +106,7 @@ function formatDatetimeLocal(input) {
 const loadEvents = async () => {
   try {
     const raw = await fetchEvents()
-    events.value = raw.map((e) => {
+    events.value = raw.map(e => {
       const type = e.event_type
       return {
         id: e.id,
@@ -104,15 +117,12 @@ const loadEvents = async () => {
         location: e.location,
         type,
         remind: e.reminder_minutes,
-     
-        color: getColorForType(type), 
+        color: getColorForType(type),
       }
     })
-
-    console.log('🎨 Events mapped:', events.value)
     calendarApp.events.set(events.value)
   } catch (e) {
-    console.error('❌ Lỗi tải sự kiện:', e)
+    console.error('Load events error:', e)
   }
 }
 
@@ -154,7 +164,7 @@ const saveEvent = async (eventData) => {
     showDialog.value = false
     await loadEvents()
   } catch (e) {
-    console.error('❌ Lỗi lưu sự kiện:', e)
+    console.error('Save event error:', e)
   }
 }
 
@@ -164,7 +174,7 @@ const handleDelete = async (eventId) => {
     showDialog.value = false
     await loadEvents()
   } catch (e) {
-    console.error('❌ Lỗi xoá sự kiện:', e)
+    console.error(' Delete event error:', e)
   }
 }
 
@@ -172,13 +182,57 @@ onMounted(loadEvents)
 </script>
 
 <style scoped>
+.calendar-layout {
+  display: flex;
+  height: 100vh;
+  background-color: #f9fafb;
+}
+
+.calendar-main {
+  flex: 1;
+  margin: 0 auto 0; 
+ 
+}
+
 .sx-vue-calendar-wrapper {
-  width: 1200px;
-  max-width: 100vw;
-  height: 800px;
-  max-height: 90vh;
+  width: 100%;
+  max-width: 1400px;
+  height: 900px;
+  max-height: 100vh;
+  border-radius: 8px;
+  background: white;
 }
-.sx-vue-calendar-wrapper .event {
-  border: 1px solid black;
+
+/* 📍 Nút + nằm ở góc phải đầu bảng calendar */
+.add-event-btn {
+  position: absolute;
+  top: 25px;
+  right:22%;
+  z-index: 10;
+  font-size: 10px;
 }
+
+/* Reponsive cho mọi thiết bị */
+@media (max-width: 1000px) {
+  .add-event-btn {
+    right: 0px;
+    top: 0px;
+    margin: 4px 10px;
+    font-size: 8px;
+  }
+  .sx-vue-calendar-wrapper {
+   
+    width: 100%;
+    height: 100vh;
+    font-size: 10px;    
+    margin: 40px auto;
+  }    
+  v-dialog {
+    width: 90%;
+    max-width: 500px;
+    font-size: 12px;
+  }   
+}    
+       
+   
 </style>
