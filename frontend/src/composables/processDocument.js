@@ -155,18 +155,24 @@ const fetchDocumentsByFolder = async (folderId) => {
   }
 }
 
-  const recentFiles = computed(() =>
-    documents.value
-      .slice()
-      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-      .slice(0, 4)
-      .map((doc) => ({
-        ...doc,
-        name: doc.original_name,
-        date: formatDate(doc.created_at),
-        size: formatSize(doc.file_size),
-      }))
-  )
+const recentFiles = computed(() => {
+  let list = [...documents.value]
+
+  if (selectedType.value !== 'all' && selectedType.value !== 'Folder') {
+    list = list.filter(doc => getFileType(doc.file_type) === selectedType.value)
+  }
+
+  return list
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    .slice(0, 4)
+    .map((doc) => ({
+      ...doc,
+      name: doc.original_name,
+      date: formatDate(doc.created_at),
+      size: formatSize(doc.file_size),
+    }))
+})
+
 
   const folders = computed(() => {
     const groups = {}

@@ -158,8 +158,21 @@ const sortedAndFilteredItems = computed(() => {
   }
 
   // Nếu KHÔNG trong folder → hiển thị folder + file chưa gán
-  let folders = []
-  if (selectedType.value === 'all' || selectedType.value === 'Folder') {
+let folders = []
+let files = []
+
+// Nếu lọc theo "Folder" → chỉ hiện danh sách folder
+if (selectedType.value === 'Folder') {
+  folders = foldersList.value.map(folder => ({
+    id: folder.id,
+    name: folder.name,
+    size: '-',
+    created_at: folder.created_at || null,
+    type: 'folder',
+  }))
+} else {
+  // Các loại file khác → hiện folder + file chưa gán vào folder
+  if (selectedType.value === 'all') {
     folders = foldersList.value.map(folder => ({
       id: folder.id,
       name: folder.name,
@@ -171,18 +184,20 @@ const sortedAndFilteredItems = computed(() => {
 
   let filteredFiles = documents.value.filter(doc => !doc.folder_id)
 
-  if (selectedType.value !== 'all' && selectedType.value !== 'Folder') {
+  if (selectedType.value !== 'all') {
     filteredFiles = filteredFiles.filter(doc => {
       const type = getFileType(doc.file_type)
       return type === selectedType.value
     })
   }
 
-  const files = filteredFiles.map(doc => ({
+  files = filteredFiles.map(doc => ({
     ...doc,
     name: doc.original_name,
     type: 'file',
   }))
+}
+
 
   let result = [...folders, ...files]
 
