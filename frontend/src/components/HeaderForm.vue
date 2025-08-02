@@ -67,12 +67,14 @@ watch(mobile, (newVal) => {
 })
 
 const items = [
+
   { title: 'Home', icon: 'mdi-home', to: '/' },
   { title: 'Documents', icon: 'mdi-file-document', to: '/documents' },
   { title: 'Feedback Form', icon: 'mdi-bell', to: '/feedback' },
   { title: 'Calendar', icon: 'mdi-calendar', to: '/calendar' },
   { title: 'Chat Test', icon: 'mdi-chat', to: '/chat' },
   { title: 'Settings', icon: 'mdi-cog', to: '/settings' },
+
   { divider: true },
 ]
 </script>
@@ -120,7 +122,9 @@ const items = [
             </v-card-title>
             <v-divider />
             <v-card-text style="max-height: 300px; overflow-y: auto">
+
               <div v-if="notifications.length === 0">No new notifications</div>
+
               <v-list v-else>
                 <v-list-item
                   v-for="(n, i) in notifications"
@@ -134,7 +138,9 @@ const items = [
               </v-list>
             </v-card-text>
             <v-card-actions>
+
               <v-btn color="primary" @click="handleMarkAllAsRead">Mask as read</v-btn>
+
             </v-card-actions>
           </v-card>
         </v-menu>
@@ -146,6 +152,7 @@ const items = [
           </template>
           <v-list>
             <v-list-item
+
               title="Personal Information"
               @click="home"
              
@@ -156,6 +163,7 @@ const items = [
               <template #prepend><i class="fas fa-key"></i></template>
             </v-list-item>
             <v-list-item title="Logout" @click="logout">
+
               <template #prepend><i class="fas fa-sign-out-alt"></i></template>
             </v-list-item>
           </v-list>

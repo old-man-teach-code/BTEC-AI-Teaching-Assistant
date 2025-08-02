@@ -10,11 +10,14 @@
       <div class="toggle-box">
         <div class="toggle-panel toggle-left">
           <h1>Welcome Back! </h1>
+
           <p>Don't have an account? Register here.</p>
           <button class="btn" @click="isSignin = false">Register</button>
         </div>
         <div class="toggle-panel toggle-right">
+
           <h1>Nice to see you!</h1>
+
           <p>Already have an account? Login here.</p>
           <button class="btn" @click="isSignin = true">Login</button>
         </div>

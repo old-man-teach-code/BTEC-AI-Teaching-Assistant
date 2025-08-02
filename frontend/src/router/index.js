@@ -3,9 +3,11 @@ import HomeView from '../views/HomeView.vue'
 import NotFoundView from '../views/NotFoundView.vue'
 import { useAuthStore } from '../stores/auth' 
 import Authen from '../views/Authen.vue'
+
 import DocumentsView from '../views/DocumentsView.vue'
 import TrashVIew from '../views/TrashVIew.vue'
 import CalendarView from '@/views/CalendarView.vue'
+
 
 
 const router = createRouter({
@@ -21,16 +23,19 @@ const router = createRouter({
       component: HomeView,
     },
     {
+
       path: '/documents',
       name: 'documents',
       component: DocumentsView,
     },
     {
+
       path: '/auth',
       name: 'authen',
       component: Authen,
     },
     {
+
       path:'/calendar',
       name: 'calendar',
       component: CalendarView ,
@@ -41,6 +46,7 @@ const router = createRouter({
       component: TrashVIew,
     },
     {
+
       path: '/about',
       name: 'about',
       component: () => import('../views/AboutView.vue'),
