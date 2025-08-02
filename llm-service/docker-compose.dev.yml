@@ -1,0 +1,15 @@
+version: "3.9"
+
+services:
+  ai-service:
+    command: ["python", "-m", "uvicorn", "app.main:app", "--reload", "--host", "0.0.0.0", "--port", "8001"]
+    environment:
+      - ENV=development
+      - LOG_LEVEL=DEBUG
+      - PYTHONPATH=/app/app
+    volumes:
+      - ./app:/app/app  # Mount code để hot reload
+      - ./data:/app/data
+      - model_cache:/home/appuser/.cache
+    # Override user để có quyền write trong development
+    user: root
