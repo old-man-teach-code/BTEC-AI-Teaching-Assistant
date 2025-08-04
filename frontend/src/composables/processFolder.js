@@ -23,8 +23,42 @@ export function processFolder(folderFileInput, fetchDocumentsByFolder, documents
   const {
     sortedAndFilteredDocuments,
     sortBy,
-    getFileType,
   } = processDocument()
+
+  // Local getFileType function to ensure consistency
+  const getFileType = (file) => {
+    // Nếu file là object với thuộc tính type (File object)
+    if (file && typeof file === 'object' && file.type) {
+      if (file.type.includes('pdf')) return 'PDF'
+      if (file.type.includes('word') || file.type.includes('document')) return 'DOCX'
+      if (file.type.includes('presentation')) return 'PPTX'
+      if (file.type.includes('sheet')) return 'XLSX'
+      return file.type
+    }
+    
+    // Nếu file là string (file_type từ database hoặc filename)
+    if (typeof file === 'string') {
+      const lowerFile = file.toLowerCase()
+      
+      // Kiểm tra extension từ filename
+      if (lowerFile.endsWith('.pdf')) return 'PDF'
+      if (lowerFile.endsWith('.docx') || lowerFile.endsWith('.doc')) return 'DOCX'
+      if (lowerFile.endsWith('.pptx') || lowerFile.endsWith('.ppt')) return 'PPTX'
+      if (lowerFile.endsWith('.xlsx') || lowerFile.endsWith('.xls')) return 'XLSX'
+      if (lowerFile.endsWith('.txt')) return 'TXT'
+      if (lowerFile.endsWith('.jpg') || lowerFile.endsWith('.jpeg') || lowerFile.endsWith('.png')) return 'IMAGE'
+      
+      // Kiểm tra MIME type strings
+      if (lowerFile.includes('pdf')) return 'PDF'
+      if (lowerFile.includes('word') || lowerFile.includes('document')) return 'DOCX'
+      if (lowerFile.includes('presentation')) return 'PPTX'
+      if (lowerFile.includes('sheet')) return 'XLSX'
+      
+      return file.toUpperCase()
+    }
+    
+    return ''
+  }
 
   const fetchFolders = async () => {
     loading.value = true
@@ -126,7 +160,8 @@ const sortedAndFilteredItems = computed(() => {
     // Filter theo selectedType
     if (selectedType.value !== 'all') {
       filesInFolder = filesInFolder.filter(doc => {
-        const type = getFileType(doc.file_type)
+        const type = getFileType(doc.file_type) || getFileType(doc.original_name)
+        console.log(`[processFolder-InFolder] Filtering: "${doc.original_name}" | file_type: "${doc.file_type}" | detected: "${type}" | selectedType: "${selectedType.value}" | match: ${type === selectedType.value}`)
         return type === selectedType.value
       })
     }
@@ -186,7 +221,8 @@ if (selectedType.value === 'Folder') {
 
   if (selectedType.value !== 'all') {
     filteredFiles = filteredFiles.filter(doc => {
-      const type = getFileType(doc.file_type)
+      const type = getFileType(doc.file_type) || getFileType(doc.original_name)
+      console.log(`[processFolder] Filtering: "${doc.original_name}" | file_type: "${doc.file_type}" | detected: "${type}" | selectedType: "${selectedType.value}" | match: ${type === selectedType.value}`)
       return type === selectedType.value
     })
   }

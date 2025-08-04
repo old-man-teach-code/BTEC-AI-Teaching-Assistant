@@ -1,5 +1,5 @@
 <template>
-  <v-dialog v-model="internalDialog" max-width="600" @keydown.esc="close">
+  <v-dialog v-model="internalDialog" max-width="550" @keydown.esc="close">
     <v-card>
       <v-card-title>{{ isEditMode ? 'Chỉnh sửa sự kiện' : 'Tạo sự kiện mới' }}</v-card-title>
 
@@ -67,7 +67,7 @@ const props = defineProps({
   modelValue: Boolean,
   eventData: Object,
 })
-const eventTypes =ref( ['Cuộc họp', 'Thuyết trình', 'Thi cử', 'Báo cáo', 'Sinh hoạt', 'Workshop'])
+const eventTypes =ref( ['Cuộc họp', 'Thuyết trình', 'Thi cử', 'Báo cáo', 'Sinh hoạt', 'Workshop', 'Khác'])
 
 
 const emit = defineEmits(['update:modelValue', 'save', 'delete'])
@@ -149,3 +149,28 @@ function handleDelete() {
 
 
 </script>
+<style>
+.v-dialog {
+  width: 90%;
+  max-width: 550px;
+}
+.v-card-title {
+  margin: 10px 0 0 0 ;
+  font-size: 1.6em;
+  font-weight: bold;
+  text-align: center;
+}
+/* Reponsive cho mọi thiết bị */
+@media (max-width: 600px) {
+  v-dialog {
+    width: 90%;
+    max-width: 300px;
+    border-radius:4px ;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  }
+  v-field__field{
+    font-size: 12px;
+  }
+}
+
+</style>

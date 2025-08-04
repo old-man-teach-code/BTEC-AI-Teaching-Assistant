@@ -9,10 +9,10 @@ export function processTrash() {
   const processing = ref(false)
 
   const sidebarItemsTop = [
-    { label: 'Welcome', icon: 'mdi-home-outline' },
+    { label: 'Home', icon: 'mdi-home-outline', route: '/dashboardhome' },
     { label: 'Document', icon: 'mdi-file-document-outline', route: '/documents' },
-    { label: 'Calendar', icon: 'mdi-calendar-clock-outline' },
-    { label: 'Class', icon: 'mdi-account-group-outline' },
+    { label: 'Calendar', icon: 'mdi-calendar-clock-outline', route: '/calendar' },
+    { label: 'Notifications', icon: 'mdi-bell-outline' },
     { label: 'Statistical', icon: 'mdi-chart-line' },
   ]
 
@@ -136,6 +136,7 @@ export function processTrash() {
 
   const handleSidebar = (item) => {
     if (item.route) {
+      console.log('route: ', item.route)
       router.push(item.route)
     } else if (item.action === 'logout') {
       router.push({ path: '/home' })

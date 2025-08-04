@@ -5,7 +5,7 @@
         <div class="collapse-icon">«</div>
       </div>
       <ul class="menu">
-        <li v-for="item in sidebarItemsTop" :key="item.label">
+        <li v-for="item in sidebarItemsTop" :key="item.label" @click="handleSidebar(item)">
           <v-icon>{{ item.icon }}</v-icon>
 
           <span>{{ item.label }}</span>
@@ -160,7 +160,7 @@
                 <td>{{ selectedFile.name }}</td>
                 <td>{{ getFileType(selectedFile) }}</td>
               </tr>
-              <tr v-for="item in sortedAndFilteredItems" :key="item.id">
+              <tr v-for="(item, index) in sortedAndFilteredItems" :key="index">
                 <td class="file-cell">
                   <div
                     class="file-content"

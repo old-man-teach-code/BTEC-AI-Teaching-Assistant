@@ -15,15 +15,15 @@ export function processDocument() {
   const sortBy = ref('latest')
 
   const sidebarItemsTop = [
-    { label: 'Home', icon: 'mdi-home-outline' },
+    { label: 'Home', icon: 'mdi-home-outline', route: '/dashboardhome' },
     { label: 'Document', icon: 'mdi-file-document-outline', route: '/documents' },
-    { label: 'Calendar', icon: 'mdi-calendar-clock-outline' },
-    { label: 'Class', icon: 'mdi-account-group-outline' },
+    { label: 'Calendar', icon: 'mdi-calendar-clock-outline', route: '/calendar' },
+    { label: 'Notifications', icon: 'mdi-bell-outline' },
     { label: 'Statistical', icon: 'mdi-chart-line' },
   ]
 
   const sidebarItemsBottom = [
-    { label: 'Trash', icon: 'mdi-delete-clock-outline', route: '/trash'},
+    { label: 'Trash', icon: 'mdi-delete-clock-outline', route: '/trash' },
     { label: 'Help Centre', icon: 'mdi-help-circle-outline' },
     { label: 'Setting', icon: 'mdi-cog-outline', action: 'setting' },
     { label: 'Return', icon: 'mdi-logout', action: 'logout' },
@@ -32,18 +32,36 @@ export function processDocument() {
   const triggerFileInput = () => fileInput.value.click()
 
   const getFileType = (file) => {
+    // Nếu file là object với thuộc tính type (File object)
     if (file && typeof file === 'object' && file.type) {
       if (file.type.includes('pdf')) return 'PDF'
-      if (file.type.includes('word')) return 'DOCX'
+      if (file.type.includes('word') || file.type.includes('document')) return 'DOCX'
       if (file.type.includes('presentation')) return 'PPTX'
+      if (file.type.includes('sheet')) return 'XLSX'
       return file.type
     }
+    
+    // Nếu file là string (file_type từ database hoặc filename)
     if (typeof file === 'string') {
-      if (file.includes('pdf')) return 'PDF'
-      if (file.includes('word')) return 'DOCX'
-      if (file.includes('presentation')) return 'PPTX'
-      return file
+      const lowerFile = file.toLowerCase()
+      
+      // Kiểm tra extension từ filename
+      if (lowerFile.endsWith('.pdf')) return 'PDF'
+      if (lowerFile.endsWith('.docx') || lowerFile.endsWith('.doc')) return 'DOCX'
+      if (lowerFile.endsWith('.pptx') || lowerFile.endsWith('.ppt')) return 'PPTX'
+      if (lowerFile.endsWith('.xlsx') || lowerFile.endsWith('.xls')) return 'XLSX'
+      if (lowerFile.endsWith('.txt')) return 'TXT'
+      if (lowerFile.endsWith('.jpg') || lowerFile.endsWith('.jpeg') || lowerFile.endsWith('.png')) return 'IMAGE'
+      
+      // Kiểm tra MIME type strings
+      if (lowerFile.includes('pdf')) return 'PDF'
+      if (lowerFile.includes('word') || lowerFile.includes('document')) return 'DOCX'
+      if (lowerFile.includes('presentation')) return 'PPTX'
+      if (lowerFile.includes('sheet')) return 'XLSX'
+      
+      return file.toUpperCase()
     }
+    
     return ''
   }
 
@@ -57,6 +75,34 @@ export function processDocument() {
     if (!dateStr) return ''
     const d = new Date(dateStr)
     return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+  }
+
+  const truncateFileName = (fileName, maxLength = 25) => {
+    if (!fileName) return ''
+    if (fileName.length <= maxLength) return fileName
+    
+    // Tách tên file và extension
+    const lastDotIndex = fileName.lastIndexOf('.')
+    if (lastDotIndex === -1) {
+      // Không có extension
+      return fileName.substring(0, maxLength - 3) + '...'
+    }
+    
+    const name = fileName.substring(0, lastDotIndex)
+    const extension = fileName.substring(lastDotIndex)
+    
+    // Nếu extension quá dài thì cắt cả extension
+    if (extension.length > 8) {
+      return fileName.substring(0, maxLength - 3) + '...'
+    }
+    
+    // Cắt tên nhưng giữ extension
+    const maxNameLength = maxLength - extension.length - 3
+    if (name.length > maxNameLength) {
+      return name.substring(0, maxNameLength) + '...' + extension
+    }
+    
+    return fileName
   }
 
   async function handleFileSelect(e) {
@@ -159,7 +205,10 @@ const recentFiles = computed(() => {
   let list = [...documents.value]
 
   if (selectedType.value !== 'all' && selectedType.value !== 'Folder') {
-    list = list.filter(doc => getFileType(doc.file_type) === selectedType.value)
+    list = list.filter(doc => {
+      const fileType = getFileType(doc.file_type) || getFileType(doc.original_name)
+      return fileType === selectedType.value
+    })
   }
 
   return list
@@ -167,7 +216,8 @@ const recentFiles = computed(() => {
     .slice(0, 4)
     .map((doc) => ({
       ...doc,
-      name: doc.original_name,
+      name: truncateFileName(doc.original_name, 20), // Truncate tên file với max 30 ký tự
+      fullName: doc.original_name, // Giữ tên đầy đủ để có thể hiển thị tooltip
       date: formatDate(doc.created_at),
       size: formatSize(doc.file_size),
     }))
@@ -192,6 +242,14 @@ const recentFiles = computed(() => {
 const filterByType = (type) => {
   console.log('Gọi filterByType:', type)
   selectedType.value = type
+  
+  // Debug: Log tất cả documents và type của chúng
+  console.log('=== DEBUG FILTER BY TYPE ===')
+  documents.value.forEach(doc => {
+    const detectedType = getFileType(doc.file_type) || getFileType(doc.original_name)
+    console.log(`File: "${doc.original_name}" | file_type: "${doc.file_type}" | detected: "${detectedType}" | match filter "${type}": ${detectedType === type}`)
+  })
+  console.log('=============================')
 }
 
   
@@ -199,7 +257,12 @@ const filterByType = (type) => {
   const sortedAndFilteredDocuments = computed(() => {
     let list = [...documents.value]
     if (selectedType.value !== 'all') {
-      list = list.filter((doc) => getFileType(doc.file_type) === selectedType.value)
+      list = list.filter((doc) => {
+        // Thử lấy type từ file_type trước, nếu không có thì từ original_name
+        const fileType = getFileType(doc.file_type) || getFileType(doc.original_name)
+        console.log(`Filtering doc: "${doc.original_name}" | file_type: "${doc.file_type}" | detected: "${fileType}" | selectedType: "${selectedType.value}"`)
+        return fileType === selectedType.value
+      })
     }
     switch (sortBy.value) {
       case 'latest':
@@ -239,6 +302,7 @@ const filterByType = (type) => {
     fetchDocumentsByFolder,
     formatSize,
     formatDate,
+    truncateFileName,
     getFileType,
     filterByType,
     selectedType,
