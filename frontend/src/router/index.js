@@ -7,6 +7,7 @@ import Authen from '../views/Authen.vue'
 import DocumentsView from '../views/DocumentsView.vue'
 import TrashVIew from '../views/TrashVIew.vue'
 import CalendarView from '@/views/CalendarView.vue'
+import HomeDashboard from '../views/HomeDashboard.vue'
 
 
 
@@ -46,6 +47,11 @@ const router = createRouter({
       component: TrashVIew,
     },
     {
+      path: '/dashboardhome',
+      name: 'dashboardhome',
+      component: HomeDashboard,
+    },
+    {
 
       path: '/about',
       name: 'about',
@@ -79,7 +85,7 @@ router.beforeEach((to, from, next) => {
     return next({ name: 'authen' });
   }
   if (to.path === '/auth' && token) {
-    return next({ path: '/home' });
+    return next({ path: '/dashboardhome' });
   }
   next();
 })
