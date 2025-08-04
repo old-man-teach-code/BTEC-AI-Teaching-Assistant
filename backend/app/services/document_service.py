@@ -24,7 +24,8 @@ from crud.document import (
     soft_delete_document,
     restore_document,
     delete_document,
-    move_document_to_folder
+    move_document_to_folder,
+    get_latest_user_document
 )
 from crud.folder import get_active_folder
 from utils.file_handler import save_file, get_file_extension, get_file_size, validate_file
@@ -268,6 +269,45 @@ def service_download_document(db: Session, document_id: int, owner_id: int) -> D
     """
     # Kiểm tra document và quyền truy cập
     document = _validate_document_access(db, document_id, owner_id, "download")
+    
+    # Kiểm tra file có tồn tại không
+    file_path = document.file_path
+    if not os.path.exists(file_path):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="File không tồn tại trên server"
+        )
+    
+    # Trả về thông tin file để download
+    return {
+        "file_path": file_path,
+        "filename": document.original_name,
+        "content_type": document.file_type
+    } 
+
+
+def service_download_latest_document(db: Session, owner_id: int) -> Dict[str, Any]:
+    """
+    Lấy thông tin file để download document mới nhất theo created_at
+    
+    Args:
+        db: Database session
+        owner_id: ID của user để kiểm tra quyền sở hữu
+        
+    Returns:
+        Dict: Thông tin file để download
+        
+    Raises:
+        HTTPException: Nếu không có document nào hoặc file không tồn tại
+    """
+    # Lấy document mới nhất của user
+    document = get_latest_user_document(db, owner_id)
+    
+    if not document:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Bạn chưa có document nào"
+        )
     
     # Kiểm tra file có tồn tại không
     file_path = document.file_path

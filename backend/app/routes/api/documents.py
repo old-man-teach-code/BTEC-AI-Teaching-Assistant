@@ -3,8 +3,10 @@ from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from typing import Optional, Dict, Any
 import os
+import shutil
 
 from dependencies.deps import get_db, get_current_user
+from cache.redis_client import redis_client
 from schemas.document import (
     DocumentResponse, DocumentListResponse, DocumentUpdate,
     DocumentTrashResponse, DocumentRestoreRequest
@@ -17,6 +19,7 @@ from services.document_service import (
     service_update_document,
     service_delete_document,
     service_download_document,
+    service_download_latest_document,
     service_process_document,
     service_get_user_trash_documents,
     service_restore_document,
@@ -204,6 +207,123 @@ def delete_document(
         Dict: Thông báo kết quả
     """
     return service_delete_document(db, document_id, current_user.id, hard_delete)
+
+
+@router.get("/latest/download")
+def download_latest_document(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Download file document mới nhất theo created_at
+    Tránh tải xuống file trùng lặp bằng cách kiểm tra cache
+    
+    Args:
+        db: Database session
+        current_user: User hiện tại (từ token)
+        
+    Returns:
+        FileResponse: File mới nhất để download hoặc False nếu file trùng lặp
+    """
+    try:
+        # Lấy thông tin file mới nhất cần download
+        file_info = service_download_latest_document(db, current_user.id)
+        
+        # Tạo cache key cho user hiện tại
+        cache_key = f"last_downloaded_file:user_{current_user.id}"
+        
+        # Thử lấy tên file đã tải xuống gần nhất từ cache
+        try:
+            last_downloaded_filename = redis_client.get(cache_key)
+        except Exception as e:
+            print(f"Redis error: {e}")
+            last_downloaded_filename = None
+        
+        # Kiểm tra nếu file hiện tại trùng với file đã tải xuống gần nhất
+        current_filename = file_info["filename"]
+        if last_downloaded_filename == current_filename:
+            # Trả về file response nếu là lần thứ 2 cùng file
+            return FileResponse(
+                path=file_info["file_path"],
+                filename=file_info["filename"],
+                media_type=file_info["content_type"]
+            )
+        
+        # Thử lưu tên file hiện tại vào cache (TTL 5 giây)
+        try:
+            redis_client.setex(cache_key, 5, current_filename)
+        except Exception as e:
+            print(f"Redis error when saving: {e}")
+        
+        # Trả về response với status false nếu là lần đầu
+        return {
+            "success": False,
+            "message": "File này đã được tải xuống gần nhất, không có file mới",
+            "filename": current_filename
+        }
+    except Exception as e:
+        print(f"Error in download_latest_document: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Lỗi server: {str(e)}"
+        )
+
+
+@router.delete("/latest/download/cache")
+def clear_download_cache(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Quản lý lưu trữ file: lưu file mới hoặc xóa file trùng lặp
+    
+    Args:
+        current_user: User hiện tại (từ token)
+        db: Database session
+        
+    Returns:
+        Dict: Thông báo kết quả
+    """
+    try:
+        # Lấy thông tin file mới nhất
+        file_info = service_download_latest_document(db, current_user.id)
+        current_filename = file_info["filename"]
+        
+        # Tạo thư mục lưu trữ cho user nếu chưa có
+        storage_dir = f"uploads/user_{current_user.id}_storage"
+        os.makedirs(storage_dir, exist_ok=True)
+        
+        # Đường dẫn file trong thư mục lưu trữ
+        stored_file_path = os.path.join(storage_dir, current_filename)
+        
+        # Kiểm tra nếu file đã tồn tại trong thư mục lưu trữ
+        if os.path.exists(stored_file_path):
+            # File đã tồn tại → không lưu nữa, trả về thông báo đã tồn tại
+            return {
+                "success": False,
+                "action": "already_exists",
+                "message": f"File đã tồn tại trong storage: {current_filename}",
+                "filename": current_filename,
+                "storage_path": stored_file_path
+            }
+        else:
+            # File chưa tồn tại → sao chép file vào thư mục lưu trữ
+            shutil.copy2(file_info["file_path"], stored_file_path)
+            
+            return {
+                "success": True,
+                "action": "stored",
+                "message": f"Đã lưu file mới vào storage: {current_filename}",
+                "filename": current_filename,
+                "storage_path": stored_file_path
+            }
+            
+    except Exception as e:
+        print(f"Error in clear_download_cache: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Lỗi server: {str(e)}"
+        )
 
 
 @router.get("/{document_id}/download")
