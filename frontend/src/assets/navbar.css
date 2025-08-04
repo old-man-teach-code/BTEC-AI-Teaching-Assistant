@@ -1,0 +1,30 @@
+/* Menu split */
+.menu {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.menu li {
+  display: flex;
+  align-items: center;
+  padding: 10px 8px;
+  font-size: 15px;
+  color: #1f2937;
+  cursor: pointer;
+  transition: background 0.2s;
+  border-radius: 6px;
+}
+
+.menu li:hover {
+  background-color: #f3f4f6;
+}
+
+.menu i {
+  margin-right: 10px;
+}
+
+/* Add margin top to bottom section */
+.menu-bottom {
+  margin-top: auto;
+}

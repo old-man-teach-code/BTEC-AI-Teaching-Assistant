@@ -42,9 +42,6 @@ protected_app.include_router(calendar.router, prefix="/calendar", tags=["calenda
 protected_app.include_router(templates.router, prefix="/templates", tags=["templates"])
 
 
-
-
-
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(info.router, prefix="/info", tags=["info"])
 app.include_router(reminder.router, prefix="/reminder", tags=["reminder"])
