@@ -1,0 +1,218 @@
+/* Layout Wrapper */
+.page-wrapper {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  font-family: "Poppins", sans-serif;
+  background-color: #f9fafb;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 240px;
+  background-color: #ffffff;
+  border-right: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.window-controls .circle {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 5px;
+}
+
+.collapse-icon {
+  font-size: 1.2rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Menu split */
+.menu {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.menu li {
+  display: flex;
+  align-items: center;
+  padding: 10px 8px;
+  font-size: 15px;
+  color: #1f2937;
+  cursor: pointer;
+  transition: background 0.2s;
+  border-radius: 6px;
+}
+
+.menu li:hover {
+  background-color: #f3f4f6;
+}
+
+.menu i {
+  margin-right: 10px;
+}
+
+/* Add margin top to bottom section */
+.menu-bottom {
+  margin-top: auto;
+}
+
+/* Main Content */
+.main-content {
+  flex: 1;
+  padding: 2rem 3rem;
+  overflow-y: auto;
+  background-color: #f9fafb;
+}
+
+.documents-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.button-group button {
+  margin-left: 0.5rem;
+}
+
+.empty-text {
+  text-align: center;
+  color: #6b7280; 
+  font-size: 1rem;
+  padding: 1.5rem;
+  background-color: #f9fafb;
+  border-radius: 0 0 12px 12px;
+  font-weight: 500;
+}
+
+.btn-primary {
+  background-color: #6699FF;
+  color: white;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  background-color: #4f46e5;
+}
+
+.btn-secondary {
+  background-color: #f3f4f6;
+  color: #111827;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.files-table {
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  padding: 1rem;
+}
+
+.files-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.files-table th {
+  text-align: left;
+  font-size: 14px;
+  color: #6b7280;
+  padding-bottom: 0.5rem;
+}
+.file-cell {
+  padding: 12px 16px;
+}
+
+.file-content {
+  display: flex;
+  align-items: center;
+  gap: 10px; /* Khoảng cách giữa icon và chữ */
+}
+.white-search-input .v-field {
+  background-color: #ffffff !important;    /* Nền trắng */
+  border-radius: 999px !important;         /* Bo góc tối đa */
+  border: 1px solid #ddd !important;       /* Viền mờ */
+  box-shadow: none !important;
+}
+
+.white-search-input .v-field__input {
+  color: #000 !important;                  /* Text đen */
+}
+
+.white-search-input .v-icon {
+  color: #555 !important;                  /* Icon xám đen */
+}
+
+.white-search-input input::placeholder {
+  color: #999 !important;                  /* Placeholder xám nhạt */
+  opacity: 1;
+}
+
+.file-icon {
+  font-size: 20px;
+  color: #374151; /* Màu xám đậm */
+}
+
+.file-name {
+  font-weight: 500;
+  color: #1f2937;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.files-table td {
+  padding: 0.7rem 0;
+  font-size: 15px;
+  color: #1f2937;
+  border-top: 1px solid #e5e7eb;
+}
+
+.hover-action-cell {
+  position: relative;
+  cursor: pointer;
+}
+
+.empty-text {
+  text-align: center;
+  padding: 2rem;
+  color: #6b7280;
+}
+.icon-wrapper {
+  width: 36px;
+  height: 36px;
+  border-radius: 30%;
+  background-color: #f3f4f6; /* Màu nền nhẹ */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-wrapper .v-icon {
+  color: #374151;
+  font-size: 20px;
+}

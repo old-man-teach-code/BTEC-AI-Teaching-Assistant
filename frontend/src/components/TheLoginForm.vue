@@ -79,7 +79,7 @@ export default {
         console.log('JWT:', this.authStore.jwt)
         console.log('JWT in localStorage:', localStorage.getItem('jwt_token'))
         this.loading = false
-        this.router.push({ path: '/home' }) 
+        this.router.push({ path: '/dashboardhome' }) 
       } catch (err) {
         this.error = err?.response?.data?.detail || 'Login failed. Please try again.'
         this.loading = false
