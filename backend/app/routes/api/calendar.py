@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, Query, Path, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import Optional, List
 from datetime import datetime
+from pydantic import BaseModel
 
 from dependencies.deps import get_db, get_current_user
 from schemas.event import EventCreate, EventUpdate, EventResponse, EventListResponse, EventOverlapCheck
@@ -15,6 +16,10 @@ from services.event_service import (
     service_get_upcoming_events
 )
 from models.user import User
+from models.event import Event
+from sqlalchemy import and_
+import aiohttp
+import asyncio
 
 # Khởi tạo router với prefix mặc định
 router = APIRouter()
@@ -222,4 +227,65 @@ def check_event_overlap(
     Note:
         Endpoint này hữu ích khi frontend muốn kiểm tra xung đột trước khi tạo/cập nhật event
     """
-    return service_check_event_overlap(db, current_user.id, overlap_check) 
+    return service_check_event_overlap(db, current_user.id, overlap_check)
+
+
+async def send_discord_reminder(event, discord_user_id=None, channel_id=None):
+    """
+    Gửi notification tới Discord bot qua API /send_reminder
+    """
+    BOT_API_URL = "http://localhost:8080/send_reminder"
+    payload = {
+        "title": event.title,
+        "description": event.description,
+        "start_time": str(event.start_time),
+        "end_time": str(event.end_time),
+        "owner_id": event.owner_id
+    }
+    if discord_user_id:
+        payload["user_id"] = discord_user_id
+    if channel_id:
+        payload["channel_id"] = channel_id
+    
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(BOT_API_URL, json=payload, timeout=10) as resp:
+                if resp.status == 200:
+                    return True
+                else:
+                    print(f"[Reminder Error] Discord API error: {resp.status}")
+                    return False
+    except Exception as e:
+        print(f"[Reminder Error] Exception: {e}")
+        return False
+
+def get_events_need_reminder(db):
+    """
+    Lấy events cần nhắc nhở
+    """
+    from datetime import datetime, timedelta
+    
+    # 🔧 FIX TIMEZONE: Cộng thêm 7 tiếng vào thời gian hiện tại
+    now_utc = datetime.now()  # Thời gian UTC
+    now_local = now_utc + timedelta(hours=7)  # Cộng 7 tiếng để có giờ Việt Nam
+    
+    # Lấy events có reminder_minutes và chưa được nhắc nhở
+    potential_events = db.query(Event).filter(
+        and_(
+            Event.reminder_minutes.isnot(None),
+            Event.reminded == False,
+            Event.start_time > now_local, 
+            Event.start_time <= now_local + timedelta(hours=24)
+        )
+    ).all()
+    
+    # Filter events đã đến giờ nhắc nhở
+    events_to_remind = []
+    for event in potential_events:
+        event_start_naive = event.start_time.replace(tzinfo=None) if event.start_time.tzinfo else event.start_time
+        reminder_time = event_start_naive - timedelta(minutes=event.reminder_minutes)
+        if reminder_time <= now_local:
+            events_to_remind.append(event)
+    
+    return events_to_remind
+
