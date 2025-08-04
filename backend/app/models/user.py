@@ -23,3 +23,6 @@ class User(Base):
     folders = relationship("Folder", back_populates="owner", cascade="all, delete-orphan")
 
     templates = relationship("Template", back_populates="owner", cascade="all, delete-orphan")
+
+    # Thêm relationship với Notification model
+    notifications = relationship("Notification", back_populates="user", cascade="all, delete-orphan")

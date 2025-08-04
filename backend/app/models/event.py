@@ -49,5 +49,8 @@ class Event(Base):
     # Relationship với User model - back_populates sẽ map với thuộc tính tương ứng ở User model
     owner = relationship("User", back_populates="events")
 
+    # Relationship với Notification model
+    notifications = relationship("Notification", back_populates="event", cascade="all, delete-orphan")
+
     # Đánh dấu đã gửi nhắc nhở chưa
     reminded = Column(Boolean, default=False, nullable=False)
