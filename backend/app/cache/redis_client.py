@@ -26,20 +26,37 @@ except redis.ConnectionError as e:
     print(f"Không thể kết nối đến Redis: {e}")
     # Tạo redis client giả lập khi không có kết nối thực
     class DummyRedis:
-        def set(self, *args, **kwargs):
-            print("WARNING: Sử dụng Redis giả lập, dữ liệu không được lưu trữ")
+        def __init__(self):
+            self._cache = {}  # In-memory cache khi Redis không available
+        
+        def set(self, key, value, *args, **kwargs):
+            print("WARNING: Sử dụng Redis giả lập, dữ liệu được lưu trong memory")
+            self._cache[key] = value
             return True
 
-        def get(self, *args, **kwargs):
-            print("WARNING: Sử dụng Redis giả lập, không có dữ liệu")
-            return None
+        def setex(self, key, ttl, value):
+            print("WARNING: Sử dụng Redis giả lập với TTL, dữ liệu được lưu trong memory")
+            self._cache[key] = value
+            return True
 
-        def delete(self, *args, **kwargs):
-            print("WARNING: Sử dụng Redis giả lập, không có thao tác xóa")
+        def get(self, key, *args, **kwargs):
+            value = self._cache.get(key)
+            if value is None:
+                print("WARNING: Sử dụng Redis giả lập, không có dữ liệu")
+            else:
+                print(f"WARNING: Sử dụng Redis giả lập, lấy dữ liệu: {value}")
+            return value
+
+        def delete(self, key, *args, **kwargs):
+            print("WARNING: Sử dụng Redis giả lập, xóa dữ liệu")
+            if key in self._cache:
+                del self._cache[key]
+                return 1
             return 0
             
         def flushdb(self, *args, **kwargs):
-            print("WARNING: Sử dụng Redis giả lập, không có thao tác flush")
+            print("WARNING: Sử dụng Redis giả lập, xóa toàn bộ cache")
+            self._cache.clear()
             return True
 
     redis_client = DummyRedis()
