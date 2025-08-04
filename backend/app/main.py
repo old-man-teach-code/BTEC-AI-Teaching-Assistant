@@ -1,5 +1,4 @@
-from routes.api import user, templates
-from routes.api import files, documents, trash, folders, calendar
+from routes.api import user, files, documents, trash, folders, calendar, templates
 from routes import auth, info, reminder
 from fastapi import FastAPI
 from routes import auth, info
