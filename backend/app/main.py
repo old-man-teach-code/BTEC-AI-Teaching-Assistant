@@ -1,5 +1,5 @@
-from routes.api import user, templates
-from routes.api import files, documents, trash, folders, calendar
+from routes.api import user, files, documents, trash, folders, calendar, templates
+from routes import auth, info, reminder
 from fastapi import FastAPI
 from routes import auth, info
 from core.jwt_middleware import JWTAuthMiddleware
@@ -42,11 +42,9 @@ protected_app.include_router(calendar.router, prefix="/calendar", tags=["calenda
 protected_app.include_router(templates.router, prefix="/templates", tags=["templates"])
 
 
-
-
-
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(info.router, prefix="/info", tags=["info"])
+app.include_router(reminder.router, prefix="/reminder", tags=["reminder"])
 
 app.mount("/api", protected_app)
 
