@@ -265,7 +265,7 @@ def service_delete_notification(db: Session, notification_id: int) -> Dict[str, 
             )
         
         return {
-            "message": f"Notification ID {notification_id} đã được xóa thành công",
+            "message": f"Notification ID {notification_id} đã được xóa thành công.",
             "notification_id": notification_id,
             "deleted_at": datetime.now().isoformat()
         }
