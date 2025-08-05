@@ -1,330 +1,229 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import desc, and_, func, case
-from models.notification import Notification, NotificationStatus, NotificationCategory
-from schemas.notification import NotificationCreate, NotificationUpdate, NotificationStatusUpdate
-from typing import List, Optional, Dict, Any
+from sqlalchemy import and_, or_, desc
+from typing import List, Optional, Dict
 from datetime import datetime
 
+from models.notification import (
+    Notification, 
+    NotificationType,
+    NotificationEventStatus,
+    NotificationRespondStatus, 
+    NotificationGeneralStatus
+)
+from schemas.notification import NotificationCreate, NotificationUpdate
 
-def create_notification(db: Session, notification_data: NotificationCreate) -> Notification:
-    """
-    Tạo notification mới trong database
+
+def auto_set_status(notification_type: NotificationType, event_id: Optional[int] = None) -> Dict:
+    """Tự động set status dựa trên notification_type"""
+    status_dict = {
+        'event_status': None,
+        'respond_status': None, 
+        'general_status': None
+    }
     
-    Args:
-        db: Database session
-        notification_data: Dữ liệu notification cần tạo
-        
-    Returns:
-        Notification: Notification đã được tạo
-    """
-    # Chuyển đổi notification_data thành dict
-    notification_dict = notification_data.dict()
-    db_notification = Notification(**notification_dict)
+    if notification_type == NotificationType.EVENT:
+        status_dict['event_status'] = NotificationEventStatus.UNREAD
+    elif notification_type == NotificationType.RESPOND:
+        status_dict['respond_status'] = NotificationRespondStatus.PENDING_RESPONSE
+    elif notification_type == NotificationType.GENERAL:
+        status_dict['general_status'] = NotificationGeneralStatus.PENDING
     
-    # Thêm vào database và commit
+    return status_dict
+
+
+def validate_status_for_type(notification_type: NotificationType, status_update: dict) -> bool:
+    """Validate status update theo notification type"""
+    if notification_type == NotificationType.EVENT:
+        return 'event_status' in status_update and status_update['event_status'] is not None
+    elif notification_type == NotificationType.RESPOND:
+        return 'respond_status' in status_update and status_update['respond_status'] is not None
+    elif notification_type == NotificationType.GENERAL:
+        return 'general_status' in status_update and status_update['general_status'] is not None
+    return False
+
+
+def create_notification(db: Session, notification: NotificationCreate) -> Notification:
+    """Tạo notification mới với auto-status"""
+    # Auto-set status dựa trên notification_type
+    status_dict = auto_set_status(notification.notification_type, notification.event_id)
+    
+    db_notification = Notification(
+        notification_type=notification.notification_type,
+        title=notification.title,
+        message=notification.message,
+        user_id=notification.user_id,
+        event_id=notification.event_id,
+        scheduled_at=notification.scheduled_at,
+        event_status=status_dict['event_status'],
+        respond_status=status_dict['respond_status'],
+        general_status=status_dict['general_status']
+    )
+    
     db.add(db_notification)
     db.commit()
     db.refresh(db_notification)
-    
     return db_notification
 
 
 def get_notification(db: Session, notification_id: int) -> Optional[Notification]:
-    """
-    Lấy notification theo ID
-    
-    Args:
-        db: Database session
-        notification_id: ID của notification cần lấy
-        
-    Returns:
-        Notification hoặc None nếu không tìm thấy
-    """
+    """Lấy notification theo ID"""
     return db.query(Notification).filter(Notification.id == notification_id).first()
 
 
-def get_user_notifications(
+def get_all_notifications(
+    db: Session, 
+    skip: int = 0, 
+    limit: int = 100
+) -> List[Notification]:
+    """Lấy tất cả notifications"""
+    return db.query(Notification).order_by(desc(Notification.created_at)).offset(skip).limit(limit).all()
+
+
+def get_notifications_by_user(
     db: Session, 
     user_id: int, 
     skip: int = 0, 
     limit: int = 100,
-    status: Optional[NotificationStatus] = None,
-    category: Optional[NotificationCategory] = None,
-    unread_only: bool = False
-) -> tuple[List[Notification], int]:
-    """
-    Lấy danh sách notifications của một user với filter
-    
-    Args:
-        db: Database session
-        user_id: ID của user
-        skip: Số lượng records bỏ qua (cho phân trang)
-        limit: Số lượng records lấy tối đa
-        status: Lọc theo trạng thái (optional)
-        category: Lọc theo danh mục (optional)
-        unread_only: Chỉ lấy notifications chưa đọc
-        
-    Returns:
-        tuple: (danh sách notifications, tổng số records)
-    """
-    # Xây dựng query cơ bản
+    notification_type: Optional[NotificationType] = None
+) -> List[Notification]:
+    """Lấy danh sách notifications của user với filter"""
     query = db.query(Notification).filter(Notification.user_id == user_id)
     
-    # Thêm filters
-    if status:
-        query = query.filter(Notification.status == status)
+    if notification_type:
+        query = query.filter(Notification.notification_type == notification_type)
     
-    if category:
-        query = query.filter(Notification.category == category)
-        
-    if unread_only:
-        query = query.filter(Notification.status == NotificationStatus.UNREAD)
-    
-    # Đếm tổng số records (trước khi skip/limit)
-    total = query.count()
-    
-    # Áp dụng ordering, skip và limit
-    notifications = (
-        query.order_by(desc(Notification.created_at))
-        .offset(skip)
-        .limit(limit)
-        .all()
-    )
-    
-    return notifications, total
+    return query.order_by(desc(Notification.created_at)).offset(skip).limit(limit).all()
 
 
-def update_notification(
-    db: Session, 
-    notification_id: int, 
-    notification_update: NotificationUpdate
-) -> Optional[Notification]:
-    """
-    Cập nhật thông tin notification
-    
-    Args:
-        db: Database session
-        notification_id: ID của notification cần cập nhật
-        notification_update: Dữ liệu cập nhật
-        
-    Returns:
-        Notification đã cập nhật hoặc None nếu không tìm thấy
-    """
-    db_notification = db.query(Notification).filter(Notification.id == notification_id).first()
-    
-    if db_notification is None:
+def get_notifications_by_message(db: Session, message: str) -> List[Notification]:
+    """Lấy notifications theo message content"""
+    return db.query(Notification).filter(Notification.message == message).all()
+
+
+def get_respond_notifications_by_message(db: Session, message: str) -> List[Notification]:
+    """Lấy RESPOND notifications theo message content"""
+    return db.query(Notification).filter(
+        and_(
+            Notification.message == message,
+            Notification.notification_type == NotificationType.RESPOND
+        )
+    ).all()
+
+
+def update_notification(db: Session, notification_id: int, notification_update: NotificationUpdate) -> Optional[Notification]:
+    """Cập nhật notification"""
+    db_notification = get_notification(db, notification_id)
+    if not db_notification:
         return None
     
-    # Cập nhật các trường có giá trị
     update_data = notification_update.dict(exclude_unset=True)
     
     for field, value in update_data.items():
         setattr(db_notification, field, value)
     
-    # Nếu trạng thái chuyển sang READ, set read_at
-    if notification_update.status == NotificationStatus.READ and db_notification.read_at is None:
-        db_notification.read_at = datetime.utcnow()
-    
+    db_notification.updated_at = datetime.utcnow()
     db.commit()
     db.refresh(db_notification)
-    
     return db_notification
 
 
-def update_notification_status(
+def update_notification_status_by_message(
+    db: Session, 
+    message: str, 
+    status_update: dict
+) -> List[Notification]:
+    """Cập nhật status theo message content"""
+    notifications = get_notifications_by_message(db, message)
+    updated_notifications = []
+    
+    for notification in notifications:
+        # Validate status update cho notification type
+        if validate_status_for_type(notification.notification_type, status_update):
+            for field, value in status_update.items():
+                if hasattr(notification, field):
+                    setattr(notification, field, value)
+            
+            notification.updated_at = datetime.utcnow()
+            updated_notifications.append(notification)
+    
+    db.commit()
+    
+    for notification in updated_notifications:
+        db.refresh(notification)
+    
+    return updated_notifications
+
+
+def update_respond_notification_status_by_message(
+    db: Session, 
+    message: str, 
+    respond_status: NotificationRespondStatus
+) -> List[Notification]:
+    """Cập nhật status cho RESPOND notifications theo message"""
+    notifications = get_respond_notifications_by_message(db, message)
+    updated_notifications = []
+    
+    for notification in notifications:
+        notification.respond_status = respond_status
+        notification.updated_at = datetime.utcnow()
+        updated_notifications.append(notification)
+    
+    db.commit()
+    
+    for notification in updated_notifications:
+        db.refresh(notification)
+    
+    return updated_notifications
+
+
+def update_notification_status_by_id(
     db: Session, 
     notification_id: int, 
-    status_update: NotificationStatusUpdate
+    status_update: dict
 ) -> Optional[Notification]:
-    """
-    Cập nhật trạng thái notification
-    
-    Args:
-        db: Database session
-        notification_id: ID của notification cần cập nhật
-        status_update: Trạng thái mới
-        
-    Returns:
-        Notification đã cập nhật hoặc None nếu không tìm thấy
-    """
-    db_notification = db.query(Notification).filter(Notification.id == notification_id).first()
-    
-    if db_notification is None:
+    """Cập nhật status theo notification ID"""
+    notification = get_notification(db, notification_id)
+    if not notification:
         return None
     
-    # Cập nhật trạng thái
-    db_notification.status = status_update.status
+    # Validate status update cho notification type
+    if not validate_status_for_type(notification.notification_type, status_update):
+        return None
     
-    # Nếu trạng thái chuyển sang READ, set read_at
-    if status_update.status == NotificationStatus.READ and db_notification.read_at is None:
-        db_notification.read_at = datetime.utcnow()
+    for field, value in status_update.items():
+        if hasattr(notification, field):
+            setattr(notification, field, value)
     
+    notification.updated_at = datetime.utcnow()
     db.commit()
-    db.refresh(db_notification)
-    
-    return db_notification
-
-
-def mark_notifications_as_read(db: Session, notification_ids: List[int], user_id: int) -> int:
-    """
-    Đánh dấu nhiều notifications là đã đọc
-    
-    Args:
-        db: Database session
-        notification_ids: Danh sách ID notifications
-        user_id: ID user (để bảo mật)
-        
-    Returns:
-        Số notifications đã được cập nhật
-    """
-    current_time = datetime.utcnow()
-    
-    updated_count = (
-        db.query(Notification)
-        .filter(
-            and_(
-                Notification.id.in_(notification_ids),
-                Notification.user_id == user_id,
-                Notification.status == NotificationStatus.UNREAD
-            )
-        )
-        .update(
-            {
-                "status": NotificationStatus.READ,
-                "read_at": current_time,
-                "updated_at": current_time
-            },
-            synchronize_session=False
-        )
-    )
-    
-    db.commit()
-    return updated_count
+    db.refresh(notification)
+    return notification
 
 
 def delete_notification(db: Session, notification_id: int) -> bool:
-    """
-    Xóa notification
-    
-    Args:
-        db: Database session
-        notification_id: ID của notification cần xóa
-        
-    Returns:
-        True nếu xóa thành công, False nếu không tìm thấy
-    """
-    db_notification = db.query(Notification).filter(Notification.id == notification_id).first()
-    
-    if db_notification is None:
+    """Xóa notification"""
+    db_notification = get_notification(db, notification_id)
+    if not db_notification:
         return False
     
     db.delete(db_notification)
     db.commit()
-    
     return True
 
 
-def get_user_notification_stats(db: Session, user_id: int) -> Dict[str, Any]:
-    """
-    Lấy thống kê notifications của user
-    
-    Args:
-        db: Database session
-        user_id: ID của user
-        
-    Returns:
-        Dictionary chứa thống kê
-    """
-    # Query để đếm theo status
-    status_stats = (
-        db.query(
-            Notification.status,
-            func.count(Notification.id).label('count')
-        )
-        .filter(Notification.user_id == user_id)
-        .group_by(Notification.status)
-        .all()
-    )
-    
-    # Query để đếm theo category
-    category_stats = (
-        db.query(
-            Notification.category,
-            func.count(Notification.id).label('count')
-        )
-        .filter(Notification.user_id == user_id)
-        .group_by(Notification.category)
-        .all()
-    )
-    
-    # Tổng số notifications
+def get_notifications_stats(db: Session, user_id: int) -> Dict:
+    """Lấy thống kê notifications của user"""
     total = db.query(Notification).filter(Notification.user_id == user_id).count()
     
-    # Tạo dict kết quả
-    stats = {
+    # Thống kê theo type
+    by_type = {}
+    for ntype in NotificationType:
+        type_count = db.query(Notification).filter(
+            and_(Notification.user_id == user_id, Notification.notification_type == ntype)
+        ).count()
+        by_type[ntype.value] = type_count
+    
+    return {
         "total": total,
-        "unread": 0,
-        "read": 0,
-        "pending_response": 0,
-        "responded": 0,
-        "by_category": {}
+        "by_type": by_type
     }
-    
-    # Điền thống kê theo status
-    for status, count in status_stats:
-        if status == NotificationStatus.UNREAD:
-            stats["unread"] = count
-        elif status == NotificationStatus.READ:
-            stats["read"] = count
-        elif status == NotificationStatus.PENDING_RESPONSE:
-            stats["pending_response"] = count
-        elif status == NotificationStatus.RESPONDED:
-            stats["responded"] = count
-    
-    # Điền thống kê theo category
-    for category, count in category_stats:
-        stats["by_category"][category.value] = count
-    
-    return stats
-
-
-def get_unread_count(db: Session, user_id: int) -> int:
-    """
-    Lấy số lượng notifications chưa đọc của user
-    
-    Args:
-        db: Database session
-        user_id: ID của user
-        
-    Returns:
-        Số lượng notifications chưa đọc
-    """
-    return (
-        db.query(Notification)
-        .filter(
-            and_(
-                Notification.user_id == user_id,
-                Notification.status == NotificationStatus.UNREAD
-            )
-        )
-        .count()
-    )
-
-
-def get_notifications_by_event(db: Session, event_id: int) -> List[Notification]:
-    """
-    Lấy tất cả notifications liên quan đến một event
-    
-    Args:
-        db: Database session
-        event_id: ID của event
-        
-    Returns:
-        Danh sách notifications liên quan đến event
-    """
-    return (
-        db.query(Notification)
-        .filter(Notification.event_id == event_id)
-        .order_by(desc(Notification.created_at))
-        .all()
-    )

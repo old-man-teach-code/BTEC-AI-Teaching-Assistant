@@ -1,32 +1,37 @@
+from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
-from crud.notification import (
-    create_notification,
-    get_notification,
-    get_user_notifications,
-    update_notification,
-    update_notification_status,
-    mark_notifications_as_read,
-    delete_notification,
-    get_user_notification_stats,
-    get_unread_count,
-    get_notifications_by_event
+from typing import List, Optional, Dict, Any
+from datetime import datetime, timezone
+
+from models.notification import (
+    Notification,
+    NotificationType,
+    NotificationEventStatus,
+    NotificationRespondStatus,
+    NotificationGeneralStatus
 )
 from schemas.notification import (
     NotificationCreate,
     NotificationUpdate,
-    NotificationStatusUpdate,
     NotificationResponse,
     NotificationListResponse,
+    NotificationRespondStatusUpdate,
     NotificationStatsResponse
 )
-from models.notification import NotificationStatus, NotificationCategory
-from fastapi import HTTPException, status
-from typing import List, Optional
-from datetime import datetime
+from crud.notification import (
+    create_notification,
+    get_notification,
+    get_all_notifications,
+    get_notifications_by_user,
+    update_notification,
+    update_respond_notification_status_by_message,
+    delete_notification,
+    get_notifications_stats
+)
 
 
 def service_create_notification(
-    db: Session, 
+    db: Session,
     notification_data: NotificationCreate
 ) -> NotificationResponse:
     """
@@ -40,292 +45,287 @@ def service_create_notification(
         NotificationResponse: Thông tin notification đã tạo
         
     Raises:
-        HTTPException 400: Nếu dữ liệu không hợp lệ
-        HTTPException 404: Nếu user hoặc event không tồn tại
+        HTTPException: Nếu có lỗi validation hoặc tạo notification
     """
     try:
-        # Kiểm tra user tồn tại
-        from crud.user import get_user
-        user = get_user(db, notification_data.user_id)
-        if not user:
+        # Validate business rules
+        if notification_data.notification_type == NotificationType.EVENT and not notification_data.event_id:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User not found"
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="event_id is required for EVENT notifications"
             )
         
-        # Kiểm tra event tồn tại (nếu có)
-        if notification_data.event_id:
-            from crud.event import get_event
-            event = get_event(db, notification_data.event_id)
-            if not event:
+        if notification_data.notification_type != NotificationType.EVENT and notification_data.event_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="event_id should only be set for EVENT notifications"
+            )
+        
+        if notification_data.notification_type == NotificationType.GENERAL and notification_data.scheduled_at:
+            # Xử lý so sánh datetime với timezone
+            if notification_data.scheduled_at.tzinfo is not None:
+                # scheduled_at có timezone, convert datetime.now() sang UTC
+                current_time = datetime.now(timezone.utc)
+            else:
+                # scheduled_at không có timezone, dùng datetime.now() local
+                current_time = datetime.now()
+                
+            if notification_data.scheduled_at <= current_time:
                 raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Event not found"
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="scheduled_at must be in the future for GENERAL notifications"
                 )
         
         # Tạo notification
         db_notification = create_notification(db, notification_data)
+        
+        return NotificationResponse.from_orm(db_notification)
+        
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Không thể tạo notification: {str(e)}"
+        )
+
+
+def service_get_all_notifications(
+    db: Session,
+    skip: int = 0,
+    limit: int = 100,
+    user_id: Optional[int] = None,
+    notification_type: Optional[NotificationType] = None
+) -> NotificationListResponse:
+    """
+    Service lấy danh sách notifications
+    
+    Args:
+        db: Database session
+        skip: Số lượng records bỏ qua
+        limit: Số lượng records lấy tối đa
+        user_id: Lọc theo user ID
+        notification_type: Lọc theo loại notification
+        
+    Returns:
+        NotificationListResponse: Danh sách notifications
+    """
+    try:
+        if user_id:
+            notifications = get_notifications_by_user(
+                db, user_id, skip, limit, notification_type
+            )
+        else:
+            notifications = get_all_notifications(db, skip, limit)
+        
+        # Chuyển đổi sang response format
+        notification_responses = [NotificationResponse.from_orm(notif) for notif in notifications]
+        
+        return NotificationListResponse(
+            total=len(notification_responses),
+            notifications=notification_responses
+        )
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Không thể lấy danh sách notifications: {str(e)}"
+        )
+
+
+def service_get_notification(db: Session, notification_id: int) -> NotificationResponse:
+    """
+    Service lấy thông tin chi tiết một notification
+    
+    Args:
+        db: Database session
+        notification_id: ID của notification cần lấy
+        
+    Returns:
+        NotificationResponse: Thông tin notification
+        
+    Raises:
+        HTTPException: Nếu không tìm thấy notification
+    """
+    try:
+        db_notification = get_notification(db, notification_id)
+        
+        if not db_notification:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Không tìm thấy notification với ID {notification_id}"
+            )
+        
         return NotificationResponse.from_orm(db_notification)
         
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Error creating notification: {str(e)}"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Không thể lấy thông tin notification: {str(e)}"
         )
-
-
-def service_get_user_notifications(
-    db: Session,
-    user_id: int,
-    skip: int = 0,
-    limit: int = 100,
-    status_filter: Optional[NotificationStatus] = None,
-    category_filter: Optional[NotificationCategory] = None,
-    unread_only: bool = False
-) -> NotificationListResponse:
-    """
-    Service lấy danh sách notifications của user
-    
-    Args:
-        db: Database session
-        user_id: ID của user
-        skip: Số lượng records bỏ qua
-        limit: Số lượng records lấy tối đa
-        status_filter: Lọc theo trạng thái
-        category_filter: Lọc theo danh mục
-        unread_only: Chỉ lấy notifications chưa đọc
-        
-    Returns:
-        NotificationListResponse: Danh sách notifications kèm metadata
-    """
-    try:
-        notifications, total = get_user_notifications(
-            db, user_id, skip, limit, status_filter, category_filter, unread_only
-        )
-        
-        # Đếm số notifications chưa đọc
-        unread_count = get_unread_count(db, user_id)
-        
-        return NotificationListResponse(
-            total=total,
-            unread_count=unread_count,
-            items=[NotificationResponse.from_orm(notif) for notif in notifications]
-        )
-        
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Error fetching notifications: {str(e)}"
-        )
-
-
-def service_get_notification(db: Session, notification_id: int, user_id: int) -> NotificationResponse:
-    """
-    Service lấy thông tin chi tiết notification
-    
-    Args:
-        db: Database session
-        notification_id: ID của notification
-        user_id: ID của user (để kiểm tra quyền)
-        
-    Returns:
-        NotificationResponse: Thông tin notification
-        
-    Raises:
-        HTTPException 404: Nếu notification không tồn tại
-        HTTPException 403: Nếu user không có quyền truy cập
-    """
-    db_notification = get_notification(db, notification_id)
-    
-    if not db_notification:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Notification not found"
-        )
-    
-    # Kiểm tra quyền truy cập
-    if db_notification.user_id != user_id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not enough permissions"
-        )
-    
-    return NotificationResponse.from_orm(db_notification)
 
 
 def service_update_notification(
     db: Session,
     notification_id: int,
-    notification_update: NotificationUpdate,
-    user_id: int
+    notification_update: NotificationUpdate
 ) -> NotificationResponse:
     """
-    Service cập nhật notification
+    Service cập nhật thông tin notification
     
     Args:
         db: Database session
-        notification_id: ID của notification
+        notification_id: ID của notification cần cập nhật
         notification_update: Dữ liệu cập nhật
-        user_id: ID của user (để kiểm tra quyền)
         
     Returns:
-        NotificationResponse: Notification đã cập nhật
+        NotificationResponse: Thông tin notification đã cập nhật
         
     Raises:
-        HTTPException 404: Nếu notification không tồn tại
-        HTTPException 403: Nếu user không có quyền
-    """
-    # Kiểm tra notification tồn tại và quyền truy cập
-    db_notification = get_notification(db, notification_id)
-    
-    if not db_notification:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Notification not found"
-        )
-    
-    if db_notification.user_id != user_id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not enough permissions"
-        )
-    
-    # Cập nhật notification
-    updated_notification = update_notification(db, notification_id, notification_update)
-    
-    if not updated_notification:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Error updating notification"
-        )
-    
-    return NotificationResponse.from_orm(updated_notification)
-
-
-def service_update_notification_status(
-    db: Session,
-    notification_id: int,
-    status_update: NotificationStatusUpdate,
-    user_id: int
-) -> NotificationResponse:
-    """
-    Service cập nhật trạng thái notification
-    
-    Args:
-        db: Database session
-        notification_id: ID của notification
-        status_update: Trạng thái mới
-        user_id: ID của user (để kiểm tra quyền)
-        
-    Returns:
-        NotificationResponse: Notification đã cập nhật
-        
-    Raises:
-        HTTPException 404: Nếu notification không tồn tại
-        HTTPException 403: Nếu user không có quyền
-    """
-    # Kiểm tra notification tồn tại và quyền truy cập
-    db_notification = get_notification(db, notification_id)
-    
-    if not db_notification:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Notification not found"
-        )
-    
-    if db_notification.user_id != user_id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not enough permissions"
-        )
-    
-    # Cập nhật trạng thái
-    updated_notification = update_notification_status(db, notification_id, status_update)
-    
-    if not updated_notification:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Error updating notification status"
-        )
-    
-    return NotificationResponse.from_orm(updated_notification)
-
-
-def service_mark_notifications_as_read(
-    db: Session,
-    notification_ids: List[int],
-    user_id: int
-) -> dict:
-    """
-    Service đánh dấu nhiều notifications là đã đọc
-    
-    Args:
-        db: Database session
-        notification_ids: Danh sách ID notifications
-        user_id: ID của user
-        
-    Returns:
-        dict: Thông tin về số notifications đã cập nhật
+        HTTPException: Nếu không tìm thấy notification
     """
     try:
-        updated_count = mark_notifications_as_read(db, notification_ids, user_id)
+        # Kiểm tra notification tồn tại
+        db_notification = get_notification(db, notification_id)
+        if not db_notification:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Không tìm thấy notification với ID {notification_id}"
+            )
         
-        return {
-            "message": f"Marked {updated_count} notifications as read",
-            "updated_count": updated_count,
-            "requested_count": len(notification_ids)
-        }
+        # Validate scheduled_at cho GENERAL notifications
+        if (notification_update.scheduled_at is not None and 
+            db_notification.notification_type == NotificationType.GENERAL):
+            if notification_update.scheduled_at <= datetime.now():
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="scheduled_at must be in the future"
+                )
         
-    except Exception as e:
+        # Cập nhật notification
+        updated_notification = update_notification(db, notification_id, notification_update)
+        
+        if not updated_notification:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Không thể cập nhật notification"
+            )
+        
+        return NotificationResponse.from_orm(updated_notification)
+        
+    except HTTPException:
+        raise
+    except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Error marking notifications as read: {str(e)}"
+            detail=str(e)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Không thể cập nhật notification: {str(e)}"
         )
 
 
-def service_delete_notification(db: Session, notification_id: int, user_id: int) -> dict:
+def service_delete_notification(db: Session, notification_id: int) -> Dict[str, Any]:
     """
     Service xóa notification
     
     Args:
         db: Database session
-        notification_id: ID của notification
-        user_id: ID của user (để kiểm tra quyền)
+        notification_id: ID của notification cần xóa
         
     Returns:
-        dict: Thông báo xóa thành công
+        Dict[str, Any]: Thông báo kết quả
         
     Raises:
-        HTTPException 404: Nếu notification không tồn tại
-        HTTPException 403: Nếu user không có quyền
+        HTTPException: Nếu không tìm thấy notification
     """
-    # Kiểm tra notification tồn tại và quyền truy cập
-    db_notification = get_notification(db, notification_id)
-    
-    if not db_notification:
+    try:
+        # Kiểm tra notification tồn tại
+        db_notification = get_notification(db, notification_id)
+        if not db_notification:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Không tìm thấy notification với ID {notification_id}"
+            )
+        
+        # Xóa notification
+        success = delete_notification(db, notification_id)
+        
+        if not success:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Không thể xóa notification"
+            )
+        
+        return {
+            "message": f"Notification ID {notification_id} đã được xóa thành công",
+            "notification_id": notification_id,
+            "deleted_at": datetime.now().isoformat()
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Notification not found"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Không thể xóa notification: {str(e)}"
         )
+
+
+def service_update_respond_status_by_message(
+    db: Session,
+    message: str,
+    respond_status: NotificationRespondStatus
+) -> Dict[str, Any]:
+    """
+    Service cập nhật trạng thái RESPOND theo message
     
-    if db_notification.user_id != user_id:
+    Args:
+        db: Database session
+        message: Nội dung message cần tìm
+        respond_status: Trạng thái respond mới
+        
+    Returns:
+        Dict[str, Any]: Thông tin cập nhật
+        
+    Raises:
+        HTTPException: Nếu không tìm thấy notifications
+    """
+    try:
+        updated_notifications = update_respond_notification_status_by_message(
+            db, message, respond_status
+        )
+        
+        if not updated_notifications:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Không tìm thấy RESPOND notifications với message này."
+            )
+        
+        # Chuyển đổi sang response format
+        notification_responses = [NotificationResponse.from_orm(notif) for notif in updated_notifications]
+        
+        return {
+            "message": f"Đã cập nhật {len(updated_notifications)} RESPOND notifications",
+            "updated_count": len(updated_notifications),
+            "notifications": notification_responses,
+            "updated_at": datetime.now().isoformat()
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not enough permissions"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Không thể cập nhật trạng thái: {str(e)}"
         )
-    
-    # Xóa notification
-    success = delete_notification(db, notification_id)
-    
-    if not success:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Error deleting notification"
-        )
-    
-    return {"message": "Notification deleted successfully"}
 
 
 def service_get_notification_stats(db: Session, user_id: int) -> NotificationStatsResponse:
@@ -340,44 +340,11 @@ def service_get_notification_stats(db: Session, user_id: int) -> NotificationSta
         NotificationStatsResponse: Thống kê notifications
     """
     try:
-        stats = get_user_notification_stats(db, user_id)
+        stats = get_notifications_stats(db, user_id)
         return NotificationStatsResponse(**stats)
         
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Error fetching notification stats: {str(e)}"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Không thể lấy thống kê notifications: {str(e)}"
         )
-
-
-def service_create_event_notification(
-    db: Session,
-    user_id: int,
-    event_id: int,
-    title: str,
-    message: str,
-    category: NotificationCategory = NotificationCategory.EVENT_REMINDER
-) -> NotificationResponse:
-    """
-    Service tạo notification liên quan đến event
-    
-    Args:
-        db: Database session
-        user_id: ID của user nhận notification
-        event_id: ID của event liên quan
-        title: Tiêu đề notification
-        message: Nội dung notification
-        category: Danh mục notification
-        
-    Returns:
-        NotificationResponse: Notification đã tạo
-    """
-    notification_data = NotificationCreate(
-        title=title,
-        category=category,
-        message=message,
-        user_id=user_id,
-        event_id=event_id
-    )
-    
-    return service_create_notification(db, notification_data)
