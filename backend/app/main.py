@@ -1,7 +1,6 @@
 from routes.api import user, files, documents, trash, folders, calendar, templates
 from routes import auth, info, reminder, notifications
 from fastapi import FastAPI
-from routes import auth, info
 from core.jwt_middleware import JWTAuthMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 

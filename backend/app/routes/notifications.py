@@ -1,278 +1,132 @@
-from fastapi import APIRouter, Depends, Query, Path, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from typing import Optional, List
+from typing import Optional
 
-from dependencies.deps import get_db, get_current_user
+from dependencies.deps import get_db
 from schemas.notification import (
     NotificationCreate,
     NotificationUpdate,
-    NotificationStatusUpdate,
     NotificationResponse,
     NotificationListResponse,
-    NotificationMarkAsReadRequest,
+    NotificationRespondStatusUpdate,
     NotificationStatsResponse
 )
 from services.notification_service import (
     service_create_notification,
-    service_get_user_notifications,
+    service_get_all_notifications,
     service_get_notification,
     service_update_notification,
-    service_update_notification_status,
-    service_mark_notifications_as_read,
     service_delete_notification,
+    service_update_respond_status_by_message,
     service_get_notification_stats
 )
-from models.user import User
-from models.notification import NotificationStatus, NotificationCategory
+from models.notification import NotificationType
 
-# Khởi tạo router
 router = APIRouter()
 
 
-@router.post("/", response_model=NotificationResponse)
-def create_notification(
-    notification_data: NotificationCreate,
+@router.post("/", response_model=NotificationResponse, summary="Tạo thông báo mới")
+def create_notification_endpoint(
+    notification: NotificationCreate,
     db: Session = Depends(get_db)
 ):
     """
-    Tạo notification mới
+    Tạo thông báo mới với các loại:
     
-    Args:
-        notification_data: Dữ liệu notification cần tạo
-        db: Database session
-        
-    Returns:
-        NotificationResponse: Thông tin notification đã tạo
-        
-    Raises:
-        HTTPException 400: Nếu dữ liệu không hợp lệ
-        HTTPException 404: Nếu user hoặc event không tồn tại
-    """
-    return service_create_notification(db, notification_data)
-
-
-@router.get("/", response_model=NotificationListResponse)
-def get_notifications(
-    user_id: int = Query(..., description="ID của user"),
-    skip: int = Query(0, ge=0, description="Số lượng records bỏ qua"),
-    limit: int = Query(100, ge=1, le=1000, description="Số lượng records lấy tối đa"),
-    status: Optional[NotificationStatus] = Query(None, description="Lọc theo trạng thái"),
-    category: Optional[NotificationCategory] = Query(None, description="Lọc theo danh mục"),
-    unread_only: bool = Query(False, description="Chỉ lấy notifications chưa đọc"),
-    db: Session = Depends(get_db)
-):
-    """
-    Lấy danh sách notifications của user
+    1. RESPOND: Thông báo cần phản hồi
+       - event_id: null (bắt buộc)
+       - scheduled_at: null (bắt buộc)
+       
+    2. EVENT: Thông báo sự kiện
+       - event_id: ID của sự kiện (bắt buộc)
+       - scheduled_at: null (bắt buộc)
+       
+    3. GENERAL: Thông báo chung có lập lịch
+       - event_id: null (bắt buộc)
+       - scheduled_at: thời gian tương lai (bắt buộc)
     
-    Args:
-        user_id: ID của user
-        skip: Số lượng records bỏ qua (cho phân trang)
-        limit: Số lượng records lấy tối đa (cho phân trang)
-        status: Lọc theo trạng thái
-        category: Lọc theo danh mục
-        unread_only: Chỉ lấy notifications chưa đọc
-        db: Database session
-        
-    Returns:
-        NotificationListResponse: Danh sách notifications kèm metadata phân trang
-        
     Example:
-        GET /notifications?user_id=1&status=unread&category=event_reminder&skip=0&limit=10
+    ```json
+    {
+      "notification_type": "respond",
+      "title": "Thông báo cần phản hồi",
+      "message": "Vui lòng xác nhận tham gia",
+      "user_id": 1,
+      "event_id": null,
+      "scheduled_at": null
+    }
+    ```
     """
-    return service_get_user_notifications(
-        db, user_id, skip, limit, status, category, unread_only
+    return service_create_notification(db, notification)
+
+
+@router.get("/", response_model=NotificationListResponse, summary="Lấy tất cả thông báo")
+def get_all_notifications_endpoint(
+    skip: int = Query(0, ge=0, description="Số lượng bỏ qua"),
+    limit: int = Query(100, ge=1, le=1000, description="Số lượng tối đa"),
+    user_id: Optional[int] = Query(None, gt=0, description="Lọc theo user ID"),
+    notification_type: Optional[NotificationType] = Query(None, description="Lọc theo loại thông báo (respond/event/general)"),
+    db: Session = Depends(get_db)
+):
+    """
+    Lấy danh sách tất cả thông báo với các bộ lọc:
+    - user_id: Lọc theo người dùng
+    - notification_type: Lọc theo loại thông báo
+      - "respond": Thông báo cần phản hồi
+      - "event": Thông báo sự kiện  
+      - "general": Thông báo chung có lập lịch
+    """
+    return service_get_all_notifications(
+        db, skip, limit, user_id, notification_type
     )
 
 
-@router.get("/stats", response_model=NotificationStatsResponse)
-def get_notification_stats(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+@router.get("/{notification_id}", response_model=NotificationResponse, summary="Lấy thông báo theo ID")
+def get_notification_endpoint(
+    notification_id: int,
+    db: Session = Depends(get_db)
+):
+    """Lấy thông tin chi tiết của một thông báo"""
+    return service_get_notification(db, notification_id)
+
+
+@router.put("/{notification_id}", response_model=NotificationResponse, summary="Cập nhật thông báo")
+def update_notification_endpoint(
+    notification_id: int,
+    notification_update: NotificationUpdate,
+    db: Session = Depends(get_db)
+):
+    """Cập nhật thông tin thông báo"""
+    return service_update_notification(db, notification_id, notification_update)
+
+
+@router.delete("/{notification_id}", summary="Xóa thông báo")
+def delete_notification_endpoint(
+    notification_id: int,
+    db: Session = Depends(get_db)
+):
+    """Xóa một thông báo"""
+    return service_delete_notification(db, notification_id)
+
+
+@router.patch("/respond-status", summary="Cập nhật trạng thái RESPOND theo message")
+def update_respond_status_by_message_endpoint(
+    status_update: NotificationRespondStatusUpdate,
+    db: Session = Depends(get_db)
 ):
     """
-    Lấy thống kê notifications của user hiện tại
-    
-    Args:
-        db: Database session
-        current_user: User hiện tại (từ token)
-        
-    Returns:
-        NotificationStatsResponse: Thống kê notifications
+    Cập nhật trạng thái phản hồi cho tất cả thông báo RESPOND có cùng message
+    Dành riêng cho loại RESPOND
     """
-    return service_get_notification_stats(db, current_user.id)
-
-
-@router.get("/unread-count")
-def get_unread_count(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    """
-    Lấy số lượng notifications chưa đọc của user hiện tại
-    
-    Args:
-        db: Database session
-        current_user: User hiện tại (từ token)
-        
-    Returns:
-        dict: Số lượng notifications chưa đọc
-    """
-    from crud.notification import get_unread_count
-    count = get_unread_count(db, current_user.id)
-    
-    return {"unread_count": count}
-
-
-@router.get("/{notification_id}", response_model=NotificationResponse)
-def get_notification(
-    notification_id: int = Path(..., description="ID của notification"),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    """
-    Lấy thông tin chi tiết notification
-    
-    Args:
-        notification_id: ID của notification
-        db: Database session
-        current_user: User hiện tại (từ token)
-        
-    Returns:
-        NotificationResponse: Thông tin notification
-        
-    Raises:
-        HTTPException 404: Nếu notification không tồn tại
-        HTTPException 403: Nếu user không có quyền truy cập
-    """
-    return service_get_notification(db, notification_id, current_user.id)
-
-
-@router.put("/{notification_id}", response_model=NotificationResponse)
-def update_notification(
-    notification_id: int = Path(..., description="ID của notification"),
-    notification_update: NotificationUpdate = ...,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    """
-    Cập nhật notification
-    
-    Args:
-        notification_id: ID của notification
-        notification_update: Dữ liệu cập nhật
-        db: Database session
-        current_user: User hiện tại (từ token)
-        
-    Returns:
-        NotificationResponse: Notification đã cập nhật
-        
-    Raises:
-        HTTPException 404: Nếu notification không tồn tại
-        HTTPException 403: Nếu user không có quyền
-    """
-    return service_update_notification(db, notification_id, notification_update, current_user.id)
-
-
-@router.patch("/{notification_id}/status", response_model=NotificationResponse)
-def update_notification_status(
-    notification_id: int = Path(..., description="ID của notification"),
-    status_update: NotificationStatusUpdate = ...,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    """
-    Cập nhật trạng thái notification
-    
-    Args:
-        notification_id: ID của notification
-        status_update: Trạng thái mới
-        db: Database session
-        current_user: User hiện tại (từ token)
-        
-    Returns:
-        NotificationResponse: Notification đã cập nhật
-        
-    Raises:
-        HTTPException 404: Nếu notification không tồn tại
-        HTTPException 403: Nếu user không có quyền
-    """
-    return service_update_notification_status(db, notification_id, status_update, current_user.id)
-
-
-@router.patch("/mark-as-read")
-def mark_notifications_as_read(
-    request: NotificationMarkAsReadRequest,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    """
-    Đánh dấu nhiều notifications là đã đọc
-    
-    Args:
-        request: Danh sách ID notifications cần đánh dấu
-        db: Database session
-        current_user: User hiện tại (từ token)
-        
-    Returns:
-        dict: Thông tin về số notifications đã cập nhật
-    """
-    return service_mark_notifications_as_read(db, request.notification_ids, current_user.id)
-
-
-@router.patch("/mark-all-as-read")
-def mark_all_notifications_as_read(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    """
-    Đánh dấu tất cả notifications chưa đọc của user là đã đọc
-    
-    Args:
-        db: Database session
-        current_user: User hiện tại (từ token)
-        
-    Returns:
-        dict: Thông tin về số notifications đã cập nhật
-    """
-    # Lấy tất cả notifications chưa đọc
-    from crud.notification import get_user_notifications
-    from models.notification import NotificationStatus
-    
-    unread_notifications, _ = get_user_notifications(
-        db, current_user.id, 0, 1000, NotificationStatus.UNREAD
+    return service_update_respond_status_by_message(
+        db, status_update.message, status_update.respond_status
     )
-    
-    notification_ids = [notif.id for notif in unread_notifications]
-    
-    if not notification_ids:
-        return {
-            "message": "No unread notifications found",
-            "updated_count": 0,
-            "requested_count": 0
-        }
-    
-    return service_mark_notifications_as_read(db, notification_ids, current_user.id)
 
 
-@router.delete("/{notification_id}")
-def delete_notification(
-    notification_id: int = Path(..., description="ID của notification"),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+@router.get("/stats/{user_id}", response_model=NotificationStatsResponse, summary="Thống kê thông báo")
+def get_notification_stats_endpoint(
+    user_id: int,
+    db: Session = Depends(get_db)
 ):
-    """
-    Xóa notification
-    
-    Args:
-        notification_id: ID của notification
-        db: Database session
-        current_user: User hiện tại (từ token)
-        
-    Returns:
-        dict: Thông báo xóa thành công
-        
-    Raises:
-        HTTPException 404: Nếu notification không tồn tại
-        HTTPException 403: Nếu user không có quyền
-    """
-    return service_delete_notification(db, notification_id, current_user.id)
+    """Lấy thống kê thông báo của user"""
+    return service_get_notification_stats(db, user_id)
