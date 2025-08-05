@@ -306,7 +306,7 @@ def service_update_respond_status_by_message(
         if not updated_notifications:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Không tìm thấy RESPOND notifications với message này"
+                detail="Không tìm thấy RESPOND notifications với message này."
             )
         
         # Chuyển đổi sang response format
