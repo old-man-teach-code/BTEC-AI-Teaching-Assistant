@@ -110,6 +110,16 @@ def get_respond_notifications_by_message(db: Session, message: str) -> List[Noti
     ).all()
 
 
+def get_general_notifications_by_message(db: Session, message: str) -> List[Notification]:
+    """Lấy GENERAL notifications theo message content"""
+    return db.query(Notification).filter(
+        and_(
+            Notification.message == message,
+            Notification.notification_type == NotificationType.GENERAL
+        )
+    ).all()
+
+
 def update_notification(db: Session, notification_id: int, notification_update: NotificationUpdate) -> Optional[Notification]:
     """Cập nhật notification"""
     db_notification = get_notification(db, notification_id)
@@ -176,6 +186,28 @@ def update_respond_notification_status_by_message(
     return updated_notifications
 
 
+def update_general_notification_status_by_message(
+    db: Session, 
+    message: str, 
+    general_status: NotificationGeneralStatus
+) -> List[Notification]:
+    """Cập nhật status cho GENERAL notifications theo message"""
+    notifications = get_general_notifications_by_message(db, message)
+    updated_notifications = []
+    
+    for notification in notifications:
+        notification.general_status = general_status
+        notification.updated_at = datetime.utcnow()
+        updated_notifications.append(notification)
+    
+    db.commit()
+    
+    for notification in updated_notifications:
+        db.refresh(notification)
+    
+    return updated_notifications
+
+
 def update_notification_status_by_id(
     db: Session, 
     notification_id: int, 
@@ -227,3 +259,61 @@ def get_notifications_stats(db: Session, user_id: int) -> Dict:
         "total": total,
         "by_type": by_type
     }
+
+
+def get_notifications_by_type_and_status(
+    db: Session,
+    notification_type: NotificationType,
+    event_status: Optional[NotificationEventStatus] = None,
+    respond_status: Optional[NotificationRespondStatus] = None,
+    general_status: Optional[NotificationGeneralStatus] = None,
+    user_id: Optional[int] = None,
+    skip: int = 0,
+    limit: int = 100
+) -> List[Notification]:
+    """Lọc notifications theo loại và trạng thái tương ứng"""
+    query = db.query(Notification).filter(
+        Notification.notification_type == notification_type
+    )
+    
+    # Lọc theo user nếu có
+    if user_id:
+        query = query.filter(Notification.user_id == user_id)
+    
+    # Lọc theo trạng thái tương ứng với loại
+    if notification_type == NotificationType.EVENT and event_status:
+        query = query.filter(Notification.event_status == event_status)
+    elif notification_type == NotificationType.RESPOND and respond_status:
+        query = query.filter(Notification.respond_status == respond_status)
+    elif notification_type == NotificationType.GENERAL and general_status:
+        query = query.filter(Notification.general_status == general_status)
+    
+    return query.order_by(desc(Notification.created_at)).offset(skip).limit(limit).all()
+
+
+def count_notifications_by_type_and_status(
+    db: Session,
+    notification_type: NotificationType,
+    event_status: Optional[NotificationEventStatus] = None,
+    respond_status: Optional[NotificationRespondStatus] = None,
+    general_status: Optional[NotificationGeneralStatus] = None,
+    user_id: Optional[int] = None
+) -> int:
+    """Đếm số lượng notifications theo loại và trạng thái"""
+    query = db.query(Notification).filter(
+        Notification.notification_type == notification_type
+    )
+    
+    # Lọc theo user nếu có
+    if user_id:
+        query = query.filter(Notification.user_id == user_id)
+    
+    # Lọc theo trạng thái tương ứng với loại
+    if notification_type == NotificationType.EVENT and event_status:
+        query = query.filter(Notification.event_status == event_status)
+    elif notification_type == NotificationType.RESPOND and respond_status:
+        query = query.filter(Notification.respond_status == respond_status)
+    elif notification_type == NotificationType.GENERAL and general_status:
+        query = query.filter(Notification.general_status == general_status)
+    
+    return query.count()

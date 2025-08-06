@@ -91,6 +91,56 @@ class NotificationRespondStatusUpdate(BaseModel):
     respond_status: NotificationRespondStatus = Field(..., description="Trạng thái phản hồi mới")
 
 
+class NotificationGeneralStatusUpdate(BaseModel):
+    """Schema cập nhật trạng thái GENERAL theo message"""
+    message: str = Field(..., min_length=1, description="Nội dung thông báo cần cập nhật")
+    general_status: NotificationGeneralStatus = Field(..., description="Trạng thái general mới")
+
+
+class NotificationFilterByStatus(BaseModel):
+    """Schema lọc thông báo theo loại và trạng thái"""
+    notification_type: NotificationType = Field(..., description="Loại thông báo")
+    event_status: Optional[NotificationEventStatus] = Field(None, description="Trạng thái EVENT (chỉ cho EVENT type)")
+    respond_status: Optional[NotificationRespondStatus] = Field(None, description="Trạng thái RESPOND (chỉ cho RESPOND type)")
+    general_status: Optional[NotificationGeneralStatus] = Field(None, description="Trạng thái GENERAL (chỉ cho GENERAL type)")
+    
+    @validator('event_status')
+    def validate_event_status(cls, v, values):
+        """Validate event_status chỉ dùng cho EVENT type"""
+        notification_type = values.get('notification_type')
+        if notification_type == NotificationType.EVENT:
+            if v is None:
+                raise ValueError('event_status is required for EVENT notifications')
+        else:
+            if v is not None:
+                raise ValueError('event_status can only be used with EVENT notifications')
+        return v
+    
+    @validator('respond_status')
+    def validate_respond_status(cls, v, values):
+        """Validate respond_status chỉ dùng cho RESPOND type"""
+        notification_type = values.get('notification_type')
+        if notification_type == NotificationType.RESPOND:
+            if v is None:
+                raise ValueError('respond_status is required for RESPOND notifications')
+        else:
+            if v is not None:
+                raise ValueError('respond_status can only be used with RESPOND notifications')
+        return v
+    
+    @validator('general_status')
+    def validate_general_status(cls, v, values):
+        """Validate general_status chỉ dùng cho GENERAL type"""
+        notification_type = values.get('notification_type')
+        if notification_type == NotificationType.GENERAL:
+            if v is None:
+                raise ValueError('general_status is required for GENERAL notifications')
+        else:
+            if v is not None:
+                raise ValueError('general_status can only be used with GENERAL notifications')
+        return v
+
+
 class NotificationResponse(NotificationBase):
     """Schema response cho notification"""
     id: int
