@@ -1,6 +1,8 @@
 from routes.api import user, files, documents, trash, folders, calendar, templates
 from routes import auth, info, reminder, notifications
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends, HTTPException
+from sqlalchemy.orm import Session
+from dependencies.deps import get_db
 from core.jwt_middleware import JWTAuthMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -46,6 +48,26 @@ app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(info.router, prefix="/info", tags=["info"])
 app.include_router(reminder.router, prefix="/reminder", tags=["reminder"])
 app.include_router(notifications.router, prefix="/notifications", tags=["notifications"])
+
+# Public endpoint để lookup user theo Discord ID (không cần JWT)
+@app.get("/users/by-discord/{discord_user_id}")
+async def get_user_by_discord_id_public(discord_user_id: str, db: Session = Depends(get_db)):
+    """Public endpoint để tìm user theo discord_user_id (không cần JWT)"""
+    from crud.user import get_user_by_discord_id
+    from schemas.user import UserRead
+    
+    db_user = get_user_by_discord_id(db, discord_user_id)
+    if db_user is None:
+        raise HTTPException(status_code=404, detail="User not found with this Discord ID")
+    
+    # Return basic user info without sensitive data
+    return {
+        "id": db_user.id,
+        "name": db_user.name,
+        "email": db_user.email,
+        "discord_user_id": db_user.discord_user_id,
+        "created_at": db_user.created_at
+    }
 
 app.mount("/api", protected_app)
 

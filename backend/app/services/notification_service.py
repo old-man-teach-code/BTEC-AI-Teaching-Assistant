@@ -25,8 +25,11 @@ from crud.notification import (
     get_notifications_by_user,
     update_notification,
     update_respond_notification_status_by_message,
+    update_general_notification_status_by_message,
     delete_notification,
-    get_notifications_stats
+    get_notifications_stats,
+    get_notifications_by_type_and_status,
+    count_notifications_by_type_and_status
 )
 
 
@@ -306,7 +309,7 @@ def service_update_respond_status_by_message(
         if not updated_notifications:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Không tìm thấy RESPOND notifications với message này."
+                detail="Không tìm thấy RESPOND notifications với message này"
             )
         
         # Chuyển đổi sang response format
@@ -314,6 +317,55 @@ def service_update_respond_status_by_message(
         
         return {
             "message": f"Đã cập nhật {len(updated_notifications)} RESPOND notifications",
+            "updated_count": len(updated_notifications),
+            "notifications": notification_responses,
+            "updated_at": datetime.now().isoformat()
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Không thể cập nhật trạng thái: {str(e)}"
+        )
+
+
+def service_update_general_status_by_message(
+    db: Session,
+    message: str,
+    general_status: NotificationGeneralStatus
+) -> Dict[str, Any]:
+    """
+    Service cập nhật trạng thái GENERAL theo message
+    
+    Args:
+        db: Database session
+        message: Nội dung message cần tìm
+        general_status: Trạng thái general mới
+        
+    Returns:
+        Dict[str, Any]: Thông tin cập nhật
+        
+    Raises:
+        HTTPException: Nếu không tìm thấy notifications
+    """
+    try:
+        updated_notifications = update_general_notification_status_by_message(
+            db, message, general_status
+        )
+        
+        if not updated_notifications:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Không tìm thấy GENERAL notifications với message này"
+            )
+        
+        # Chuyển đổi sang response format
+        notification_responses = [NotificationResponse.from_orm(notif) for notif in updated_notifications]
+        
+        return {
+            "message": f"Đã cập nhật {len(updated_notifications)} GENERAL notifications",
             "updated_count": len(updated_notifications),
             "notifications": notification_responses,
             "updated_at": datetime.now().isoformat()
@@ -347,4 +399,83 @@ def service_get_notification_stats(db: Session, user_id: int) -> NotificationSta
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Không thể lấy thống kê notifications: {str(e)}"
+        )
+
+
+def service_get_notifications_by_type_and_status(
+    db: Session,
+    notification_type: NotificationType,
+    event_status: Optional[NotificationEventStatus] = None,
+    respond_status: Optional[NotificationRespondStatus] = None,
+    general_status: Optional[NotificationGeneralStatus] = None,
+    user_id: Optional[int] = None,
+    skip: int = 0,
+    limit: int = 100
+) -> NotificationListResponse:
+    """
+    Service lọc notifications theo loại và trạng thái tương ứng
+    
+    Args:
+        db: Database session
+        notification_type: Loại thông báo (EVENT/RESPOND/GENERAL)
+        event_status: Trạng thái EVENT (chỉ cho EVENT type)
+        respond_status: Trạng thái RESPOND (chỉ cho RESPOND type)
+        general_status: Trạng thái GENERAL (chỉ cho GENERAL type)
+        user_id: ID user (optional)
+        skip: Số lượng bỏ qua
+        limit: Số lượng tối đa
+        
+    Returns:
+        NotificationListResponse: Danh sách notifications đã lọc
+        
+    Raises:
+        HTTPException: Nếu có lỗi validation hoặc lấy dữ liệu
+    """
+    try:
+        # Validation: Chỉ được truyền trạng thái tương ứng với loại
+        if notification_type == NotificationType.EVENT:
+            if respond_status or general_status:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="EVENT type chỉ chấp nhận event_status"
+                )
+        elif notification_type == NotificationType.RESPOND:
+            if event_status or general_status:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="RESPOND type chỉ chấp nhận respond_status"
+                )
+        elif notification_type == NotificationType.GENERAL:
+            if event_status or respond_status:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="GENERAL type chỉ chấp nhận general_status"
+                )
+        
+        # Lấy danh sách notifications
+        notifications = get_notifications_by_type_and_status(
+            db, notification_type, event_status, respond_status, general_status,
+            user_id, skip, limit
+        )
+        
+        # Đếm tổng số
+        total = count_notifications_by_type_and_status(
+            db, notification_type, event_status, respond_status, general_status,
+            user_id
+        )
+        
+        # Chuyển đổi sang response format
+        notification_responses = [NotificationResponse.from_orm(notif) for notif in notifications]
+        
+        return NotificationListResponse(
+            total=total,
+            notifications=notification_responses
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Không thể lấy danh sách notifications: {str(e)}"
         )
