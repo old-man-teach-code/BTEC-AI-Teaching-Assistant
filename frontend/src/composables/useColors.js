@@ -45,10 +45,12 @@ export function useColors() {
 
   const getStatusColor = (status) => {
     const colors = {
+
       'UPLOAD': 'blue',
       'RESTORE': 'green',
       'IN_PROGRESS': 'orange',
       'DELETE': 'grey'
+
     }
     return colors[status] || 'grey'
   }

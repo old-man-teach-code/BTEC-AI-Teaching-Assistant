@@ -50,9 +50,11 @@ export function useStats() {
       // Update stats với dữ liệu thật
       stats.value = {
         documents: allDocuments.length,
+
         questionsAnswered: 0, // Chưa có dữ liệu thật
         announcements: 0, // Chưa có dữ liệu thật
         missedDeadlines: 0, // Chưa có dữ liệu thật
+
         scheduledToday: events.filter(e => {
           const today = new Date().toISOString().split('T')[0]
           const eventDate = new Date(e.start).toISOString().split('T')[0]
@@ -70,9 +72,11 @@ export function useStats() {
           
           return {
             id: doc.id,
+
             title: `${doc.original_name}`,
             type: extension, // Hiển thị extension thực
             status: doc.status === 'ready' ? 'RESTORE' : 'UPLOAD',
+
             priority: 'MEDIUM',
             timeAgo: getTimeAgo(new Date(doc.created_at))
           }

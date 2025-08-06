@@ -54,11 +54,12 @@
   flex: 1;
   max-width: 360px;
   min-width: 280px;
+
   margin-left: 500px;
 }
 .search-input {
   border-radius: 10px;
-}
+
 
 .header-actions {
   display: flex;

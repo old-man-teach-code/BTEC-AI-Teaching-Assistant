@@ -26,6 +26,7 @@ export function processFolder(folderFileInput, fetchDocumentsByFolder, documents
 
   // Local getFileType function to ensure consistency
   const getFileType = (file) => {
+
     console.log('[getFileType] Input:', file)
     
     // Nếu file là object với thuộc tính type (File object)
@@ -36,11 +37,13 @@ export function processFolder(folderFileInput, fetchDocumentsByFolder, documents
       // Fix: Check for both 'presentation' và 'presentationml'
       if (file.type.includes('presentation') || file.type.includes('presentationml')) return 'PPTX'
       if (file.type.includes('sheet') || file.type.includes('spreadsheetml')) return 'XLSX'
+
       return file.type
     }
     
     // Nếu file là string (file_type từ database hoặc filename)
     if (typeof file === 'string') {
+
       console.log('[getFileType] String detected:', file)
       const lowerFile = file.toLowerCase()
       
@@ -75,6 +78,7 @@ export function processFolder(folderFileInput, fetchDocumentsByFolder, documents
     }
     
     console.log('[getFileType] No match, returning empty string')
+
     return ''
   }
 

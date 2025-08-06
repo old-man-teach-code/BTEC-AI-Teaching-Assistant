@@ -366,3 +366,22 @@ def move_document_to_folder(db: Session, document: Document, folder_id: Optional
     db.refresh(document)
 
     return document
+
+
+def get_latest_user_document(db: Session, owner_id: int) -> Optional[Document]:
+    """
+    Lấy document mới nhất (theo created_at) của một user
+
+    Args:
+        db: Database session
+        owner_id: ID của user sở hữu
+
+    Returns:
+        Document mới nhất hoặc None nếu không có document
+    """
+    return db.query(Document).filter(
+        and_(
+            Document.owner_id == owner_id,
+            Document.is_deleted == False
+        )
+    ).order_by(desc(Document.created_at)).first()

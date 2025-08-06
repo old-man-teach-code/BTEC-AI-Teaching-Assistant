@@ -10,15 +10,18 @@
           <div class="search-bar">
             <v-text-field
               variant="outlined"
+
               placeholder="Enter your search request..."
               prepend-inner-icon="mdi-magnify"
               hide-details
               density="compact"
               class="search-input"
+
             />
           </div>
           <div class="header-actions">
             <v-badge :content="notificationCount" color="red" v-if="notificationCount > 0">
+
               <v-btn icon size="small" class="action-btn">
                 <v-icon>mdi-bell-outline</v-icon>
               </v-btn>
@@ -29,6 +32,7 @@
             <div class="profile-menu" @click="toggleDropdown">
               <v-avatar size="40" class="profile-avatar">
                 <v-icon size="large">mdi-account-circle</v-icon>
+
               </v-avatar>
               <div v-if="showDropdown" class="dropdown">
                 <a href="#"><v-icon small>mdi-account</v-icon> Profile</a>
@@ -37,6 +41,7 @@
             </div>
           </div>
         </div>
+
         <!-- Stats Cards -->
         <div class="stats-grid">
           <div class="stat-card blue">
@@ -300,6 +305,7 @@ onMounted(async () => {
 </style>
 
 <style scoped>
+
 /* Styling cho search bar và header actions */
 .search-input :deep(.v-field) {
   background: #f8f9fa;
@@ -368,4 +374,5 @@ onMounted(async () => {
 .dropdown a:hover {
   background: #f8f9fa;
 }
+
 </style>
