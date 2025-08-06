@@ -89,9 +89,6 @@
               <v-list>
                 <v-list-item @click="sortBy = 'latest'">Latest</v-list-item>
                 <v-list-item @click="sortBy = 'oldest'">Oldest</v-list-item>
-                <v-list-item @click="sortBy = 'size_asc'">Small → Large</v-list-item>
-                <v-list-item @click="sortBy = 'size_desc'">Large → Small</v-list-item>
-                <v-list-item @click="sortBy = 'name_az'">Name A → Z</v-list-item>
               </v-list>
             </v-menu>
           </div>
@@ -167,11 +164,15 @@
                     @click="item.type === 'folder' ? goToFolder(item.id) : handleView(item)"
                     style="cursor: pointer"
                   >
+                        <div class="icon-wrapper"  style="cursor: pointer">
+                
                     <v-icon small>
                       {{ item.type === 'folder' ? 'mdi-folder' : 'mdi-file-document-outline' }}
                     </v-icon>
+                    </div>
                     <span class="file-name">{{ item.name }}</span>
                   </div>
+
                 </td>
                 <td>{{ item.type === 'folder' ? '-' : formatSize(item.file_size) }}</td>
                 <td>{{ item.created_at ? formatDate(item.created_at) : '-' }}</td>

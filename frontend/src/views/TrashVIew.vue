@@ -22,26 +22,31 @@
     <!-- Main -->
     <main class="main-content">
       <div class="documents-page">
-        <!-- Header -->
-        <div class="documents-header d-flex align-center justify-space-between flex-wrap mb-4">
-          <div class="d-flex align-center">
-            <v-icon class="me-2 icon-title">mdi-delete-variant</v-icon>
-            <div>
-              <h2 class="mb-1 title-text">Recycle Bin</h2>
-              <div class="text-caption text-grey description-text">
-                When you delete something we’ll keep it here for 30 days, just in case you regret.
+        <div class="trash-header">
+          <div class="header-left">
+
+              <v-icon class="trash-icon">mdi-delete-variant</v-icon>
+
+            <div class="header-text">
+              <h1 class="header-title">Recycle Bin</h1>
+              <div class="header-description">
+                <span>When you delete something we'll keep it here for 30 days, just in case you regret.</span>
+                <v-icon class="info-icon" size="16">mdi-information-outline</v-icon>
               </div>
             </div>
           </div>
-          <v-text-field
-            v-model="search"
-            placeholder="Search bin..."
-            prepend-inner-icon="mdi-magnify"
-            density="comfortable"
-            hide-details
-            class="white-search-input"
-            style="max-width: 300px"
-          />
+          
+          <div class="header-right">
+            <v-text-field
+              v-model="search"
+              placeholder="Search bin..."
+              prepend-inner-icon="mdi-magnify"
+              density="comfortable"
+              hide-details
+              variant="outlined"
+              class="search-input"
+            />
+          </div>
         </div>
 
         <div class="files-table">
@@ -92,9 +97,12 @@
   </div>
 </template>
 
-
 <script setup>
+import { ref } from 'vue'
 import { processTrash } from '../composables/processTrash'
+
+const search = ref('')
+
 const {
   handleSidebar,
   formatSize,
@@ -106,4 +114,5 @@ const {
   handlehardDelete,
 } = processTrash()
 </script>
+
 <style scoped src="../assets/trash.css"></style>

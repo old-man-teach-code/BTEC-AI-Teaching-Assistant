@@ -1,4 +1,3 @@
-
 import { ref, computed, onMounted } from 'vue'
 import api from '../api/http'
 import { processDocument } from './processDocument' // sử dụng các ref & computed 
@@ -27,36 +26,55 @@ export function processFolder(folderFileInput, fetchDocumentsByFolder, documents
 
   // Local getFileType function to ensure consistency
   const getFileType = (file) => {
+    console.log('[getFileType] Input:', file)
+    
     // Nếu file là object với thuộc tính type (File object)
     if (file && typeof file === 'object' && file.type) {
+      console.log('[getFileType] File object detected, type:', file.type)
       if (file.type.includes('pdf')) return 'PDF'
       if (file.type.includes('word') || file.type.includes('document')) return 'DOCX'
-      if (file.type.includes('presentation')) return 'PPTX'
-      if (file.type.includes('sheet')) return 'XLSX'
+      // Fix: Check for both 'presentation' và 'presentationml'
+      if (file.type.includes('presentation') || file.type.includes('presentationml')) return 'PPTX'
+      if (file.type.includes('sheet') || file.type.includes('spreadsheetml')) return 'XLSX'
       return file.type
     }
     
     // Nếu file là string (file_type từ database hoặc filename)
     if (typeof file === 'string') {
+      console.log('[getFileType] String detected:', file)
       const lowerFile = file.toLowerCase()
       
       // Kiểm tra extension từ filename
-      if (lowerFile.endsWith('.pdf')) return 'PDF'
-      if (lowerFile.endsWith('.docx') || lowerFile.endsWith('.doc')) return 'DOCX'
-      if (lowerFile.endsWith('.pptx') || lowerFile.endsWith('.ppt')) return 'PPTX'
-      if (lowerFile.endsWith('.xlsx') || lowerFile.endsWith('.xls')) return 'XLSX'
+      if (lowerFile.endsWith('.pdf')) {
+        console.log('[getFileType] Detected PDF from extension')
+        return 'PDF'
+      }
+      if (lowerFile.endsWith('.docx') || lowerFile.endsWith('.doc')) {
+        console.log('[getFileType] Detected DOCX from extension')
+        return 'DOCX'
+      }
+      if (lowerFile.endsWith('.pptx') || lowerFile.endsWith('.ppt')) {
+        console.log('[getFileType] Detected PPTX from extension')
+        return 'PPTX'
+      }
+      if (lowerFile.endsWith('.xlsx') || lowerFile.endsWith('.xls')) {
+        console.log('[getFileType] Detected XLSX from extension')
+        return 'XLSX'
+      }
       if (lowerFile.endsWith('.txt')) return 'TXT'
       if (lowerFile.endsWith('.jpg') || lowerFile.endsWith('.jpeg') || lowerFile.endsWith('.png')) return 'IMAGE'
       
-      // Kiểm tra MIME type strings
+      // Kiểm tra MIME type strings - ƯU TIÊN kiểm tra cụ thể trước
       if (lowerFile.includes('pdf')) return 'PDF'
-      if (lowerFile.includes('word') || lowerFile.includes('document')) return 'DOCX'
-      if (lowerFile.includes('presentation')) return 'PPTX'
+      if (lowerFile.includes('presentation')) return 'PPTX' // Kiểm tra PPTX TRƯỚC
       if (lowerFile.includes('sheet')) return 'XLSX'
+      if (lowerFile.includes('word') || lowerFile.includes('document')) return 'DOCX' // Kiểm tra DOCX SAU
       
+      console.log('[getFileType] No match found, returning uppercase:', file.toUpperCase())
       return file.toUpperCase()
     }
     
+    console.log('[getFileType] No match, returning empty string')
     return ''
   }
 
@@ -174,14 +192,9 @@ const sortedAndFilteredItems = computed(() => {
       case 'oldest':
         filesInFolder.sort((a, b) => new Date(a.created_at || 0) - new Date(b.created_at || 0))
         break
-      case 'size_asc':
-        filesInFolder.sort((a, b) => (a.file_size || 0) - (b.file_size || 0))
-        break
-      case 'size_desc':
-        filesInFolder.sort((a, b) => (b.file_size || 0) - (a.file_size || 0))
-        break
-      case 'name_az':
-        filesInFolder.sort((a, b) => (a.original_name || '').localeCompare(b.original_name || ''))
+      default:
+        // Mặc định sort theo latest
+        filesInFolder.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
         break
     }
 
@@ -237,7 +250,7 @@ if (selectedType.value === 'Folder') {
 
   let result = [...folders, ...files]
 
-  // Sort toàn bộ danh sách
+  // Sort toàn bộ danh sách - CHỈ Latest và Oldest
   switch (sortBy.value) {
     case 'latest':
       result.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
@@ -245,14 +258,9 @@ if (selectedType.value === 'Folder') {
     case 'oldest':
       result.sort((a, b) => new Date(a.created_at || 0) - new Date(b.created_at || 0))
       break
-    case 'size_asc':
-      result.sort((a, b) => (a.file_size || 0) - (b.file_size || 0))
-      break
-    case 'size_desc':
-      result.sort((a, b) => (b.file_size || 0) - (a.file_size || 0))
-      break
-    case 'name_az':
-      result.sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+    default:
+      // Mặc định sort theo latest
+      result.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
       break
   }
 

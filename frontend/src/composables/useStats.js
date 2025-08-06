@@ -50,9 +50,9 @@ export function useStats() {
       // Update stats với dữ liệu thật
       stats.value = {
         documents: allDocuments.length,
-        questionsAnswered: Math.floor(allDocuments.length * 2.3), // Estimate
-        announcements: Math.floor(allDocuments.length * 0.2), // Estimate
-        missedDeadlines: Math.floor(allDocuments.length * 0.1), // Estimate
+        questionsAnswered: 0, // Chưa có dữ liệu thật
+        announcements: 0, // Chưa có dữ liệu thật
+        missedDeadlines: 0, // Chưa có dữ liệu thật
         scheduledToday: events.filter(e => {
           const today = new Date().toISOString().split('T')[0]
           const eventDate = new Date(e.start).toISOString().split('T')[0]
@@ -70,9 +70,9 @@ export function useStats() {
           
           return {
             id: doc.id,
-            title: `Upload ${doc.original_name}`,
+            title: `${doc.original_name}`,
             type: extension, // Hiển thị extension thực
-            status: doc.status === 'ready' ? 'DONE' : 'PENDING',
+            status: doc.status === 'ready' ? 'RESTORE' : 'UPLOAD',
             priority: 'MEDIUM',
             timeAgo: getTimeAgo(new Date(doc.created_at))
           }
