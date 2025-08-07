@@ -45,7 +45,7 @@ const sidebarItemsTop = [
 const sidebarItemsBottom = [
   { label: 'Trash', icon: 'mdi-delete-clock-outline', route: '/trash' },
   { label: 'Help Centre', icon: 'mdi-help-circle-outline', route: '/help' },
-  { label: 'Setting', icon: 'mdi-cog-outline', action: 'setting' },
+  { label: 'Setting', icon: 'mdi-cog-outline', route: '/settings' },
   { label: 'Return', icon: 'mdi-logout', action: 'logout', route: '/login' },
 ]
 
@@ -54,12 +54,9 @@ const handleSidebar = (item) => {
     router.push(item.route)
   } else if (item.action === 'logout') {
     // Thực hiện hành động logout
-    console.log('🔒 Logging out...')
+    console.log('Logging out...')
     localStorage.removeItem('token')
     router.push('/login')
-  } else if (item.action === 'setting') {
-    console.log('⚙️ Open setting dialog')
-    
   }
 }
 </script>
