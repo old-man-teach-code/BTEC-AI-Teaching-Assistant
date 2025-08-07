@@ -35,8 +35,8 @@ const sidebarItemsTop = [
 const sidebarItemsBottom = [
   { label: 'Trash', icon: 'mdi-delete-clock-outline', route: '/trash' },
   { label: 'Help Centre', icon: 'mdi-help-circle-outline' },
-  { label: 'Setting', icon: 'mdi-cog-outline', action: 'setting' },
-  { label: 'Return', icon: 'mdi-logout', action: 'logout' },
+  { label: 'Setting', icon: 'mdi-cog-outline', route: '/settings' },
+  { label: 'Return', icon: 'mdi-logout', route: '/dashboardhome' },
 ]
 
 const handleSidebar = (item) => {

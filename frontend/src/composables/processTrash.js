@@ -19,8 +19,8 @@ export function processTrash() {
   const sidebarItemsBottom = [
     { label: 'Trash', icon: 'mdi-delete-clock-outline', route: '/trash' },
     { label: 'Help Centre', icon: 'mdi-help-circle-outline' },
-    { label: 'Setting', icon: 'mdi-cog-outline', action: 'setting' },
-    { label: 'Logout', icon: 'mdi-logout', action: 'logout' },
+    { label: 'Setting', icon: 'mdi-cog-outline', route: 'settings' },
+    { label: 'Return', icon: 'mdi-logout', route: '/dashboardhome' },
   ]
 
   const getFileType = (file) => {
@@ -94,16 +94,36 @@ export function processTrash() {
   }
 
   const handleRestore = async (item) => {
+    console.log('[handleRestore] Starting restore for item:', item)
+    console.log('[handleRestore] Item ID:', item.id)
+    console.log('[handleRestore] Item type:', item.type)
+    
     try {
       if (item.type === 'folder') {
+        console.log('[handleRestore] Restoring folder via API...')
         await api.post(`/api/documents/folders/${item.id}/restore`)
       } else {
-        await api.post(`/api/documents/${item.id}/restore`)
+        console.log('[handleRestore] Restoring document via API...')
+        const response = await api.post(`/api/documents/${item.id}/restore`)
+        console.log('[handleRestore] Restore response:', response.data)
       }
+      
+      console.log('[handleRestore] Restore successful, refreshing trash list...')
       await fetchDocuments()
+      
+      // Trigger một event để báo cho DocumentsView biết cần refresh
+      window.dispatchEvent(new CustomEvent('document-restored', { 
+        detail: { 
+          id: item.id, 
+          type: item.type,
+          name: item.type === 'folder' ? item.name : item.original_name
+        } 
+      }))
+      
     } catch (err) {
+      console.error('[handleRestore] Restore failed:', err)
+      console.error('[handleRestore] Error response:', err.response)
       alert('Failed to restore item')
-      console.error(err)
     }
   }
 
@@ -119,11 +139,11 @@ export function processTrash() {
           ]
         }
       })
-      alert('Đã xoá vĩnh viễn')
+      alert('This file has been permanently deleted.')
       documents.value = documents.value.filter((d) => d.id !== item.id)
     } catch (e) {
       console.error(e)
-      alert('Xoá thất bại!')
+      alert('Delete Failed!')
     }
   }
 

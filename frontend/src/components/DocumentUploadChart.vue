@@ -53,12 +53,19 @@ const chartData = computed(() => {
   let data = []
   
   if (props.timeFilter === 'daily') {
-    // Last 7 days
+
+    // Last 7 days - Hiển thị từ Chủ nhật đến Thứ 7
+
     for (let i = 6; i >= 0; i--) {
       const date = new Date(now)
       date.setDate(date.getDate() - i)
       const dateStr = date.toISOString().split('T')[0]
-      labels.push(date.toLocaleDateString('en-US', { weekday: 'short' }))
+
+      
+      // Format ngày: Sun, Mon, Tue, Wed, Thu, Fri, Sat
+      const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+      labels.push(dayNames[date.getDay()])
+
       
       const count = props.documents.filter(doc => {
         const docDate = new Date(doc.created_at).toISOString().split('T')[0]
@@ -68,14 +75,19 @@ const chartData = computed(() => {
       data.push(count)
     }
   } else if (props.timeFilter === 'weekly') {
-    // Last 8 weeks
-    for (let i = 7; i >= 0; i--) {
+
+    // Last 4 weeks - Hiển thị Week 1, Week 2, Week 3, Week 4
+    for (let i = 3; i >= 0; i--) {
+
       const startOfWeek = new Date(now)
       startOfWeek.setDate(startOfWeek.getDate() - (startOfWeek.getDay() + i * 7))
       const endOfWeek = new Date(startOfWeek)
       endOfWeek.setDate(endOfWeek.getDate() + 6)
       
-      labels.push(`Week ${Math.ceil((now.getTime() - startOfWeek.getTime()) / (1000 * 60 * 60 * 24 * 7))}`)
+
+      // Format tuần: Week 1, Week 2, Week 3, Week 4
+      labels.push(`Week ${4 - i}`)
+
       
       const count = props.documents.filter(doc => {
         const docDate = new Date(doc.created_at)
@@ -85,12 +97,19 @@ const chartData = computed(() => {
       data.push(count)
     }
   } else if (props.timeFilter === 'monthly') {
-    // Last 6 months
+
+    // Last 6 months - Hiển thị Jan, Feb, Mar, Apr, May, Jun
+
     for (let i = 5; i >= 0; i--) {
       const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1)
       const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0)
       
-      labels.push(monthStart.toLocaleDateString('en-US', { month: 'short' }))
+
+      // Format tháng: Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                         'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+      labels.push(monthNames[monthStart.getMonth()])
+
       
       const count = props.documents.filter(doc => {
         const docDate = new Date(doc.created_at)

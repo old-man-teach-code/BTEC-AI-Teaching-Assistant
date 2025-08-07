@@ -72,20 +72,51 @@ export function useCalendar() {
   })
 
   const todaysEvents = computed(() => {
-    const today = new Date().toISOString().split('T')[0]
-    return events.value.filter(event => {
-      const eventDate = new Date(event.start).toISOString().split('T')[0]
-      return eventDate === today
+    const today = new Date()
+    const todayStr = today.getFullYear() + '-' + 
+                   String(today.getMonth() + 1).padStart(2, '0') + '-' + 
+                   String(today.getDate()).padStart(2, '0')
+    
+    console.log('🔍 [todaysEvents] Today local date:', todayStr)
+    
+    const filtered = events.value.filter(event => {
+      const eventDateObj = new Date(event.start)
+      const eventDate = eventDateObj.getFullYear() + '-' + 
+                       String(eventDateObj.getMonth() + 1).padStart(2, '0') + '-' + 
+                       String(eventDateObj.getDate()).padStart(2, '0')
+      
+      const matches = eventDate === todayStr
+      console.log(`  Event "${event.title}": ${event.start} -> ${eventDate} (matches today: ${matches})`)
+      return matches
     })
+    
+    console.log('  Today events found:', filtered.length, filtered.map(e => e.title))
+    return filtered
   })
 
-  // Helper functions
+  // Helper functions  
   const getEventsForDate = (date) => {
-    const dateStr = date.toISOString().split('T')[0]
-    return events.value.filter(event => {
-      const eventDate = new Date(event.start).toISOString().split('T')[0]
-      return eventDate === dateStr
+    // Sử dụng local date string thay vì UTC để tránh timezone issues
+    const dateStr = date.getFullYear() + '-' + 
+                   String(date.getMonth() + 1).padStart(2, '0') + '-' + 
+                   String(date.getDate()).padStart(2, '0')
+    
+    console.log(`🔍 [getEventsForDate] Looking for events on: ${dateStr}`)
+    
+    const matchedEvents = events.value.filter(event => {
+      // Parse event date using local timezone
+      const eventDateObj = new Date(event.start)
+      const eventDate = eventDateObj.getFullYear() + '-' + 
+                       String(eventDateObj.getMonth() + 1).padStart(2, '0') + '-' + 
+                       String(eventDateObj.getDate()).padStart(2, '0')
+      
+      const matches = eventDate === dateStr
+      console.log(`  Event "${event.title}": ${event.start} -> ${eventDate} (matches: ${matches})`)
+      return matches
     })
+    
+    console.log(`  Found ${matchedEvents.length} events for ${dateStr}`)
+    return matchedEvents
   }
 
   const formatEventTime = (datetime) => {

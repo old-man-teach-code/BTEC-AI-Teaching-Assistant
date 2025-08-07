@@ -1,5 +1,4 @@
-
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import api from '../api/http'
 import { useRouter } from 'vue-router'
 
@@ -12,8 +11,13 @@ export function processDocument() {
   const selectedFolderId = ref(null)
   const processing = ref(false)
   const selectedType = ref('all')
-  const sortBy = ref('latest')
-
+  const sortBy = ref('latest') 
+  
+  // Debug watch để kiểm tra
+  watch(sortBy, (newValue, oldValue) => {
+    console.log(`[processDocument] sortBy changed: "${oldValue}" -> "${newValue}"`)
+  })
+  
   const sidebarItemsTop = [
     { label: 'Home', icon: 'mdi-home-outline', route: '/dashboardhome' },
     { label: 'Document', icon: 'mdi-file-document-outline', route: '/documents' },
@@ -25,8 +29,8 @@ export function processDocument() {
   const sidebarItemsBottom = [
     { label: 'Trash', icon: 'mdi-delete-clock-outline', route: '/trash' },
     { label: 'Help Centre', icon: 'mdi-help-circle-outline' },
-    { label: 'Setting', icon: 'mdi-cog-outline', action: 'setting' },
-    { label: 'Return', icon: 'mdi-logout', action: 'logout' },
+    { label: 'Setting', icon: 'mdi-cog-outline', route: '/settings' },
+    { label: 'Return', icon: 'mdi-logout', route: '/dashboardhome' },
   ]
 
   const triggerFileInput = () => fileInput.value.click()
@@ -146,11 +150,6 @@ const fetchDocumentsByFolder = async (folderId) => {
   }
 }
 
-  // const handleView = (doc) => {
-  //   if (!doc.filename) return alert('File không hợp lệ')
-  //   window.open(`/files/${doc.filename}`, '_blank')
-  // }
-
   async function handleDownload(doc) {
     processing.value = true
     try {
@@ -183,7 +182,7 @@ const fetchDocumentsByFolder = async (folderId) => {
   async function handleDelete(doc) {
     processing.value = true
     try {
-      await api.delete(`/api/documents/${doc.id}`)
+   await api.delete(`/api/documents/${doc.id}?hard_delete=false`)
       alert('File has been moved to trash')
       documents.value = documents.value.filter((d) => d.id !== doc.id)
     } catch {
@@ -196,7 +195,7 @@ const fetchDocumentsByFolder = async (folderId) => {
   if (item.route) {
     router.push(item.route) 
   } else if (item.action === 'logout') {
-     router.push({ path: '/home' })
+     router.push({ path: '/dashboardhome' })
 
   }
 }
@@ -270,15 +269,6 @@ const filterByType = (type) => {
         break
       case 'oldest':
         list.sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
-        break
-      case 'size_asc':
-        list.sort((a, b) => a.file_size - b.file_size)
-        break
-      case 'size_desc':
-        list.sort((a, b) => b.file_size - a.file_size)
-        break
-      case 'name_az':
-        list.sort((a, b) => a.original_name.localeCompare(b.original_name))
         break
     }
     return list
