@@ -11,6 +11,12 @@
             :rules="[(v) => !!v || 'Title is required']"
             required
           />
+             <v-text-field
+            v-model="localEvent.description"
+            label="Discription"
+            :rules="[(v) => !!v || 'Discription is required']"
+            required
+          />
 
           <v-combobox
             v-model="localEvent.type"
@@ -42,7 +48,7 @@
           <v-text-field v-model="localEvent.location" label="Location" />
           <v-text-field
             v-model.number="localEvent.remind"
-            label="Remind Before (minutes)"
+            label="Reminder (minutes before)"
             type="number"
             :rules="[(v) => v >= 0 || 'Must be a non-negative number']"
           />
@@ -66,17 +72,7 @@ const props = defineProps({
   modelValue: Boolean,
   eventData: Object,
 })
-
-const eventTypes = ref([
-  'Meeting',
-  'Presentation',
-  'Exam',
-  'Report',
-  'Activity',
-  'Workshop',
-  'Other',
-])
-
+const eventTypes = ref(['Meeting', 'Presentation', 'Exam', 'Report', 'Activity', 'Workshop', 'Other'])
 
 const emit = defineEmits(['update:modelValue', 'save', 'delete'])
 
@@ -110,11 +106,13 @@ function toDatetimeLocalInput(date) {
 }
 
 watch(internalDialog, (val) => emit('update:modelValue', val))
+
 watch(() => localEvent.value.type, (newType) => {
   if (newType && !eventTypes.value.includes(newType)) {
     eventTypes.value.push(newType)
   }
 })
+
 const isEditMode = computed(() => !!localEvent.value?.id)
 
 const validateEndAfterStart = (v) => {
@@ -149,13 +147,12 @@ const handleSave = () => {
 const close = () => {
   internalDialog.value = false
 }
+
 function handleDelete() {
   emit('delete', localEvent.value.id)
   internalDialog.value = false
 }
 </script>
-
-
 
 <style>
 .v-dialog {
@@ -163,21 +160,17 @@ function handleDelete() {
   max-width: 550px;
 }
 .v-card-title {
-
   margin: 10px 0 0 0;
-
   font-size: 1.6em;
   font-weight: bold;
   text-align: center;
 }
 
-/* Responsive for all devices */
-
+/* Responsive styling for all devices */
 @media (max-width: 600px) {
   v-dialog {
     width: 90%;
     max-width: 300px;
-
     border-radius: 4px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   }
@@ -186,4 +179,3 @@ function handleDelete() {
   }
 }
 </style>
-
