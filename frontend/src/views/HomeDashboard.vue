@@ -10,13 +10,11 @@
           <div class="search-bar">
             <v-text-field
               variant="outlined"
-
               placeholder="Enter your search request..."
               prepend-inner-icon="mdi-magnify"
               hide-details
               density="compact"
               class="search-input"
-
             />
           </div>
           <div class="header-actions">
@@ -35,8 +33,7 @@
 
               </v-avatar>
               <div v-if="showDropdown" class="dropdown">
-                <a href="#"><v-icon small>mdi-account</v-icon> Profile</a>
-                <a href="#"><v-icon small>mdi-logout</v-icon> Logout</a>
+                <a href="#" @click.prevent="handleLogout"><v-icon small>mdi-logout</v-icon> Logout</a>
               </div>
             </div>
           </div>
@@ -66,14 +63,14 @@
             </div>
           </div>
 
-          <div class="stat-card orange">
+          <div class="stat-card orange" @click="showTomorrowEventsModal = true" style="cursor: pointer;">
             <div class="stat-icon">
               <v-icon>mdi-bullhorn</v-icon>
             </div>
             <div class="stat-content">
               <div class="stat-label">Upcoming Announcements</div>
               <div class="stat-number">{{ stats.announcements }}</div>
-              <div class="stat-meta">{{ stats.scheduledToday }} scheduled today</div>
+              <div class="stat-meta">{{ stats.announcementMessage }}</div>
             </div>
           </div>
 
@@ -215,6 +212,64 @@
         </div>
       </div>
     </main>
+    
+    <!-- Tomorrow Events Modal -->
+    <v-dialog v-model="showTomorrowEventsModal" max-width="600px">
+      <v-card>
+        <v-card-title class="text-h5 pa-4 d-flex justify-center align-center">
+          <v-icon class="mr-2">mdi-calendar-tomorrow</v-icon>
+          Tomorrow's Events
+        </v-card-title>
+        
+        <v-divider></v-divider>
+        
+        <v-card-text class="pa-4">
+          <div v-if="tomorrowEvents.length === 0" class="text-center py-8">
+            <v-icon size="64" color="grey-lighten-1" class="mb-4">mdi-calendar-blank</v-icon>
+            <p class="text-h6 text-grey">No events scheduled for tomorrow</p>
+          </div>
+          
+          <div v-else class="events-list">
+            <div
+              v-for="event in tomorrowEvents"
+              :key="event.id"
+              class="event-item-modal mb-3"
+            >
+              <div class="d-flex align-center">
+                <v-icon class="mr-3" color="primary">mdi-clock-outline</v-icon>
+                <div class="flex-grow-1">
+                  <div class="text-h6">{{ event.title }}</div>
+                  <div class="text-body-2 text-grey">
+                    {{ formatEventTime(event.start) }}
+                    <span v-if="event.location" class="ml-2">
+                      <v-icon size="small">mdi-map-marker</v-icon>
+                      {{ event.location }}
+                    </span>
+                  </div>
+                  <div v-if="event.description" class="text-body-2 mt-1">
+                    {{ event.description }}
+                  </div>
+                </div>
+              </div>
+              <v-divider v-if="event !== tomorrowEvents[tomorrowEvents.length - 1]" class="mt-3"></v-divider>
+            </div>
+          </div>
+        </v-card-text>
+        
+        <v-divider></v-divider>
+        
+        <v-card-actions class="pa-4">
+          <v-spacer></v-spacer>
+          <v-btn
+            color="primary"
+            variant="text"
+            @click="showTomorrowEventsModal = false"
+          >
+            Close
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
@@ -223,156 +278,44 @@
 import { onMounted } from 'vue'
 import SideBar from '@/views/SideBar.vue'
 import DocumentUploadChart from '@/components/DocumentUploadChart.vue'
+import { useHomeDashboard } from '@/composables'
 
-// Composables
-import {
-  useAuth,
-  useCalendar,
-  useStats,
-  useEvents,
-  useColors,
-  useUI
-} from '@/composables'
-
-// Auth composable
-const { username, loadUserProfile } = useAuth()
-
-// Calendar composable
+// Use the HomeDashboard composable
 const {
-  events,
+  // State
+  showTomorrowEventsModal,
+  username,
   weekdays,
   currentMonthYear,
   calendarDays,
   todaysEvents,
-  formatEventTime,
-  previousMonth,
-  nextMonth,
-  selectDate
-} = useCalendar()
-
-// Stats composable
-const {
   stats,
   recentActivities,
   documents,
   notificationCount,
-  fetchStats
-} = useStats()
-
-// Events composable
-const { fetchCalendarEvents } = useEvents()
-
-// Colors composable
-const {
-  getTypeColor,
-  getStatusColor,
-  getPriorityColor
-} = useColors()
-
-// UI composable
-const {
+  tomorrowEvents,
   showDropdown,
   timeFilter,
-  toggleDropdown,
-  setVisible
-} = useUI()
 
-// Main data loading function
-const loadDashboardData = async () => {
-  // Load user profile trước
-  await loadUserProfile()
-  
-  // Fetch calendar events
-  const calendarEvents = await fetchCalendarEvents()
-  events.value = calendarEvents
-  
-  // Fetch stats với events data
-  await fetchStats(calendarEvents)
-}
+  // Methods
+  formatEventTime,
+  previousMonth,
+  nextMonth,
+  selectDate,
+  getTypeColor,
+  getStatusColor,
+  getPriorityColor,
+  toggleDropdown,
+  handleLogout,
+  initDashboard
+} = useHomeDashboard()
 
 onMounted(async () => {
-  await loadDashboardData()
-  
-  // Animation cho welcome card
-  setTimeout(() => {
-    setVisible(true)
-  }, 300)
+  await initDashboard()
 })
 </script>
 
 <style>
 @import '../assets/db.css';
-</style>
-
-<style scoped>
-
-/* Styling cho search bar và header actions */
-.search-input :deep(.v-field) {
-  background: #f8f9fa;
-  border: 1px solid #e9ecef;
-  border-radius: 8px;
-}
-
-.search-input :deep(.v-field__input) {
-  color: #6c757d;
-}
-
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-/* Notification button với vòng bo tròn */
-.action-btn {
-  background: #f8f9fa !important;
-  border: 1px solid #e9ecef;
-  color: #6c757d !important;
-  width: 40px;
-  height: 40px;
-  border-radius: 50% !important;
-}
-
-.action-btn:hover {
-  background: #e9ecef !important;
-  color: #495057 !important;
-}
-
-/* Profile avatar */
-.profile-avatar {
-  cursor: pointer;
-  border: 2px solid #e9ecef;
-}
-
-.profile-avatar:hover {
-  border-color: #3b82f6;
-}
-
-.dropdown {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  background: white;
-  border: 1px solid #e9ecef;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  z-index: 1000;
-  min-width: 150px;
-  margin-top: 0.5rem;
-}
-
-.dropdown a {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  color: #495057;
-  text-decoration: none;
-  transition: background-color 0.2s;
-}
-
-.dropdown a:hover {
-  background: #f8f9fa;
-}
-
+@import '../assets/home-dashboard.css';
 </style>

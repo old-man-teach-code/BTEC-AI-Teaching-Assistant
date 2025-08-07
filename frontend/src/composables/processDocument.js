@@ -29,8 +29,8 @@ export function processDocument() {
   const sidebarItemsBottom = [
     { label: 'Trash', icon: 'mdi-delete-clock-outline', route: '/trash' },
     { label: 'Help Centre', icon: 'mdi-help-circle-outline' },
-    { label: 'Setting', icon: 'mdi-cog-outline', action: 'setting' },
-    { label: 'Return', icon: 'mdi-logout', action: 'logout' },
+    { label: 'Setting', icon: 'mdi-cog-outline', route: '/settings' },
+    { label: 'Return', icon: 'mdi-logout', route: '/dashboardhome' },
   ]
 
   const triggerFileInput = () => fileInput.value.click()
@@ -195,7 +195,7 @@ const fetchDocumentsByFolder = async (folderId) => {
   if (item.route) {
     router.push(item.route) 
   } else if (item.action === 'logout') {
-     router.push({ path: '/home' })
+     router.push({ path: '/dashboardhome' })
 
   }
 }

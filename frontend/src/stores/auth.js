@@ -1,7 +1,6 @@
 import { defineStore } from 'pinia'
 import api from '../api/http'
 import * as authApi from '../api/auth'
-import * as userApi from '../api/user'
 import router from '@/router'
 
 export const useAuthStore = defineStore('auth', {
@@ -18,10 +17,13 @@ export const useAuthStore = defineStore('auth', {
       this.jwt = token
       if (token) {
         localStorage.setItem('jwt_token', token)
+        // Manually set header để đảm bảo
         api.defaults.headers.common['Authorization'] = `Bearer ${token}`
+        console.log('🔑 Token set:', token.substring(0, 20) + '...')
       } else {
         localStorage.removeItem('jwt_token')
         delete api.defaults.headers.common['Authorization']
+        console.log('🗑️ Token cleared')
       }
     },
     async login(credentials) {
@@ -38,21 +40,34 @@ export const useAuthStore = defineStore('auth', {
     logout() {
       this.jwt = null
       this.user = null
-      this.setJwt(null) // Clear JWT token
-      this.$patch({ isAuthenticated: false })
-      router.push('/auth') // Redirect to login page
+      localStorage.removeItem('jwt_token')
+      // Redirect được xử lý bởi http.js interceptor khi 401
+      router.push('/auth')
     },
     setUser(user) {
       this.user = user
     },
+    async updateUser(userData) {
+      try {
+        const response = await api.put('/api/users/me', userData)
+        this.setUser(response.data)
+        return response.data
+      } catch (error) {
+        throw error
+      }
+    },
     async fetchUser() {
       if (this.isAuthenticated) {
         try {
-          const response = await userApi.fetchUser()
+          console.log('Fetching user with token:', this.jwt?.substring(0, 20) + '...')
+          console.log('Authorization header:', api.defaults.headers.common['Authorization']?.substring(0, 30) + '...')
+          
+          const response = await api.get('/api/users/me')
+          console.log('User fetched successfully:', response.data)
           this.setUser(response.data) 
           return response.data
         } catch (error) {
-          
+          console.error('Failed to fetch user:', error.response?.status, error.response?.data)
           this.logout()
           throw error
         }

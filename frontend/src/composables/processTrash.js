@@ -19,8 +19,8 @@ export function processTrash() {
   const sidebarItemsBottom = [
     { label: 'Trash', icon: 'mdi-delete-clock-outline', route: '/trash' },
     { label: 'Help Centre', icon: 'mdi-help-circle-outline' },
-    { label: 'Setting', icon: 'mdi-cog-outline', action: 'setting' },
-    { label: 'Logout', icon: 'mdi-logout', action: 'logout' },
+    { label: 'Setting', icon: 'mdi-cog-outline', route: 'settings' },
+    { label: 'Return', icon: 'mdi-logout', route: '/dashboardhome' },
   ]
 
   const getFileType = (file) => {
@@ -120,7 +120,6 @@ export function processTrash() {
         } 
       }))
       
-      alert('Item restored successfully!')
     } catch (err) {
       console.error('[handleRestore] Restore failed:', err)
       console.error('[handleRestore] Error response:', err.response)
