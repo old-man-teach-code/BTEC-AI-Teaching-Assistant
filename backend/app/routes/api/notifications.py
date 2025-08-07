@@ -2,7 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import Optional
 
-from dependencies.deps import get_db
+from dependencies.deps import get_db, get_current_user
+from models.user import User
 from schemas.notification import (
     NotificationCreate,
     NotificationUpdate,
@@ -36,7 +37,8 @@ router = APIRouter()
 @router.post("/", response_model=NotificationResponse, summary="Tạo thông báo mới")
 def create_notification_endpoint(
     notification: NotificationCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     """
     Tạo thông báo mới với các loại:
@@ -74,7 +76,8 @@ def get_all_notifications_endpoint(
     limit: int = Query(100, ge=1, le=1000, description="Số lượng tối đa"),
     user_id: Optional[int] = Query(None, gt=0, description="Lọc theo user ID"),
     notification_type: Optional[NotificationType] = Query(None, description="Lọc theo loại thông báo (respond/event/general)"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     """
     Lấy danh sách tất cả thông báo với các bộ lọc:
@@ -96,7 +99,8 @@ def get_notifications_by_type_and_status_endpoint(
     user_id: Optional[int] = Query(None, gt=0, description="Lọc theo user ID"),
     skip: int = Query(0, ge=0, description="Số lượng bỏ qua"),
     limit: int = Query(100, ge=1, le=1000, description="Số lượng tối đa"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     """
     Lọc thông báo theo loại và trạng thái tương ứng:
@@ -162,10 +166,49 @@ def get_notifications_by_type_and_status_endpoint(
     )
 
 
+@router.get("/filter-all-status", response_model=NotificationListResponse, summary="Lọc tất cả thông báo theo tất cả trạng thái")
+def get_all_notifications_with_status_filter_endpoint(
+    event_status: Optional[NotificationEventStatus] = Query(None, description="Trạng thái EVENT (unread/read)"),
+    respond_status: Optional[NotificationRespondStatus] = Query(None, description="Trạng thái RESPOND (pending_response/responded)"),
+    general_status: Optional[NotificationGeneralStatus] = Query(None, description="Trạng thái GENERAL (pending/sent)"),
+    user_id: Optional[int] = Query(None, gt=0, description="Lọc theo user ID"),
+    skip: int = Query(0, ge=0, description="Số lượng bỏ qua"),
+    limit: int = Query(100, ge=1, le=1000, description="Số lượng tối đa"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Lọc tất cả thông báo theo tất cả các trạng thái có thể:
+    
+    **Có thể kết hợp các filter:**
+    - event_status: "unread" hoặc "read" (cho loại EVENT)
+    - respond_status: "pending_response" hoặc "responded" (cho loại RESPOND)  
+    - general_status: "pending" hoặc "sent" (cho loại GENERAL)
+    - user_id: Lọc theo user cụ thể
+    
+    **Ví dụ:**
+    - `/filter-all-status?event_status=unread&respond_status=pending_response`
+    - `/filter-all-status?general_status=sent&user_id=1`
+    - `/filter-all-status?event_status=read&respond_status=responded&general_status=pending`
+    - `/filter-all-status` (lấy tất cả không lọc)
+    """
+    return service_get_notifications_by_type_and_status(
+        db=db,
+        notification_type=None,  # Không lọc theo type, lấy tất cả
+        event_status=event_status,
+        respond_status=respond_status,
+        general_status=general_status,
+        user_id=user_id,
+        skip=skip,
+        limit=limit
+    )
+
+
 @router.get("/{notification_id}", response_model=NotificationResponse, summary="Lấy thông báo theo ID")
 def get_notification_endpoint(
     notification_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     """Lấy thông tin chi tiết của một thông báo"""
     return service_get_notification(db, notification_id)
@@ -175,7 +218,8 @@ def get_notification_endpoint(
 def update_notification_endpoint(
     notification_id: int,
     notification_update: NotificationUpdate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     """Cập nhật thông tin thông báo"""
     return service_update_notification(db, notification_id, notification_update)
@@ -184,7 +228,8 @@ def update_notification_endpoint(
 @router.delete("/{notification_id}", summary="Xóa thông báo")
 def delete_notification_endpoint(
     notification_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     """Xóa một thông báo"""
     return service_delete_notification(db, notification_id)
@@ -193,7 +238,8 @@ def delete_notification_endpoint(
 @router.patch("/respond-status", summary="Cập nhật trạng thái RESPOND theo message")
 def update_respond_status_by_message_endpoint(
     status_update: NotificationRespondStatusUpdate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     """
     Cập nhật trạng thái phản hồi cho tất cả thông báo RESPOND có cùng message
@@ -207,7 +253,8 @@ def update_respond_status_by_message_endpoint(
 @router.patch("/general-status", summary="Cập nhật trạng thái GENERAL theo message")
 def update_general_status_by_message_endpoint(
     status_update: NotificationGeneralStatusUpdate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     """
     Cập nhật trạng thái cho tất cả thông báo GENERAL có cùng message
@@ -221,7 +268,8 @@ def update_general_status_by_message_endpoint(
 @router.get("/stats/{user_id}", response_model=NotificationStatsResponse, summary="Thống kê thông báo")
 def get_notification_stats_endpoint(
     user_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     """Lấy thống kê thông báo của user"""
     return service_get_notification_stats(db, user_id)
