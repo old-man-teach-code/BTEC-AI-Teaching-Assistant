@@ -40,6 +40,12 @@ def service_create_notification(
     """
     Service tạo notification mới
     
+    Tự động set trạng thái mặc định:
+    - Tất cả thông báo: event_status = UNREAD
+    - RESPOND: respond_status = PENDING_RESPONSE  
+    - GENERAL: general_status = PENDING
+    - EVENT: chỉ có event_status = UNREAD
+    
     Args:
         db: Database session
         notification_data: Dữ liệu notification cần tạo

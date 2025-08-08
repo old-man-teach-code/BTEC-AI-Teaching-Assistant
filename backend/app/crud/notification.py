@@ -16,13 +16,14 @@ from schemas.notification import NotificationCreate, NotificationUpdate
 def auto_set_status(notification_type: NotificationType, event_id: Optional[int] = None) -> Dict:
     """Tự động set status dựa trên notification_type"""
     status_dict = {
-        'event_status': None,
+        'event_status': NotificationEventStatus.UNREAD,  # Tất cả thông báo đều có trạng thái chưa đọc
         'respond_status': None, 
         'general_status': None
     }
     
     if notification_type == NotificationType.EVENT:
-        status_dict['event_status'] = NotificationEventStatus.UNREAD
+        # EVENT đã có event_status = UNREAD ở trên
+        pass
     elif notification_type == NotificationType.RESPOND:
         status_dict['respond_status'] = NotificationRespondStatus.PENDING_RESPONSE
     elif notification_type == NotificationType.GENERAL:
@@ -43,7 +44,15 @@ def validate_status_for_type(notification_type: NotificationType, status_update:
 
 
 def create_notification(db: Session, notification: NotificationCreate) -> Notification:
-    """Tạo notification mới với auto-status"""
+    """
+    Tạo notification mới với auto-status
+    
+    Tự động set trạng thái:
+    - Tất cả loại thông báo: event_status = UNREAD
+    - RESPOND: respond_status = PENDING_RESPONSE
+    - GENERAL: general_status = PENDING
+    - EVENT: chỉ có event_status = UNREAD
+    """
     # Auto-set status dựa trên notification_type
     status_dict = auto_set_status(notification.notification_type, notification.event_id)
     
