@@ -52,6 +52,7 @@ def create_notification_endpoint(
        - event_id: ID của sự kiện (bắt buộc)
        - scheduled_at: null (bắt buộc)
        - Trạng thái tự động: event_status=unread
+
        
     3. GENERAL: Thông báo chung có lập lịch
        - event_id: null (bắt buộc)
@@ -59,6 +60,7 @@ def create_notification_endpoint(
        - Trạng thái tự động: event_status=unread, general_status=pending
     
     **Lưu ý:** Tất cả thông báo khi tạo mới đều có event_status="unread"
+
     
     Example:
     ```json
