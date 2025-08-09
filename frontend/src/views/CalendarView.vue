@@ -1,10 +1,10 @@
 <template>
-  <div class="calendar-layout">
+  <div class="page-wrapper">
     <!-- Sidebar bên trái -->
     <SideBar />
 
     <!-- Nội dung chính -->
-    <div class="calendar-main">
+    <div class="main-content calendar-main">
        <v-btn icon color="primary" style="width: 32px; height: 32px;" @click="handleCreate" class="add-event-btn">
           <v-icon>mdi-plus</v-icon>
         </v-btn>
@@ -195,16 +195,11 @@ onMounted(loadEvents)
 </script>
 
 <style scoped>
-.calendar-layout {
-  display: flex;
-  height: 100vh;
-  background-color: #f9fafb;
-}
-
 .calendar-main {
   flex: 1;
   margin: 0 auto 0; 
- 
+  padding: 0;
+  max-width: 100%;
 }
 
 .sx-vue-calendar-wrapper {
@@ -225,7 +220,45 @@ onMounted(loadEvents)
   font-size: 10px;
 }
 
-/* Reponsive cho mọi thiết bị */
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .main-content {
+    padding: 5rem 0.5rem 1rem 0.5rem;
+  }
+
+  .calendar-main {
+    margin: 0;
+    padding: 0;
+  }
+
+  .add-event-btn {
+    right: 10px;
+    top: 10px;
+    margin: 4px 10px;
+    font-size: 8px;
+  }
+  
+  .sx-vue-calendar-wrapper {
+    width: 100%;
+    height: calc(100vh - 100px);
+    font-size: 10px;    
+    margin: 20px auto;
+  }    
+}
+
+/* Tablet responsive */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .main-content {
+    padding: 2rem 1rem;
+  }
+
+  .add-event-btn {
+    right: 5%;
+    top: 20px;
+  }
+}
+
+/* Reponsive cho desktop lớn */
 @media (max-width: 1000px) {
   .add-event-btn {
     right: 0px;
@@ -234,7 +267,6 @@ onMounted(loadEvents)
     font-size: 8px;
   }
   .sx-vue-calendar-wrapper {
-   
     width: 100%;
     height: 100vh;
     font-size: 10px;    
@@ -245,7 +277,5 @@ onMounted(loadEvents)
     max-width: 500px;
     font-size: 12px;
   }   
-}    
-       
-   
+}
 </style>

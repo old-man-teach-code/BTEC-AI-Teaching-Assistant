@@ -1,25 +1,6 @@
 <template>
   <div class="page-wrapper">
-    <aside class="sidebar">
-      <div class="sidebar-header">
-        <div class="collapse-icon">«</div>
-      </div>
-      <ul class="menu">
-        <li v-for="item in sidebarItemsTop" :key="item.label" @click="handleSidebar(item)">
-          <v-icon>{{ item.icon }}</v-icon>
-
-          <span>{{ item.label }}</span>
-        </li>
-      </ul>
-
-      <ul class="menu menu-bottom">
-        <li v-for="item in sidebarItemsBottom" :key="item.label" @click="handleSidebar(item)">
-          <v-icon>{{ item.icon }}</v-icon>
-
-          <span>{{ item.label }}</span>
-        </li>
-      </ul>
-    </aside>
+    <SideBar />
 
     <main class="main-content">
       <div class="documents-page">
@@ -154,11 +135,13 @@
             </thead>
             <tbody>
               <tr v-if="selectedFile">
-                <td>{{ selectedFile.name }}</td>
-                <td>{{ getFileType(selectedFile) }}</td>
+                <td data-label="Name">{{ selectedFile.name }}</td>
+                <td data-label="Type">{{ getFileType(selectedFile) }}</td>
+                <td data-label="Upload At">-</td>
+                <td data-label="Options">-</td>
               </tr>
               <tr v-for="(item, index) in sortedAndFilteredItems" :key="index">
-                <td class="file-cell">
+                <td class="file-cell" data-label="Name">
                   <div
                     class="file-content"
                     @click="item.type === 'folder' ? goToFolder(item.id) : handleView(item)"
@@ -174,9 +157,9 @@
                   </div>
 
                 </td>
-                <td>{{ item.type === 'folder' ? '-' : formatSize(item.file_size) }}</td>
-                <td>{{ item.created_at ? formatDate(item.created_at) : '-' }}</td>
-                <td class="action-icons">
+                <td data-label="Size">{{ item.type === 'folder' ? '-' : formatSize(item.file_size) }}</td>
+                <td data-label="Upload At">{{ item.created_at ? formatDate(item.created_at) : '-' }}</td>
+                <td class="action-icons" data-label="Actions">
                   <template v-if="item.type === 'file'">
                     <v-icon small class="mr-2" color="primary" @click="handleDownload(item)"
                       >mdi-cloud-download-outline</v-icon
@@ -209,6 +192,7 @@
 </template>
 
 <script setup>
+import SideBar from './SideBar.vue'
 import { processDocument } from '../composables/processDocument'
 import { processFolder } from '../composables/processFolder'
 import { ref, onMounted } from 'vue'
@@ -224,14 +208,11 @@ onMounted(() => {
 const {
   selectedFile,
   fileInput,
-  sidebarItemsTop,
-  sidebarItemsBottom,
   triggerFileInput,
   handleFileSelect,
   handleDownload,
   handleDelete,
   handleView,
-  handleSidebar,
   formatSize,
   formatDate,
   getFileType,
