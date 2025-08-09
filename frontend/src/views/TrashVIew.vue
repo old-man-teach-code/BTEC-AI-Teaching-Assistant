@@ -83,6 +83,7 @@
             <tbody>
               <tr v-for="doc in filteredDocuments" :key="doc.id">
                 <td data-label="Select">
+
                   <v-checkbox
                     v-model="selectedDocuments"
                     :value="doc.id"
@@ -91,7 +92,9 @@
                     color="primary"
                   />
                 </td>
+
                 <td class="file-cell" data-label="Name">
+
                   <div class="file-content">
                     <v-icon small class="me-1">
                       {{ doc.type === 'folder' ? 'mdi-folder' : 'mdi-file-document-outline' }}
@@ -128,6 +131,7 @@
 
 <script setup>
 import SideBar from './SideBar.vue'
+
 import { ref, watch } from 'vue'
 import { processTrash } from '../composables/processTrash'
 
