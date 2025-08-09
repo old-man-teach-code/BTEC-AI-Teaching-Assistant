@@ -22,8 +22,7 @@ export function processDocument() {
     { label: 'Home', icon: 'mdi-home-outline', route: '/dashboardhome' },
     { label: 'Document', icon: 'mdi-file-document-outline', route: '/documents' },
     { label: 'Calendar', icon: 'mdi-calendar-clock-outline', route: '/calendar' },
-    { label: 'Notifications', icon: 'mdi-bell-outline' },
-    { label: 'Statistical', icon: 'mdi-chart-line' },
+    { label: 'Statistical', icon: 'mdi-chart-line', route: '/chart' },
   ]
 
   const sidebarItemsBottom = [
@@ -168,23 +167,21 @@ const fetchDocumentsByFolder = async (folderId) => {
     processing.value = false
   }
 
-  async function handleProcess(doc) {
-    processing.value = true
-    try {
-      await api.post(`/documents/process/${doc.id}`)
-      alert('Processing successful!')
-    } catch (e) {
-      alert('Processing failed!')
-    }
-    processing.value = false
-  }
-
   async function handleDelete(doc) {
     processing.value = true
     try {
-   await api.delete(`/api/documents/${doc.id}?hard_delete=false`)
+      await api.delete(`/api/documents/${doc.id}?hard_delete=false`)
       alert('File has been moved to trash')
       documents.value = documents.value.filter((d) => d.id !== doc.id)
+      
+      // Trigger event để báo cho ChartView biết cần refresh
+      window.dispatchEvent(new CustomEvent('document-deleted', { 
+        detail: { 
+          id: doc.id,
+          name: doc.original_name
+        } 
+      }))
+      
     } catch {
       alert('Delete failure!')
     }
@@ -284,7 +281,6 @@ const filterByType = (type) => {
     triggerFileInput,
     handleFileSelect,
     handleDownload,
-    handleProcess,
     handleDelete,
     // handleView,
     handleSidebar,

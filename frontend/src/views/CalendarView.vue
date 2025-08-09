@@ -158,12 +158,19 @@ const saveEvent = async (eventData) => {
 
     if (eventData.id) {
       await updateEvent(eventData.id, payload)
+      console.log('Event updated:', eventData.title)
     } else {
       await createEvent(payload)
+      console.log('Event created:', eventData.title)
     }
 
     showDialog.value = false
     await loadEvents()
+    
+    // Notify charts to update for data synchronization
+    window.dispatchEvent(new CustomEvent('events-updated', {
+      detail: { action: eventData.id ? 'update' : 'create', eventId: eventData.id }
+    }))
   } catch (e) {
     console.error('Save event error:', e)
   }
@@ -172,8 +179,14 @@ const saveEvent = async (eventData) => {
 const handleDelete = async (eventId) => {
   try {
     await deleteEvent(eventId)
+    console.log('Event deleted:', eventId)
     showDialog.value = false
     await loadEvents()
+    
+    // Notify charts to update for data synchronization
+    window.dispatchEvent(new CustomEvent('events-updated', {
+      detail: { action: 'delete', eventId }
+    }))
   } catch (e) {
     console.error(' Delete event error:', e)
   }

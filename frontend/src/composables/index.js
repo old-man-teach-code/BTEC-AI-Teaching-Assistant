@@ -6,3 +6,7 @@ export { useEvents } from './useEvents'
 export { useColors } from './useColors'
 export { useUI } from './useUI'
 export { useHomeDashboard } from './useHomeDashboard'
+
+export { useSettings } from './useSettings'
+
+
