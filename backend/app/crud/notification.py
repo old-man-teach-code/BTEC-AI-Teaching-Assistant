@@ -16,13 +16,14 @@ from schemas.notification import NotificationCreate, NotificationUpdate
 def auto_set_status(notification_type: NotificationType, event_id: Optional[int] = None) -> Dict:
     """Tự động set status dựa trên notification_type"""
     status_dict = {
-        'event_status': None,
+        'event_status': NotificationEventStatus.UNREAD,  # Tất cả thông báo đều có trạng thái chưa đọc
         'respond_status': None, 
         'general_status': None
     }
     
     if notification_type == NotificationType.EVENT:
-        status_dict['event_status'] = NotificationEventStatus.UNREAD
+        # EVENT đã có event_status = UNREAD ở trên
+        pass
     elif notification_type == NotificationType.RESPOND:
         status_dict['respond_status'] = NotificationRespondStatus.PENDING_RESPONSE
     elif notification_type == NotificationType.GENERAL:
@@ -43,7 +44,15 @@ def validate_status_for_type(notification_type: NotificationType, status_update:
 
 
 def create_notification(db: Session, notification: NotificationCreate) -> Notification:
-    """Tạo notification mới với auto-status"""
+    """
+    Tạo notification mới với auto-status
+    
+    Tự động set trạng thái:
+    - Tất cả loại thông báo: event_status = UNREAD
+    - RESPOND: respond_status = PENDING_RESPONSE
+    - GENERAL: general_status = PENDING
+    - EVENT: chỉ có event_status = UNREAD
+    """
     # Auto-set status dựa trên notification_type
     status_dict = auto_set_status(notification.notification_type, notification.event_id)
     
@@ -263,7 +272,7 @@ def get_notifications_stats(db: Session, user_id: int) -> Dict:
 
 def get_notifications_by_type_and_status(
     db: Session,
-    notification_type: NotificationType,
+    notification_type: Optional[NotificationType] = None,
     event_status: Optional[NotificationEventStatus] = None,
     respond_status: Optional[NotificationRespondStatus] = None,
     general_status: Optional[NotificationGeneralStatus] = None,
@@ -272,9 +281,11 @@ def get_notifications_by_type_and_status(
     limit: int = 100
 ) -> List[Notification]:
     """Lọc notifications theo loại và trạng thái tương ứng"""
-    query = db.query(Notification).filter(
-        Notification.notification_type == notification_type
-    )
+    query = db.query(Notification)
+    
+    # Lọc theo notification_type nếu có
+    if notification_type:
+        query = query.filter(Notification.notification_type == notification_type)
     
     # Lọc theo user nếu có
     if user_id:
@@ -287,22 +298,32 @@ def get_notifications_by_type_and_status(
         query = query.filter(Notification.respond_status == respond_status)
     elif notification_type == NotificationType.GENERAL and general_status:
         query = query.filter(Notification.general_status == general_status)
+    elif notification_type is None:
+        # Khi không chỉ định loại, cho phép lọc theo tất cả status
+        if event_status:
+            query = query.filter(Notification.event_status == event_status)
+        if respond_status:
+            query = query.filter(Notification.respond_status == respond_status)  
+        if general_status:
+            query = query.filter(Notification.general_status == general_status)
     
     return query.order_by(desc(Notification.created_at)).offset(skip).limit(limit).all()
 
 
 def count_notifications_by_type_and_status(
     db: Session,
-    notification_type: NotificationType,
+    notification_type: Optional[NotificationType] = None,
     event_status: Optional[NotificationEventStatus] = None,
     respond_status: Optional[NotificationRespondStatus] = None,
     general_status: Optional[NotificationGeneralStatus] = None,
     user_id: Optional[int] = None
 ) -> int:
     """Đếm số lượng notifications theo loại và trạng thái"""
-    query = db.query(Notification).filter(
-        Notification.notification_type == notification_type
-    )
+    query = db.query(Notification)
+    
+    # Lọc theo notification_type nếu có
+    if notification_type:
+        query = query.filter(Notification.notification_type == notification_type)
     
     # Lọc theo user nếu có
     if user_id:
@@ -315,5 +336,13 @@ def count_notifications_by_type_and_status(
         query = query.filter(Notification.respond_status == respond_status)
     elif notification_type == NotificationType.GENERAL and general_status:
         query = query.filter(Notification.general_status == general_status)
+    elif notification_type is None:
+        # Khi không chỉ định loại, cho phép lọc theo tất cả status
+        if event_status:
+            query = query.filter(Notification.event_status == event_status)
+        if respond_status:
+            query = query.filter(Notification.respond_status == respond_status)  
+        if general_status:
+            query = query.filter(Notification.general_status == general_status)
     
     return query.count()

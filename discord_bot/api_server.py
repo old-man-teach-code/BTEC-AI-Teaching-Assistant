@@ -453,6 +453,7 @@ async def debug_sender_id(sender_id: str):
     
     return result
 
+
 @app.get("/")
 async def root():
     """Root endpoint"""
@@ -461,7 +462,10 @@ async def root():
         "endpoints": [
             "/send_message - POST: Gửi tin nhắn đến Discord",
             "/send_reminder - POST: Gửi reminder",
+            "/guilds - GET: Lấy tất cả servers/guilds",
+            "/guilds/{guild_id}/channels - GET: Lấy channels trong guild",
             "/health - GET: Kiểm tra trạng thái",
+            "/debug/{sender_id} - GET: Debug user/channel",
             "/docs - GET: API documentation"
         ]
     }

@@ -132,6 +132,7 @@ const handleCreate = () => {
 
   editEvent.value = {
     title: '',
+   
     type: '',
     startTime: now.toISOString().slice(0, 16),
     endTime: oneHourLater.toISOString().slice(0, 16),
