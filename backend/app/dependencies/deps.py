@@ -6,6 +6,7 @@ from jose import JWTError
 from core.security import decode_access_token
 from crud.user import get_user
 from typing import Optional
+from models.user import User
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
@@ -17,7 +18,7 @@ def get_db():
         db.close()
 
 
-def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
     """
     Retrieves the current authenticated user based on the provided JWT token.
 
@@ -44,7 +45,7 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     return user
 
 
-def get_current_user_optional(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+def get_current_user_optional(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> Optional[User]:
     """
     Retrieves the current authenticated user based on the provided JWT token.
     Returns None if authentication fails instead of raising an exception.
@@ -66,7 +67,7 @@ def get_current_user_optional(token: str = Depends(oauth2_scheme), db: Session =
         return None
 
 
-def get_optional_auth(request: Request, db: Session = Depends(get_db)) -> Optional[object]:
+def get_optional_auth(request: Request, db: Session = Depends(get_db)) -> Optional[User]:
     """
     Optional authentication that doesn't require a token.
     Returns None if no authentication is provided or if authentication fails.

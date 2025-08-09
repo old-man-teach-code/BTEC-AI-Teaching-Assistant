@@ -5,6 +5,7 @@
     <main class="main-content">
       <div class="dashboard">
         <!-- Header with Search -->
+
         <DashboardHeader 
           :username="username"
           :notification-count="notificationCount"
@@ -18,6 +19,7 @@
           :stats="stats"
           @show-tomorrow-events="showTomorrowEventsModal = true"
         />
+
 
         <!-- Main Content Grid -->
         <div class="content-grid">
@@ -65,6 +67,7 @@
     </main>
     
     <!-- Tomorrow Events Modal -->
+
     <TomorrowEventsModal
       v-model="showTomorrowEventsModal"
       :tomorrow-events="tomorrowEvents"
@@ -78,11 +81,13 @@
 import { onMounted } from 'vue'
 import SideBar from '@/views/SideBar.vue'
 import DocumentUploadChart from '@/components/DocumentUploadChart.vue'
+
 import DashboardHeader from '@/components/DashboardHeader.vue'
 import StatsGrid from '@/components/StatsGrid.vue'
 import DashboardCalendar from '@/components/DashboardCalendar.vue'
 import RecentActivities from '@/components/RecentActivities.vue'
 import TomorrowEventsModal from '@/components/TomorrowEventsModal.vue'
+
 import { useHomeDashboard } from '@/composables'
 
 // Use the HomeDashboard composable

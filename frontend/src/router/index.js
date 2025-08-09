@@ -9,7 +9,9 @@ import TrashVIew from '../views/TrashVIew.vue'
 import CalendarView from '@/views/CalendarView.vue'
 import HomeDashboard from '../views/HomeDashboard.vue'
 import SettingsView from '../views/SettingsView.vue'
+
 import ChartView from '../views/ChartView.vue'
+
 
 
 

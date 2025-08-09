@@ -17,6 +17,8 @@
               and role within the organization.
             </p>
             </div>
+
+
             <div class="profile-card">
               <div class="profile-info">
                 <div class="profile-avatar">

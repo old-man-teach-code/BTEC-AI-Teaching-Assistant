@@ -40,6 +40,12 @@ def service_create_notification(
     """
     Service tạo notification mới
     
+    Tự động set trạng thái mặc định:
+    - Tất cả thông báo: event_status = UNREAD
+    - RESPOND: respond_status = PENDING_RESPONSE  
+    - GENERAL: general_status = PENDING
+    - EVENT: chỉ có event_status = UNREAD
+    
     Args:
         db: Database session
         notification_data: Dữ liệu notification cần tạo
@@ -64,7 +70,12 @@ def service_create_notification(
                 detail="event_id should only be set for EVENT notifications"
             )
         
-        if notification_data.notification_type == NotificationType.GENERAL and notification_data.scheduled_at:
+        if notification_data.notification_type == NotificationType.GENERAL:
+            if not notification_data.scheduled_at:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="scheduled_at is required for GENERAL notifications"
+                )
             # Xử lý so sánh datetime với timezone
             if notification_data.scheduled_at.tzinfo is not None:
                 # scheduled_at có timezone, convert datetime.now() sang UTC
@@ -404,7 +415,7 @@ def service_get_notification_stats(db: Session, user_id: int) -> NotificationSta
 
 def service_get_notifications_by_type_and_status(
     db: Session,
-    notification_type: NotificationType,
+    notification_type: Optional[NotificationType] = None,
     event_status: Optional[NotificationEventStatus] = None,
     respond_status: Optional[NotificationRespondStatus] = None,
     general_status: Optional[NotificationGeneralStatus] = None,
@@ -417,7 +428,7 @@ def service_get_notifications_by_type_and_status(
     
     Args:
         db: Database session
-        notification_type: Loại thông báo (EVENT/RESPOND/GENERAL)
+        notification_type: Loại thông báo (EVENT/RESPOND/GENERAL) hoặc None để lấy tất cả
         event_status: Trạng thái EVENT (chỉ cho EVENT type)
         respond_status: Trạng thái RESPOND (chỉ cho RESPOND type)
         general_status: Trạng thái GENERAL (chỉ cho GENERAL type)
@@ -432,7 +443,7 @@ def service_get_notifications_by_type_and_status(
         HTTPException: Nếu có lỗi validation hoặc lấy dữ liệu
     """
     try:
-        # Validation: Chỉ được truyền trạng thái tương ứng với loại
+        # Validation: Chỉ được truyền trạng thái tương ứng với loại khi có notification_type
         if notification_type == NotificationType.EVENT:
             if respond_status or general_status:
                 raise HTTPException(
@@ -451,6 +462,7 @@ def service_get_notifications_by_type_and_status(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="GENERAL type chỉ chấp nhận general_status"
                 )
+        # Nếu notification_type = None, cho phép tất cả status filters
         
         # Lấy danh sách notifications
         notifications = get_notifications_by_type_and_status(

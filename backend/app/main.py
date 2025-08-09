@@ -1,5 +1,5 @@
-from routes.api import user, files, documents, trash, folders, calendar, templates
-from routes import auth, info, reminder, notifications
+from routes.api import user, files, documents, trash, folders, calendar, templates, notifications
+from routes import auth, info, reminder
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from dependencies.deps import get_db
@@ -41,13 +41,12 @@ protected_app.include_router(folders.router, prefix="/documents/folders", tags=[
 protected_app.include_router(trash.router, prefix="/trash", tags=["trash"])
 protected_app.include_router(calendar.router, prefix="/calendar", tags=["calendar"])
 protected_app.include_router(templates.router, prefix="/templates", tags=["templates"])
-
-
+protected_app.include_router(notifications.router, prefix="/notifications", tags=["notifications"])
 
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(info.router, prefix="/info", tags=["info"])
 app.include_router(reminder.router, prefix="/reminder", tags=["reminder"])
-app.include_router(notifications.router, prefix="/notifications", tags=["notifications"])
+
 
 # Public endpoint để lookup user theo Discord ID (không cần JWT)
 @app.get("/users/by-discord/{discord_user_id}")
