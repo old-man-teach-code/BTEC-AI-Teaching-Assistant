@@ -19,11 +19,11 @@ export const useAuthStore = defineStore('auth', {
         localStorage.setItem('jwt_token', token)
         // Manually set header để đảm bảo
         api.defaults.headers.common['Authorization'] = `Bearer ${token}`
-        console.log('🔑 Token set:', token.substring(0, 20) + '...')
+        console.log('Token set:', token.substring(0, 20) + '...')
       } else {
         localStorage.removeItem('jwt_token')
         delete api.defaults.headers.common['Authorization']
-        console.log('🗑️ Token cleared')
+        console.log('Token cleared')
       }
     },
     async login(credentials) {

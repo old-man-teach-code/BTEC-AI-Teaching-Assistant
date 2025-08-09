@@ -1,0 +1,485 @@
+
+.chart-header {
+  text-align: left;
+  margin-bottom: 2rem;
+}
+
+.dashboard-title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem 0;
+  color: #1a1a1a;
+}
+
+.dashboard-subtitle {
+  font-size: 1rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* Grid Layout */
+.charts-grid {
+  display: grid;
+  grid-template-rows: 0.5fr 2fr; /* Make top row smaller for thinner charts */
+  gap: 2rem;
+  height: calc(100vh - 120px);
+  margin-bottom: 2rem;
+}
+
+.top-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  height: 100%;
+}
+
+.bottom-row {
+  display: grid;
+  grid-template-columns: 2.5fr 1fr;
+  gap: 2rem;
+  height: 100%;
+}
+
+/* Chart Cards */
+.chart-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid #f0f0f0;
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+}
+
+.chart-card-header {
+  padding: 1rem 1.5rem;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-bottom: 1px solid #dee2e6;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.chart-card-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #495057;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.chart-card-title i {
+  font-size: 1.2rem;
+  color: #6c757d;
+}
+
+.chart-title-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.chart-subtitle {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #9ca3af;
+  font-weight: 400;
+}
+
+.chart-wrapper {
+  flex: 1;
+  padding: 0.5rem; /* Reduce padding for thinner appearance */
+  position: relative;
+  min-height: 0;
+}
+
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #6c757d;
+  gap: 1rem;
+}
+
+.loading-state i {
+  font-size: 1.5rem;
+}
+
+/* Chart Legends */
+.chart-legend {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: #6c757d;
+}
+
+.legend-color {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.legend-item.completed .legend-color {
+  background-color: #4CAF50;
+}
+
+.legend-item.pending .legend-color {
+  background-color: #2196F3;
+}
+
+/* Documents Chart Legend Colors */
+.chart-documents .legend-item:nth-child(1) .legend-color {
+  background-color: #42A5F5; /* Uploaded - Blue */
+}
+
+.chart-documents .legend-item:nth-child(2) .legend-color {
+  background-color: #B748D2 ; /* Ready - Green */
+}
+
+.chart-documents .legend-item:nth-child(3) .legend-color {
+  background-color: #FF0000; /* Deleted - Red */
+}
+
+.documents-stats {
+  font-size: 0.8rem;
+  color: #6c757d;
+}
+
+.documents-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 1rem;
+}
+
+/* Events Controls */
+.events-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 1rem;
+}
+
+.events-stats {
+  font-size: 0.8rem;
+  color: #6c757d;
+}
+
+.dataset-toggles {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* Make Events chart thinner */
+.chart-events .chart-wrapper {
+  height: 200px; /* Fixed height for thinner appearance */
+  padding: 0.5rem;
+}
+
+.chart-events .chart-card-header {
+  padding: 0.8rem 1.5rem; /* Reduce header padding */
+}
+
+
+
+.filter-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.filter-dropdown {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.time-type-select,
+.period-select {
+  appearance: none;
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  padding: 0.4rem 2rem 0.4rem 0.8rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #495057;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.time-type-select {
+  min-width: 80px;
+}
+
+.period-select {
+  min-width: 120px;
+}
+
+.time-type-select:hover,
+.period-select:hover {
+  border-color: #adb5bd;
+  background-color: #f8f9fa;
+}
+
+.time-type-select:focus,
+.period-select:focus {
+  border-color: #2196F3;
+  box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.1);
+}
+
+.dropdown-icon {
+  position: absolute;
+  right: 0.6rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #6c757d;
+  font-size: 1rem;
+  pointer-events: none;
+  transition: transform 0.2s ease;
+}
+
+.filter-dropdown:hover .dropdown-icon {
+  transform: translateY(-50%) rotate(180deg);
+}
+
+.stat-item {
+  background: #e9ecef;
+  padding: 0.25rem 0.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+/* Stats Panel */
+.stats-panel {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  border: 1px solid #f0f0f0;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Response Chart specific styles */
+.chart-response .chart-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+}
+
+.stats-header {
+  margin-bottom: 2rem;
+}
+
+.stats-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0 0 0.5rem 0;
+}
+
+.stats-subtitle {
+  font-size: 0.9rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.stats-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.stat-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.stat-label {
+  min-width: 60px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.stat-bar {
+  flex: 1;
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.stat-progress {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.stat-progress.upload {
+  background: linear-gradient(90deg, #3b82f6, #60a5fa);
+}
+
+.stat-progress.ready {
+  background: linear-gradient(90deg, #B748D2, #D68DF0);
+}
+
+
+.stat-progress.delete {
+  background: linear-gradient(90deg, #ef4444, #f87171);
+}
+
+.stat-value {
+  min-width: 40px;
+  text-align: right;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+/* Actions */
+.chart-actions {
+  text-align: center;
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid #e9ecef;
+}
+
+.refresh-btn {
+  background: linear-gradient(135deg, #ff6ec4 0%, #7873f5 50%, #4adeff 100%);
+
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+}
+
+.refresh-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+}
+
+.refresh-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .charts-grid {
+    grid-template-rows: auto auto;
+    height: auto;
+    gap: 1.5rem;
+  }
+  
+  .top-row,
+  .bottom-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .chart-wrapper {
+    height: 300px;
+  }
+  
+  .documents-controls {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .filter-controls {
+    align-self: flex-end;
+    gap: 0.6rem;
+  }
+  
+  .time-type-select,
+  .period-select {
+    font-size: 0.75rem;
+    padding: 0.3rem 1.8rem 0.3rem 0.6rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .chart-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .chart-legend {
+    flex-wrap: wrap;
+  }
+  
+  .chart-wrapper {
+    height: 250px;
+  }
+  
+  .stat-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+  
+  .stat-value {
+    text-align: left;
+  }
+}
+
+/* Animation */
+.chart-card {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.chart-card:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.stats-panel {
+  animation: fadeInUp 0.6s ease-out;
+  animation-delay: 0.2s;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

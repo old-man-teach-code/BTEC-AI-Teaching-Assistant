@@ -182,9 +182,7 @@
                       >mdi-cloud-download-outline</v-icon
                     >
 
-                    <v-icon small class="mr-2" color="blue" @click="handleProcess(item)"
-                      >mdi-autorenew</v-icon
-                    >
+
                     <v-icon small color="red" @click="handleDelete(item)"
                       >mdi-delete-outline</v-icon
                     >
@@ -194,9 +192,7 @@
                       mdi-file-upload-outline
                     </v-icon>
 
-                    <v-icon small class="mr-2" color="blue" @click="FolderProcess(item)"
-                      >mdi-autorenew</v-icon
-                    >
+   
                     <v-icon small color="red" @click="FolderDelete(item)"
                       >mdi-delete-outline</v-icon
                     >
@@ -233,7 +229,6 @@ const {
   triggerFileInput,
   handleFileSelect,
   handleDownload,
-  handleProcess,
   handleDelete,
   handleView,
   handleSidebar,

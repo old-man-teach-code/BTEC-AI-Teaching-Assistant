@@ -49,10 +49,47 @@
           </div>
         </div>
 
+        <!-- Bulk Actions Bar -->
+        <div v-if="selectedDocuments.length > 0" class="bulk-actions-bar">
+          <div class="selected-count">
+            {{ selectedDocuments.length }} item{{ selectedDocuments.length > 1 ? 's' : '' }} selected
+          </div>
+          <div class="bulk-actions">
+            <v-btn
+              variant="outlined"
+              color="blue"
+              size="small"
+              @click="handleBulkRestore"
+              class="mr-2"
+            >
+              <v-icon size="16" class="mr-1">mdi-history</v-icon>
+              Restore Selected
+            </v-btn>
+            <v-btn
+              variant="outlined"
+              color="red"
+              size="small"
+              @click="handleBulkDelete"
+            >
+              <v-icon size="16" class="mr-1">mdi-delete-outline</v-icon>
+              Delete Selected
+            </v-btn>
+          </div>
+        </div>
+
         <div class="files-table">
           <table>
             <thead>
               <tr>
+                <th>
+                  <v-checkbox
+                    v-model="selectAll"
+                    @change="toggleSelectAll"
+                    density="compact"
+                    hide-details
+                    color="primary"
+                  />
+                </th>
                 <th>Name</th>
                 <th>Size</th>
                 <th>Auto Delete In</th>
@@ -62,6 +99,15 @@
             </thead>
             <tbody>
               <tr v-for="doc in filteredDocuments" :key="doc.id">
+                <td>
+                  <v-checkbox
+                    v-model="selectedDocuments"
+                    :value="doc.id"
+                    density="compact"
+                    hide-details
+                    color="primary"
+                  />
+                </td>
                 <td class="file-cell">
                   <div class="file-content">
                     <v-icon small class="me-1">
@@ -98,10 +144,12 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { processTrash } from '../composables/processTrash'
 
 const search = ref('')
+const selectedDocuments = ref([])
+const selectAll = ref(false)
 
 const {
   handleSidebar,
@@ -110,9 +158,101 @@ const {
   sidebarItemsTop,
   sidebarItemsBottom,
   handleRestore,
+  handleRestoreBulk,
   getAutoDeleteInfo,
   handlehardDelete,
+  handlehardDeleteBulk,
 } = processTrash()
+
+// Function to toggle select all
+const toggleSelectAll = () => {
+  if (selectAll.value) {
+    selectedDocuments.value = filteredDocuments.value.map(doc => doc.id)
+  } else {
+    selectedDocuments.value = []
+  }
+}
+
+// Watch for changes in selected documents to update selectAll checkbox
+watch([selectedDocuments, filteredDocuments], () => {
+  if (filteredDocuments.value.length === 0) {
+    selectAll.value = false
+    return
+  }
+  
+  const allSelected = filteredDocuments.value.length > 0 && 
+                     filteredDocuments.value.every(doc => selectedDocuments.value.includes(doc.id))
+  
+  if (selectAll.value !== allSelected) {
+    selectAll.value = allSelected
+  }
+}, { deep: true })
+
+// Watch search changes to clear selections if needed
+watch(search, () => {
+  // Clear selections when search changes
+  selectedDocuments.value = []
+  selectAll.value = false
+})
+
+// Bulk actions
+const handleBulkRestore = async () => {
+  if (selectedDocuments.value.length === 0) return
+  
+  try {
+    // Get the actual document objects
+    const itemsToRestore = filteredDocuments.value.filter(doc => 
+      selectedDocuments.value.includes(doc.id)
+    )
+    
+    // Use bulk restore function
+    const result = await handleRestoreBulk(itemsToRestore)
+    
+    // Show result message
+    if (result.successCount > 0) {
+      let message = `${result.successCount} item(s) have been restored.`
+      if (result.failCount > 0) {
+        message += ` ${result.failCount} item(s) failed to restore.`
+      }
+      alert(message)
+    } else {
+      alert('Failed to restore items!')
+    }
+    
+    selectedDocuments.value = []
+    selectAll.value = false
+  } catch (error) {
+    console.error('Error restoring documents:', error)
+    alert('Failed to restore items!')
+  }
+}
+
+const handleBulkDelete = async () => {
+  if (selectedDocuments.value.length === 0) return
+  
+  if (confirm(`Are you sure you want to permanently delete ${selectedDocuments.value.length} item(s)?`)) {
+    try {
+      // Get the actual document objects
+      const itemsToDelete = filteredDocuments.value.filter(doc => 
+        selectedDocuments.value.includes(doc.id)
+      )
+      
+      // Use bulk delete function
+      const result = await handlehardDeleteBulk(itemsToDelete)
+      
+      // Show single success message
+      if (result.success) {
+        alert(`${result.count} item(s) have been permanently deleted.`)
+      }
+      
+      selectedDocuments.value = []
+      selectAll.value = false
+    } catch (error) {
+      console.error('Error deleting documents:', error)
+      alert('Failed to delete some items!')
+    }
+  }
+}
 </script>
 
 <style scoped src="../assets/trash.css"></style>

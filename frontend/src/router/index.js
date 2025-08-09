@@ -9,6 +9,7 @@ import TrashVIew from '../views/TrashVIew.vue'
 import CalendarView from '@/views/CalendarView.vue'
 import HomeDashboard from '../views/HomeDashboard.vue'
 import SettingsView from '../views/SettingsView.vue'
+import ChartView from '../views/ChartView.vue'
 
 
 
@@ -23,6 +24,11 @@ const router = createRouter({
       path: '/home',
       name: 'home',
       component: HomeView,
+    },
+    {
+      path: '/chart',
+      name: 'chart',
+      component: ChartView,
     },
     {
 

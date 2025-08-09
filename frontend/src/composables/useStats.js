@@ -8,7 +8,10 @@ export function useStats() {
     announcements: 0,
     missedDeadlines: 0,
     scheduledToday: 0,
-    announcementMessage: 'No upcoming events'
+    announcementMessage: 'No upcoming events',
+    documentGrowth: 0,
+    thisWeekDocs: 0,
+    lastWeekDocs: 0
   })
 
   const recentActivities = ref([])
@@ -40,14 +43,31 @@ export function useStats() {
       // Lưu documents cho chart
       documents.value = allDocuments
       
-      // Update notification count dựa trên documents mới
-      const recentDocs = allDocuments.filter(doc => {
+      // Tính documents trong 7 ngày gần đây (tuần này)
+      const now = new Date()
+      const thisWeekDocs = allDocuments.filter(doc => {
         const createdDate = new Date(doc.created_at)
-        const now = new Date()
         const diffDays = (now - createdDate) / (1000 * 60 * 60 * 24)
-        return diffDays <= 7 // Documents trong 7 ngày qua
+        return diffDays <= 7
       })
-      notificationCount.value = recentDocs.length
+      
+      // Tính documents từ 8-14 ngày trước (tuần trước)
+      const lastWeekDocs = allDocuments.filter(doc => {
+        const createdDate = new Date(doc.created_at)
+        const diffDays = (now - createdDate) / (1000 * 60 * 60 * 24)
+        return diffDays > 7 && diffDays <= 14
+      })
+      
+      // Tính % tăng trưởng
+      const calculateGrowth = (current, previous) => {
+        if (previous === 0) return current > 0 ? 100 : 0
+        return Math.round(((current - previous) / previous) * 100)
+      }
+      
+      const documentGrowth = calculateGrowth(thisWeekDocs.length, lastWeekDocs.length)
+      
+      // Update notification count dựa trên documents mới
+      notificationCount.value = thisWeekDocs.length
       
       // Get tomorrow's events using local timezone
       const tomorrow = new Date()
@@ -114,13 +134,16 @@ export function useStats() {
                            String(eventDateObj.getDate()).padStart(2, '0')
           return eventDate === todayStr
         }).length,
-        announcementMessage: getAnnouncementMessage()
+        announcementMessage: getAnnouncementMessage(),
+        documentGrowth: documentGrowth,
+        thisWeekDocs: thisWeekDocs.length,
+        lastWeekDocs: lastWeekDocs.length
       }
       
       // Update recent activities với dữ liệu thật
       recentActivities.value = allDocuments
         .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-        .slice(0, 6)
+        .slice(0, 5)
         .map(doc => {
           // Lấy extension từ tên file
           const extension = doc.original_name.split('.').pop().toUpperCase()
@@ -148,7 +171,10 @@ export function useStats() {
         announcements: 0,
         missedDeadlines: 0,
         scheduledToday: 0,
-        announcementMessage: 'No upcoming events'
+        announcementMessage: 'No upcoming events',
+        documentGrowth: 0,
+        thisWeekDocs: 0,
+        lastWeekDocs: 0
       }
       notificationCount.value = 0
     }

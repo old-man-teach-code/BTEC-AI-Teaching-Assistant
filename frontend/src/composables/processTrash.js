@@ -12,8 +12,7 @@ export function processTrash() {
     { label: 'Home', icon: 'mdi-home-outline', route: '/dashboardhome' },
     { label: 'Document', icon: 'mdi-file-document-outline', route: '/documents' },
     { label: 'Calendar', icon: 'mdi-calendar-clock-outline', route: '/calendar' },
-    { label: 'Notifications', icon: 'mdi-bell-outline' },
-    { label: 'Statistical', icon: 'mdi-chart-line' },
+    { label: 'Statistical', icon: 'mdi-chart-line', route: '/chart' },
   ]
 
   const sidebarItemsBottom = [
@@ -127,6 +126,45 @@ export function processTrash() {
     }
   }
 
+  // Function for bulk restore
+  const handleRestoreBulk = async (items) => {
+    try {
+      let successCount = 0
+      let failCount = 0
+
+      for (const item of items) {
+        try {
+          if (item.type === 'folder') {
+            await api.post(`/api/documents/folders/${item.id}/restore`)
+          } else {
+            await api.post(`/api/documents/${item.id}/restore`)
+          }
+          successCount++
+          
+          // Trigger event for each restored item
+          window.dispatchEvent(new CustomEvent('document-restored', { 
+            detail: { 
+              id: item.id, 
+              type: item.type,
+              name: item.type === 'folder' ? item.name : item.original_name
+            } 
+          }))
+        } catch (err) {
+          console.error(`Failed to restore item ${item.id}:`, err)
+          failCount++
+        }
+      }
+
+      // Refresh documents list
+      await fetchDocuments()
+      
+      return { success: successCount > 0, successCount, failCount, total: items.length }
+    } catch (err) {
+      console.error('Bulk restore failed:', err)
+      throw err
+    }
+  }
+
   const handlehardDelete = async (item) => {
     try {
       await api.delete(`/api/trash/items`, {
@@ -144,6 +182,31 @@ export function processTrash() {
     } catch (e) {
       console.error(e)
       alert('Delete Failed!')
+    }
+  }
+
+  // Function for bulk delete without individual alerts
+  const handlehardDeleteBulk = async (items) => {
+    try {
+      const deleteItems = items.map(item => ({
+        id: item.id,
+        type: item.type
+      }))
+
+      await api.delete(`/api/trash/items`, {
+        data: {
+          items: deleteItems
+        }
+      })
+      
+      // Remove deleted items from local state
+      const deletedIds = items.map(item => item.id)
+      documents.value = documents.value.filter((d) => !deletedIds.includes(d.id))
+      
+      return { success: true, count: items.length }
+    } catch (e) {
+      console.error(e)
+      throw e
     }
   }
 
@@ -177,7 +240,9 @@ export function processTrash() {
     getFileType,
     filteredDocuments,
     handleRestore,
+    handleRestoreBulk,
     handlehardDelete,
+    handlehardDeleteBulk,
     search,
     processing
   }
