@@ -1,23 +1,6 @@
 <template>
   <div class="page-wrapper">
-    <aside class="sidebar">
-      <div class="sidebar-header">
-        <div class="collapse-icon">«</div>
-      </div>
-      <ul class="menu">
-        <li v-for="item in sidebarItemsTop" :key="item.label" @click="handleSidebar(item)">
-          <v-icon>{{ item.icon }}</v-icon>
-          <span>{{ item.label }}</span>
-        </li>
-      </ul>
-
-      <ul class="menu menu-bottom">
-        <li v-for="item in sidebarItemsBottom" :key="item.label" @click="handleSidebar(item)">
-          <v-icon>{{ item.icon }}</v-icon>
-          <span>{{ item.label }}</span>
-        </li>
-      </ul>
-    </aside>
+    <SideBar />
 
     <!-- Main -->
     <main class="main-content">
@@ -99,7 +82,8 @@
             </thead>
             <tbody>
               <tr v-for="doc in filteredDocuments" :key="doc.id">
-                <td>
+                <td data-label="Select">
+
                   <v-checkbox
                     v-model="selectedDocuments"
                     :value="doc.id"
@@ -108,7 +92,9 @@
                     color="primary"
                   />
                 </td>
-                <td class="file-cell">
+
+                <td class="file-cell" data-label="Name">
+
                   <div class="file-content">
                     <v-icon small class="me-1">
                       {{ doc.type === 'folder' ? 'mdi-folder' : 'mdi-file-document-outline' }}
@@ -118,12 +104,12 @@
                     </span>
                   </div>
                 </td>
-                <td>
+                <td data-label="Size">
                   {{ doc.type === 'folder' ? '-' : formatSize(doc.file_size) }}
                 </td>
-                <td>{{ getAutoDeleteInfo(doc.deleted_at, 'remaining') }}</td>
-                <td>{{ getAutoDeleteInfo(doc.deleted_at, 'date') }}</td>
-                <td class="action-icons">
+                <td data-label="Auto Delete In">{{ getAutoDeleteInfo(doc.deleted_at, 'remaining') }}</td>
+                <td data-label="Expected Date">{{ getAutoDeleteInfo(doc.deleted_at, 'date') }}</td>
+                <td class="action-icons" data-label="Actions">
                   <v-icon small class="mr-2" color="blue" @click="handleRestore(doc)">
                     mdi-history
                   </v-icon>
@@ -133,7 +119,7 @@
                 </td>
               </tr>
               <tr v-if="filteredDocuments.length === 0">
-                <td colspan="5" class="empty-text">No deleted documents or folders</td>
+                <td colspan="6" class="empty-text">No deleted documents or folders</td>
               </tr>
             </tbody>
           </table>
@@ -144,6 +130,8 @@
 </template>
 
 <script setup>
+import SideBar from './SideBar.vue'
+
 import { ref, watch } from 'vue'
 import { processTrash } from '../composables/processTrash'
 
@@ -152,11 +140,8 @@ const selectedDocuments = ref([])
 const selectAll = ref(false)
 
 const {
-  handleSidebar,
   formatSize,
   filteredDocuments,
-  sidebarItemsTop,
-  sidebarItemsBottom,
   handleRestore,
   handleRestoreBulk,
   getAutoDeleteInfo,
