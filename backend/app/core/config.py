@@ -7,6 +7,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 class Settings:
     # Database settings
     DB_HOST: str = os.getenv("DB_HOST", "db")
+    DB_PORT: int = int(os.getenv("DB_PORT", 3306))
     DB_USER: str = os.getenv("DB_USER", "testuser")
     DB_PASSWORD: str = os.getenv("DB_PASSWORD", "testpass")
     DB_NAME: str = os.getenv("DB_NAME", "testdb")
