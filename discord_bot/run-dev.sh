@@ -9,7 +9,7 @@ env_has_key() {
     [ -f .env ] && grep -q "^$key=" .env
 }
 
-# Nếu container đang chạy thì dừng lại
+# Nếu container đang chạy thì dừng lại.
 if docker ps --format '{{.Names}}' | grep -q "^$CONTAINER_NAME$"; then
     echo "Container '$CONTAINER_NAME' đang chạy. Dừng docker compose..."
     docker compose $COMPOSE_FILES down

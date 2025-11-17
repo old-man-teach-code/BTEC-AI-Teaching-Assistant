@@ -8,7 +8,7 @@ from fastapi import UploadFile, HTTPException
 from core.config import settings
 
 # Danh sách các phần mở rộng file được chấp nhận
-ALLOWED_EXTENSIONS = ['.pdf', '.docx', '.pptx']
+ALLOWED_EXTENSIONS = ['.pdf', '.docx', '.pptx', '.xlsx', '.xls', '.csv']
 # Kích thước file tối đa (10MB)
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB in bytes
 

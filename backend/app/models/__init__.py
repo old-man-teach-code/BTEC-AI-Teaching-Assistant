@@ -3,6 +3,7 @@ from .user import User
 from .document import Document
 from .event import Event
 from .folder import Folder
+from .message import Message
 from .notification import (
     Notification, 
     NotificationType,
@@ -17,6 +18,7 @@ __all__ = [
     "Document", 
     "Event", 
     "Folder", 
+    "Message",
     "Notification", 
     "NotificationType",
     "NotificationEventStatus",

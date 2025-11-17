@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from datetime import datetime, timedelta
 from pydantic import BaseModel
 from dependencies.deps import get_db
@@ -9,8 +9,19 @@ from models.user import User
 from sqlalchemy import and_
 import asyncio
 import aiohttp
+import os
+
+# Environment variables (already loaded in main app)
+BACKEND_URL = os.getenv("BACKEND_URL")
+DISCORD_BOT_URL = os.getenv("DISCORD_BOT_URL")
+DEBUG_MODE = os.getenv("DEBUG_MODE", "false").lower() == "true"
 
 router = APIRouter()
+
+def debug_log(message: str):
+    """Log debug message nếu DEBUG_MODE được bật"""
+    if DEBUG_MODE:
+        print(message)
 
 class ReminderEventData(BaseModel):
     title: str
@@ -178,3 +189,160 @@ def process_reminder(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error processing reminders: {str(e)}"
         )
+
+async def get_user_info(owner_id: str, db: Session) -> Dict[str, Any]:
+    """
+    Hàm helper để lấy user info từ database
+    owner_id là ID từ bảng users, cần lấy discord_user_id tương ứng
+    """
+    try:
+        debug_log(f"🔍 Getting user info for owner_id: {owner_id}")
+        
+        # Truy vấn database trực tiếp thay vì HTTP call
+        user = db.query(User).filter(User.id == int(owner_id)).first()
+        
+        if not user:
+            debug_log(f"❌ User not found for owner_id: {owner_id}")
+            return None
+        
+        # Lấy discord_user_id - xử lý field String(64) nullable=True
+        discord_user_id_raw = user.discord_user_id
+        discord_user_id_value = None
+        
+        debug_log(f"🔍 Raw discord_user_id: '{discord_user_id_raw}' (type: {type(discord_user_id_raw)})")
+        
+        if discord_user_id_raw is not None:
+            # Database field là String(64), có thể chứa string hoặc null
+            if isinstance(discord_user_id_raw, str):
+                # Kiểm tra string không rỗng và không phải "null"
+                stripped = discord_user_id_raw.strip()
+                if stripped and stripped.lower() != "null" and stripped != "":
+                    discord_user_id_value = stripped
+                    debug_log(f"🔍 String discord_user_id: '{discord_user_id_value}'")
+            elif isinstance(discord_user_id_raw, (int, float)):
+                # Chuyển number thành string
+                discord_user_id_value = str(int(discord_user_id_raw))
+                debug_log(f"🔍 Number to string discord_user_id: '{discord_user_id_value}'")
+        
+        debug_log(f"🔍 Final processed discord_user_id: '{discord_user_id_value}'")
+        
+        return {
+            "user_id": user.id,
+            "discord_user_id": discord_user_id_value,
+            "name": user.name,
+            "email": user.email,
+            "has_discord_id": discord_user_id_value is not None,
+            "raw_discord_user_id": discord_user_id_raw,  # Để debug
+        }
+                        
+    except Exception as e:
+        debug_log(f"❌ Error getting user info for owner_id {owner_id}: {str(e)}")
+    
+    debug_log(f"❌ Could not get user info for owner_id {owner_id}")
+    return None
+
+async def send_reminder_to_discord(event, user_id=None, channel_id=None):
+    """
+    Gửi reminder đến Discord user hoặc channel thông qua Discord Bot API
+    """
+    try:
+        if not DISCORD_BOT_URL:
+            debug_log("❌ Discord Bot URL not configured")
+            return False
+            
+        # Format message
+        title = event.get('title') if isinstance(event, dict) else getattr(event, 'title', getattr(event, 'name', ''))
+        start_time = event.get('start_time') if isinstance(event, dict) else getattr(event, 'start_time', '')
+        description = event.get('description') if isinstance(event, dict) else getattr(event, 'description', None)
+        msg = f"📅 **Nhắc nhở sự kiện:** {title}\n🕒 Thời gian: {start_time}\n"
+        if description:
+            msg += f"📝 Mô tả: {description}\n"
+        
+        # Gửi thông qua Discord Bot API
+        target_id = user_id or channel_id
+        if target_id:
+            async with aiohttp.ClientSession() as session:
+                endpoint = f"{DISCORD_BOT_URL}/send_message"
+                payload = {
+                    "senderId": str(target_id),
+                    "output": msg
+                }
+                
+                async with session.post(
+                    endpoint,
+                    json=payload,
+                    timeout=aiohttp.ClientTimeout(total=15)
+                ) as response:
+                    if response.status == 200:
+                        result = await response.json()
+                        debug_log(f"✅ Discord message sent successfully: {result}")
+                        return True
+                    else:
+                        debug_log(f"❌ Discord API error: {response.status}")
+                        return False
+        
+        return False
+        
+    except Exception as e:
+        debug_log(f"❌ Error sending Discord reminder: {str(e)}")
+        return False
+
+@router.post("/send_reminder")
+async def api_send_reminder(request: Request, db: Session = Depends(get_db)):
+    """
+    API endpoint để gửi reminder
+    Body: Event data hoặc list of events
+    """
+    data = await request.json()
+    
+    # Lấy Authorization token từ header
+    auth_header = request.headers.get("Authorization")
+    auth_token = None
+    if auth_header and auth_header.startswith("Bearer "):
+        auth_token = auth_header.replace("Bearer ", "")
+        debug_log(f"🔍 Received auth token from request header")
+    
+    async def process_event(event):
+        user_id = event.get('user_id') or event.get('discord_id')
+        channel_id = event.get('channel_id')
+        owner_id = event.get('owner_id')
+        
+        # Lấy thông tin user từ database nếu có owner_id
+        user_info = await get_user_info(owner_id, db) if owner_id else None
+        debug_log(f"🔍 User info result for owner_id {owner_id}: {user_info}")
+        
+        # Nếu không có user_id trực tiếp nhưng có user_info, sử dụng discord_user_id
+        original_user_id = user_id
+        if not user_id and user_info and user_info.get('discord_user_id'):
+            user_id = user_info.get('discord_user_id')
+            debug_log(f"🔍 Using discord_user_id from database: '{user_id}' (was: '{original_user_id}')")
+        
+        debug_log(f"🔍 Final user_id for sending: '{user_id}'")
+        
+        # Gửi reminder
+        await send_reminder_to_discord(event, user_id=user_id, channel_id=channel_id)
+        
+        # Debug các giá trị trước khi return
+        final_discord_user_id = user_info.get("discord_user_id") if user_info else user_id
+        debug_log(f"🔍 Final discord_user_id: '{final_discord_user_id}'")
+        debug_log(f"🔍 User name: {user_info.get('name') if user_info else None}")
+        debug_log(f"🔍 Has discord_id in database: {user_info.get('has_discord_id', False) if user_info else False}")
+        
+        return {
+            "success": True,
+            "description": event.get('description'),
+            "start_time": event.get('start_time') or event.get('Start'),
+            "end_time": event.get('end_time') or event.get('End'),
+            "discord_user_id": final_discord_user_id,
+            "owner_id": owner_id,
+            "user_name": user_info.get("name") if user_info else None,
+            "has_discord_id_in_db": user_info.get('has_discord_id', False) if user_info else False,
+            "raw_discord_user_id": user_info.get("raw_discord_user_id") if user_info else None
+        }
+    
+    # Xử lý list hoặc single event
+    if isinstance(data, list):
+        results = [await process_event(event) for event in data]
+        return {"results": results, "count": len(data)}
+    
+    return await process_event(data)

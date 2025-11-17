@@ -25,7 +25,11 @@ def read_current_user(current_user = Depends(get_current_user)):
     return current_user
 
 @router.get("/{user_id}", response_model=UserRead)
-def read_user(user_id: int, db: Session = Depends(get_db)):
+def read_user(user_id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+    # Chỉ cho phép user xem thông tin của chính mình (hoặc admin trong tương lai)
+    if current_user.id != user_id:
+        raise HTTPException(status_code=403, detail="Access denied: You can only view your own profile")
+    
     db_user = service_get_user(db, user_id)
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")

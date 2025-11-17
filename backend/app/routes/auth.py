@@ -6,6 +6,7 @@ from services.user_service import service_create_user
 from schemas.user import UserCreate, UserRead
 from schemas.user import Token
 from dependencies.deps import get_db
+from crud.user import get_user_by_email
 
 router = APIRouter()
 
@@ -24,3 +25,9 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
     except Exception as e:
         print(f"Error creating user: {e}")  # Log the error for debugging
         raise HTTPException(status_code=500, detail=f"Internal server error: {e}")
+
+@router.get("/check-email/{email}")
+def check_email_exists(email: str, db: Session = Depends(get_db)):
+    """Check if email exists in database"""
+    user = get_user_by_email(db, email)
+    return {"exists": user is not None}

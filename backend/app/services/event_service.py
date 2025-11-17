@@ -96,21 +96,38 @@ def service_get_events(
         EventListResponse: Danh sách events kèm metadata
     """
     try:
+        print(f"📊 [service_get_events] START - owner_id={owner_id}, skip={skip}, limit={limit}")
+        
         # Lấy danh sách events
         events = get_user_events(db, owner_id, skip, limit, start_date, end_date)
+        print(f"📊 [service_get_events] Got {len(events)} events from DB")
         
         # Lấy tổng số events
         total = get_total_user_events(db, owner_id, start_date, end_date)
+        print(f"📊 [service_get_events] Total count: {total}")
         
         # Chuyển đổi sang response format
         event_responses = [EventResponse.from_orm(event) for event in events]
+        print(f"📊 [service_get_events] Converted {len(event_responses)} events to response format")
         
-        return EventListResponse(
+        # Log chi tiết events nếu có
+        if len(event_responses) > 0:
+            for i, evt in enumerate(event_responses[:3]):  # Log 3 events đầu tiên
+                print(f"  Event {i+1}: id={evt.id}, title={evt.title}, type={evt.event_type}, start={evt.start_time}")
+        
+        result = EventListResponse(
             total=total,
             items=event_responses
         )
         
+        print(f"✅ [service_get_events] DONE - Returning {len(result.items)} items, total={result.total}")
+        
+        return result
+        
     except Exception as e:
+        print(f"❌ [service_get_events] ERROR: {str(e)}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Không thể lấy danh sách events: {str(e)}"

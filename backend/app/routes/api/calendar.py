@@ -78,7 +78,18 @@ def get_events(
     Example:
         GET /calendar/events?start=2024-01-01T00:00:00&end=2024-01-31T23:59:59&skip=0&limit=10
     """
-    return service_get_events(db, current_user.id, skip, limit, start, end)
+    print(f"🌐 [Calendar API] GET /events - User: {current_user.id}, Name: {current_user.name}")
+    print(f"🌐 [Calendar API] Query params - Skip: {skip}, Limit: {limit}, Start: {start}, End: {end}")
+    
+    result = service_get_events(db, current_user.id, skip, limit, start, end)
+    
+    print(f"🌐 [Calendar API] Service returned - Total: {result.total}, Items: {len(result.items)}")
+    if len(result.items) > 0:
+        print(f"🌐 [Calendar API] Sample event: {result.items[0].title} (type: {result.items[0].event_type})")
+    else:
+        print(f"⚠️ [Calendar API] WARNING: No events returned from database!")
+    
+    return result
 
 
 @router.get("/events/upcoming", response_model=List[EventResponse])

@@ -23,6 +23,7 @@ class NotificationGeneralStatus(enum.Enum):
     """Enum cho trạng thái thông báo chung"""
     PENDING = "pending"  # Chưa gửi
     SENT = "sent"        # Đã gửi
+    READ = "read"        # Đã đọc
 
 class Notification(Base):
     """

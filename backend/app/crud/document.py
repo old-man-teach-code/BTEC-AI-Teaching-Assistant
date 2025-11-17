@@ -2,8 +2,42 @@ from sqlalchemy.orm import Session
 from sqlalchemy import desc, and_
 from models.document import Document, DocumentStatus
 from schemas.document import DocumentCreate, DocumentUpdate
-from typing import List, Optional
+from typing import List, Optional, Union
 from datetime import datetime, timedelta
+
+
+def check_document_name_exists(
+    db: Session, 
+    original_name: str, 
+    owner_id: int, 
+    folder_id: Optional[int] = None,
+    exclude_document_id: Optional[int] = None
+) -> bool:
+    """
+    Kiểm tra xem tên document đã tồn tại trong cùng folder chưa
+    
+    Args:
+        db: Database session
+        original_name: Tên file cần kiểm tra
+        owner_id: ID của user sở hữu document
+        folder_id: ID của folder (None = root level)
+        exclude_document_id: ID của document cần loại trừ (khi update)
+        
+    Returns:
+        bool: True nếu tên đã tồn tại, False nếu chưa
+    """
+    query = db.query(Document).filter(
+        Document.original_name == original_name,
+        Document.owner_id == owner_id,
+        Document.folder_id == folder_id,
+        Document.is_deleted == False
+    )
+    
+    # Loại trừ document hiện tại khi update
+    if exclude_document_id:
+        query = query.filter(Document.id != exclude_document_id)
+    
+    return query.first() is not None
 
 
 def create_document(db: Session, document_data: dict, owner_id: int) -> Document:
@@ -79,7 +113,7 @@ def get_user_documents(
     skip: int = 0,
     limit: int = 100,
     include_deleted: bool = False,
-    folder_id: Optional[int] = None
+    folder_id: Optional[Union[int, str]] = None
 ) -> List[Document]:
     """
     Lấy danh sách documents của một user, có phân trang
@@ -103,9 +137,14 @@ def get_user_documents(
         query = query.filter(Document.is_deleted == False)
 
     # Filter by folder_id
-    if folder_id is not None:
+    if folder_id == "all":
+        # Không filter gì cả - lấy tất cả documents
+        pass
+    elif folder_id is not None:
+        # Filter theo folder cụ thể
         query = query.filter(Document.folder_id == folder_id)
-    elif folder_id != "all":  # Nếu không phải "all", lọc root level
+    else:
+        # folder_id is None - lọc root level
         query = query.filter(Document.folder_id.is_(None))
 
     return query.order_by(desc(Document.created_at)).offset(skip).limit(limit).all()
@@ -115,7 +154,7 @@ def get_total_user_documents(
     db: Session,
     owner_id: int,
     include_deleted: bool = False,
-    folder_id: Optional[int] = None
+    folder_id: Optional[Union[int, str]] = None
 ) -> int:
     """
     Đếm tổng số documents của một user
@@ -137,9 +176,14 @@ def get_total_user_documents(
         query = query.filter(Document.is_deleted == False)
 
     # Filter by folder_id
-    if folder_id is not None:
+    if folder_id == "all":
+        # Không filter gì cả - lấy tất cả documents
+        pass
+    elif folder_id is not None:
+        # Filter theo folder cụ thể
         query = query.filter(Document.folder_id == folder_id)
-    elif folder_id != "all":
+    else:
+        # folder_id is None - lọc root level
         query = query.filter(Document.folder_id.is_(None))
 
     return query.count()

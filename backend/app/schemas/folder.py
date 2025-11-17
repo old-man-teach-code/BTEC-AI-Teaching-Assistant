@@ -93,6 +93,36 @@ class DocumentMove(BaseModel):
     folder_id: Optional[int] = Field(None, description="ID của folder đích (None = root level)")
 
 
+class FolderContentItem(BaseModel):
+    """Schema cho một item trong folder (có thể là folder hoặc document)"""
+    id: int
+    name: str
+    type: str = Field(..., description="Loại item: 'folder' hoặc 'document'")
+    size: Optional[int] = Field(None, description="Kích thước file (bytes) - chỉ có cho documents")
+    size_formatted: Optional[str] = Field(None, description="Kích thước file đã format (KB, MB)")
+    file_type: Optional[str] = Field(None, description="Loại file - chỉ có cho documents")
+    extension: Optional[str] = Field(None, description="Extension của file")
+    document_count: Optional[int] = Field(None, description="Số documents trong folder - chỉ có cho folders")
+    subfolder_count: Optional[int] = Field(None, description="Số subfolders - chỉ có cho folders")
+    total_size: Optional[int] = Field(None, description="Tổng kích thước của folder - chỉ có cho folders")
+    total_size_formatted: Optional[str] = Field(None, description="Tổng kích thước folder đã format")
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    
+    class Config:
+        from_attributes = True
+
+
+class FolderContentResponse(BaseModel):
+    """Schema trả về nội dung folder với sorting và filtering"""
+    total: int = Field(..., description="Tổng số items (không phân trang)")
+    items: List[FolderContentItem] = Field(..., description="Danh sách items trong folder")
+    folder_info: Optional[FolderResponse] = Field(None, description="Thông tin folder hiện tại (None nếu là root)")
+    
+    class Config:
+        from_attributes = True
+
+
 # Update forward references
 try:
     FolderTreeNode.model_rebuild()

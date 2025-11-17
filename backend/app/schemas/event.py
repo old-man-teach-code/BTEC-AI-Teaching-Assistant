@@ -14,17 +14,16 @@ class EventBase(BaseModel):
     is_all_day: bool = Field(False, description="Event cả ngày hay không")
     event_type: Optional[str] = Field(None, max_length=50, description="Loại event (tự do nhập)")
 
+
+class EventCreate(EventBase):
+    """Schema dùng khi tạo event mới"""
+    
     @validator('end_time')
     def validate_end_time(cls, v, values):
         """Kiểm tra thời gian kết thúc phải sau thời gian bắt đầu"""
         if 'start_time' in values and v <= values['start_time']:
             raise ValueError('Thời gian kết thúc phải sau thời gian bắt đầu')
         return v
-
-
-class EventCreate(EventBase):
-    """Schema dùng khi tạo event mới"""
-    pass
 
 
 class EventUpdate(BaseModel):
@@ -58,9 +57,23 @@ class EventInDB(EventBase):
         from_attributes = True  # Cho phép chuyển đổi từ ORM model sang Pydantic model
 
 
-class EventResponse(EventInDB):
-    """Schema cho response khi trả về event cho client"""
-    pass
+class EventResponse(BaseModel):
+    """Schema cho response khi trả về event cho client - không có validation"""
+    id: int
+    title: str
+    description: Optional[str] = None
+    start_time: datetime
+    end_time: datetime  # Không validate để cho phép đọc dữ liệu cũ
+    location: Optional[str] = None
+    reminder_minutes: int = 15
+    is_all_day: bool = False
+    event_type: Optional[str] = None
+    owner_id: int
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    
+    class Config:
+        from_attributes = True
 
 
 class EventListResponse(BaseModel):

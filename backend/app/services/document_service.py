@@ -1,6 +1,6 @@
 from fastapi import UploadFile, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Dict, List, Optional, Any, Tuple, Union
 import os
 import uuid
 from datetime import datetime
@@ -25,7 +25,8 @@ from crud.document import (
     restore_document,
     delete_document,
     move_document_to_folder,
-    get_latest_user_document
+    get_latest_user_document,
+    check_document_name_exists
 )
 from crud.folder import get_active_folder
 from utils.file_handler import save_file, get_file_extension, get_file_size, validate_file
@@ -71,7 +72,8 @@ def _validate_document_access(db: Session, document_id: int, owner_id: int, acti
 async def service_upload_document(
     db: Session, 
     file: UploadFile, 
-    owner_id: int
+    owner_id: int,
+    folder_id: Optional[int] = None
 ) -> DocumentResponse:
     """
     Service xử lý upload document
@@ -80,6 +82,7 @@ async def service_upload_document(
         db: Database session
         file: File được upload
         owner_id: ID người dùng upload
+        folder_id: ID của folder để upload vào (None = root level)
     
     Returns:
         DocumentResponse: Thông tin document đã tạo
@@ -95,7 +98,25 @@ async def service_upload_document(
             detail=error_message
         )
     
+    # Validate folder nếu có
+    folder = None
+    if folder_id:
+        folder = get_active_folder(db, folder_id)
+        if not folder or folder.owner_id != owner_id:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Folder không tồn tại hoặc bạn không có quyền truy cập"
+            )
+    
     try:
+        # Kiểm tra tên file đã tồn tại chưa
+        if check_document_name_exists(db, file.filename, owner_id, folder_id):
+            folder_name = "thư mục gốc" if not folder_id else f"thư mục '{folder.name}'"
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"File với tên '{file.filename}' đã tồn tại trong {folder_name}"
+            )
+        
         # Lưu file và lấy đường dẫn trả về
         file_path = save_file(file, owner_id)
         
@@ -110,6 +131,7 @@ async def service_upload_document(
             "file_path": file_path,
             "file_size": file_size,
             "file_type": file.content_type,
+            "folder_id": folder_id,
             "status": DocumentStatus.UPLOADED.value
         }
         
@@ -132,7 +154,7 @@ def service_get_user_documents(
     owner_id: int,
     skip: int = 0,
     limit: int = 100,
-    folder_id: Optional[int] = None
+    folder_id: Optional[Union[int, str]] = None
 ) -> DocumentListResponse:
     """
     Lấy danh sách documents của user

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, UploadFile, File, Query, Path, HTTPException, status, Response
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Union
 import os
 import shutil
 
@@ -34,6 +34,7 @@ router = APIRouter()
 @router.post("/upload", response_model=DocumentResponse)
 async def upload_document(
     file: UploadFile = File(...),
+    folder_id: Optional[int] = Query(None, description="ID của folder để upload vào (None = root level)"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -42,20 +43,21 @@ async def upload_document(
     
     Args:
         file: File cần upload
+        folder_id: ID của folder để upload vào (None = root level)
         db: Database session
         current_user: User hiện tại (từ token)
         
     Returns:
         DocumentResponse: Thông tin document đã upload
     """
-    return await service_upload_document(db, file, current_user.id)
+    return await service_upload_document(db, file, current_user.id, folder_id)
 
 
 @router.get("/", response_model=DocumentListResponse)
 def get_documents(
     skip: int = Query(0, ge=0, description="Số lượng records bỏ qua"),
     limit: int = Query(100, ge=1, le=1000, description="Số lượng records lấy tối đa"),
-    folder_id: Optional[int] = Query(None, description="Lọc theo folder (None = root level)"),
+    folder_id: Optional[Union[int, str]] = Query(None, description="Lọc theo folder (None = root level, 'all' = tất cả)"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -65,7 +67,7 @@ def get_documents(
     Args:
         skip: Số records bỏ qua (phân trang)
         limit: Số records tối đa trả về
-        folder_id: Lọc theo folder (None = root level)
+        folder_id: Lọc theo folder (None = root level, 'all' = tất cả documents)
         db: Database session
         current_user: User hiện tại (từ token)
 
@@ -304,7 +306,8 @@ def clear_download_cache(
                 "action": "already_exists",
                 "message": f"File đã tồn tại trong storage: {current_filename}",
                 "filename": current_filename,
-                "storage_path": stored_file_path
+                "storage_path": stored_file_path,
+                "user_id": current_user.id
             }
         else:
             # File chưa tồn tại → sao chép file vào thư mục lưu trữ
@@ -313,9 +316,10 @@ def clear_download_cache(
             return {
                 "success": True,
                 "action": "stored",
-                "message": f"Đã lưu file mới vào storage: {current_filename}",
+                "message": f"Bot nạp file thành công: {current_filename}",
                 "filename": current_filename,
-                "storage_path": stored_file_path
+                "storage_path": stored_file_path,
+                "user_id": current_user.id
             }
             
     except Exception as e:

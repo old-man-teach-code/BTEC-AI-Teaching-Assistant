@@ -1,0 +1,1780 @@
+{
+  "name": "DA_ZALO",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -608,
+        -336
+      ],
+      "id": "2a6ef340-fe1a-4667-9d1d-d1645e698b4b",
+      "name": "8h Sáng"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://matilde-biogeographical-robena.ngrok-free.dev/auth/login",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "Content-Type"
+            },
+            {
+              "name": "Value",
+              "value": "application/x-www-form-urlencoded"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "username",
+              "value": "admin@gmail.com"
+            },
+            {
+              "name": "password",
+              "value": "Admin123!"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -432,
+        -336
+      ],
+      "id": "60395336-401b-4561-90da-78adfeceff5f",
+      "name": "Lấy Token3"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://matilde-biogeographical-robena.ngrok-free.dev/reminder/send_reminder",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.access_token }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"title\": \"{{ $('events/today').item.json.title }}\",\n  \"description\": \"{{ $('events/today').item.json.description }}\",\n  \"Start\": \"{{ $('events/today').item.json.start_time }}\",\n  \"End\": \"{{ $('events/today').item.json.end_time }}\",\n  \"owner_id\": \"{{ $('events/today').item.json.owner_id }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        128,
+        -336
+      ],
+      "id": "a8564ed8-f449-42b5-86a6-5c09a16a8bb2",
+      "name": "/send_reminder"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://matilde-biogeographical-robena.ngrok-free.dev/auth/login",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "Content-Type"
+            },
+            {
+              "name": "Value",
+              "value": "application/x-www-form-urlencoded"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "username",
+              "value": "admin@gmail.com"
+            },
+            {
+              "name": "password",
+              "value": "Admin123!"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -448,
+        -64
+      ],
+      "id": "c358bbdc-6d18-488a-851c-abf2bfa5d237",
+      "name": "Lấy Token4"
+    },
+    {
+      "parameters": {
+        "url": "https://matilde-biogeographical-robena.ngrok-free.dev/api/calendar/events/today",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.access_token }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -288,
+        -64
+      ],
+      "id": "0e29b2c0-4685-444d-aa79-79d28ab6a123",
+      "name": "events/today1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://matilde-biogeographical-robena.ngrok-free.dev/reminder/process",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"title\": \"{{ $json.title }}\",\n  \"start_time\": \"{{ $json[\"start_time\"] }}\",\n  \"description\": \"{{ $json[\"description\"] }}\",\n  \"Start\": \"{{ $json.start_time }}\",\n  \"End\": \"{{ $json.end_time }}\",\n  \"owner_id\": \"{{ $json.owner_id }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -96,
+        -64
+      ],
+      "id": "4c198cc5-51ea-4d6d-acaf-f351cad06cf1",
+      "name": "/reminder_service"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "2534b988-3047-44da-a1dd-1eabb72f145e",
+              "leftValue": "={{ $json.reminded }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "6e2f5355-bf4a-4535-bbb4-334771e3ac54",
+              "leftValue": "",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        80,
+        -64
+      ],
+      "id": "8a2d1d46-5860-4f39-b7b2-ab2cb578ae49",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "content": "8h sáng ngày hôm đó, sẽ thông báo Event do chính giao viên tạo.",
+        "height": 224,
+        "width": 1712
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -640,
+        -400
+      ],
+      "typeVersion": 1,
+      "id": "252ed47b-050a-42ac-8e4a-0112889f7082",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "Thống báo sự kiện trước thời gian bắt đầu sự kiện theo giáo đặt ra.",
+        "height": 208,
+        "width": 1728
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -640,
+        -112
+      ],
+      "typeVersion": 1,
+      "id": "8c3c643f-bb5f-441c-af61-d479088be680",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "url": "https://matilde-biogeographical-robena.ngrok-free.dev/api/calendar/events/today",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.access_token }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -256,
+        -336
+      ],
+      "id": "2a2a03d9-018b-438c-b3cb-2b519509914b",
+      "name": "events/today"
+    },
+    {
+      "parameters": {
+        "dataType": "binary",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1,
+      "position": [
+        1104,
+        832
+      ],
+      "id": "49bcf7f0-29e0-41dc-b578-e3e1fbbd5048",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        1104,
+        976
+      ],
+      "id": "fcc52162-b7b1-4ddc-8ea2-907bd3028588",
+      "name": "Recursive Character Text Splitter"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://matilde-biogeographical-robena.ngrok-free.dev/auth/login",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "Content-Type"
+            },
+            {
+              "name": "Value",
+              "value": "application/x-www-form-urlencoded"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "username",
+              "value": "admin@gmail.com"
+            },
+            {
+              "name": "password",
+              "value": "Admin123!"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -432,
+        608
+      ],
+      "id": "3bebdc18-6631-449f-b107-996a2cb0fe32",
+      "name": "Lấy Token5"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        944,
+        832
+      ],
+      "id": "51475480-06b6-4be5-9308-4646ce7edde6",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "3uUgOJJu5a7PGxnE",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "n8n",
+          "mode": "list",
+          "cachedResultName": "n8n"
+        },
+        "options": {
+          "pineconeNamespace": "get_knowledge"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1.2,
+      "position": [
+        1136,
+        608
+      ],
+      "id": "7fc33912-c51e-415e-b65c-c4740c228615",
+      "name": "Pinecone Vector Store1",
+      "credentials": {
+        "pineconeApi": {
+          "id": "1lgfoOGFaC41VOjQ",
+          "name": "PineconeApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "e5951497-7349-401d-b601-5378cff091d5",
+              "leftValue": "={{ $json.success }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        256,
+        608
+      ],
+      "id": "981c325b-7b95-458f-97fc-a4649b7727f8",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://matilde-biogeographical-robena.ngrok-free.dev/auth/login",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "Content-Type"
+            },
+            {
+              "name": "Value",
+              "value": "application/x-www-form-urlencoded"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "username",
+              "value": "admin@gmail.com"
+            },
+            {
+              "name": "password",
+              "value": "Admin123!"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        464,
+        592
+      ],
+      "id": "ae7f3ed9-b080-4a62-86ed-61c3c2b8d0ea",
+      "name": "Lấy Token"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "seconds",
+              "secondsInterval": 15
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -608,
+        608
+      ],
+      "id": "531fc5b6-178d-45c5-a9f8-b43cd9d9529c",
+      "name": "Spam 10s"
+    },
+    {
+      "parameters": {
+        "content": "Chạy liên tục sau 10s để lấy file mới nhât",
+        "height": 592,
+        "width": 2144
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -640,
+        544
+      ],
+      "typeVersion": 1,
+      "id": "5bc8d3e5-0df0-4aff-9106-7d49569bdb61",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "url": "https://matilde-biogeographical-robena.ngrok-free.dev/api/documents/latest/download",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.access_token }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -272,
+        608
+      ],
+      "id": "e6d2c32c-e42d-4548-bdc1-138539a9d458",
+      "name": "/latest/download"
+    },
+    {
+      "parameters": {
+        "method": "DELETE",
+        "url": "https://matilde-biogeographical-robena.ngrok-free.dev/api/documents/latest/download/cache",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.access_token }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        80,
+        608
+      ],
+      "id": "3b3d7977-ea45-4ee8-9d3c-20482719e97b",
+      "name": "/download/cache"
+    },
+    {
+      "parameters": {
+        "url": "=https://matilde-biogeographical-robena.ngrok-free.dev/api/documents/latest/download",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.access_token }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        672,
+        592
+      ],
+      "id": "08cc0072-958b-4dac-8452-8c930aaf65ab",
+      "name": "/latest/download1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://matilde-biogeographical-robena.ngrok-free.dev/auth/login",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "Content-Type"
+            },
+            {
+              "name": "Value",
+              "value": "application/x-www-form-urlencoded"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "username",
+              "value": "admin@gmail.com"
+            },
+            {
+              "name": "password",
+              "value": "Admin123!"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -96,
+        608
+      ],
+      "id": "39943e12-d4df-4368-b841-1ac3c2ced20f",
+      "name": "Lấy Token6"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://matilde-biogeographical-robena.ngrok-free.dev/auth/login",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "Content-Type"
+            },
+            {
+              "name": "Value",
+              "value": "application/x-www-form-urlencoded"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "username",
+              "value": "admin@gmail.com"
+            },
+            {
+              "name": "password",
+              "value": "Admin123!"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -48,
+        -336
+      ],
+      "id": "dc944bd7-b9ae-4c1c-b168-c0436285f877",
+      "name": "Lấy Token7"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "seconds",
+              "secondsInterval": 10
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -608,
+        -64
+      ],
+      "id": "a90e64d5-f167-4fc3-adc9-94da48dba844",
+      "name": "10s check Event"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        880,
+        592
+      ],
+      "id": "35af46b6-6893-4b00-b209-f883a518db9d",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://matilde-biogeographical-robena.ngrok-free.dev/api/notifications/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.access_token }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"notification_type\": \"event\",\n  \"title\": \"{{ $('events/today').item.json.title }}\",\n  \"message\": \"{{ $('events/today').item.json.description }}\",\n  \"user_id\":{{ $('events/today').item.json.owner_id }},\n  \"event_id\": {{ $('events/today').item.json.id }},\n  \"scheduled_at\": null\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        832,
+        -336
+      ],
+      "id": "55447626-bca2-4020-9182-51a156fd89e9",
+      "name": "notifications/1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://matilde-biogeographical-robena.ngrok-free.dev/api/notifications/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.access_token }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"notification_type\": \"event\",\n  \"title\": \"Nhắc Event trước {{ $('events/today1').item.json.reminder_minutes }}p\",\n  \"message\": \"{{ $('/reminder_service').item.json.description }}\",\n  \"user_id\":{{ $('/reminder_service').item.json.owner_id }},\n  \"event_id\": {{ $('events/today1').item.json.id }},\n  \"scheduled_at\": null\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        832,
+        -80
+      ],
+      "id": "2c99eadc-a6b9-46c4-9bf4-6a142c13ce0f",
+      "name": "notifications/2"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://matilde-biogeographical-robena.ngrok-free.dev/auth/login",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "Content-Type"
+            },
+            {
+              "name": "Value",
+              "value": "application/x-www-form-urlencoded"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "username",
+              "value": "admin@gmail.com"
+            },
+            {
+              "name": "password",
+              "value": "Admin123!"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        672,
+        -336
+      ],
+      "id": "870367ef-ba98-42fc-8bef-7cf06f204c2a",
+      "name": "Lấy Token8"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://matilde-biogeographical-robena.ngrok-free.dev/auth/login",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "Content-Type"
+            },
+            {
+              "name": "Value",
+              "value": "application/x-www-form-urlencoded"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "username",
+              "value": "admin@gmail.com"
+            },
+            {
+              "name": "password",
+              "value": "Admin123!"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        656,
+        -80
+      ],
+      "id": "61489796-1d54-4d08-a5df-170af03207a2",
+      "name": "Lấy Token9"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  const data = item.json;\n\n  const desc = data.description || \"\";\n  const start = new Date(data.start_time);\n  const end = new Date(data.end_time);\n\n  const pad = n => n.toString().padStart(2, \"0\");\n\n  // Format dd/MM/yyyy\n  const formatDate = d => `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;\n  const formatTime = d => `${pad(d.getHours())}:${pad(d.getMinutes())}`;\n\n  let oneLine;\n  if (\n    start.getFullYear() === end.getFullYear() &&\n    start.getMonth() === end.getMonth() &&\n    start.getDate() === end.getDate()\n  ) {\n    // Cùng ngày → hiển thị giờ trước, ngày sau (dd/MM/yyyy trong ngoặc)\n    const startStr = formatTime(start);\n    const endStr = formatTime(end);\n    const dateStr = formatDate(start);\n\n    oneLine = `🎉 Sự kiện hôm nay: ${desc}\\n🗓️ Thời gian: ${startStr} → ${endStr} (${dateStr})`;\n  } else {\n    // Khác ngày → hiển thị cả giờ + ngày cho từng mốc\n    const startStr = `${formatTime(start)} (${formatDate(start)})`;\n    const endStr = `${formatTime(end)} (${formatDate(end)})`;\n\n    oneLine = `🎉 Sự kiện: ${desc}\\n🗓️ Thời gian: ${startStr} → ${endStr}`;\n  }\n\n  return {\n    json: {\n      ...data,\n      one_line: oneLine\n    }\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        320,
+        -336
+      ],
+      "id": "1e3b02a1-f8e4-415c-98da-b222b0b5e102",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  const data = item.json;\n\n  const desc = data.description || data.title || \"\";\n  const start = new Date(data.start_time || data.Start);\n  const end = new Date(data.end_time || data.End);\n\n  const pad = n => n.toString().padStart(2, \"0\");\n\n  // Format dd/MM/yyyy\n  const formatDate = d => `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;\n  const formatTime = d => `${pad(d.getHours())}:${pad(d.getMinutes())}`;\n  const formatFull = d => `${formatTime(d)} (${formatDate(d)})`;\n\n  // Format thời gian sự kiện\n  let timeStr;\n  if (\n    start.getFullYear() === end.getFullYear() &&\n    start.getMonth() === end.getMonth() &&\n    start.getDate() === end.getDate()\n  ) {\n    // Cùng ngày\n    timeStr = `${formatTime(start)} → ${formatTime(end)} (${formatDate(start)})`;\n  } else {\n    // Khác ngày\n    timeStr = `${formatFull(start)} → ${formatFull(end)}`;\n  }\n\n  // Nếu có reminder thì nối thêm\n  let reminderStr = \"\";\n  if (data.reminder_minutes && !isNaN(data.reminder_minutes)) {\n    const remindDate = new Date(start.getTime() - data.reminder_minutes * 60000);\n    reminderStr = `\\n⏰ Nhắc trước ${data.reminder_minutes} phút (lúc ${formatTime(remindDate)}).`;\n  }\n\n  // Thêm icon vào câu thông báo\n  const oneLine = `🎉 Sự kiện: ${desc}\\n🗓️ Thời gian: ${timeStr}${reminderStr}`;\n\n  return {\n    json: {\n      ...data,\n      one_line: oneLine\n    }\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        304,
+        -80
+      ],
+      "id": "1baed51b-9184-472e-ad64-e89db8ab78d2",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "url": "=https://matilde-biogeographical-robena.ngrok-free.dev/api/users/{{ $('/download/cache').item.json.user_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.access_token }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        448,
+        848
+      ],
+      "id": "e4ea7234-a7a2-485b-9e17-f10da572f230",
+      "name": "api/users/"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "seconds",
+              "secondsInterval": 20
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -608,
+        208
+      ],
+      "id": "d3eb5bcc-648a-438f-98dc-4f2bdb53a884",
+      "name": "10s"
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = [];\n\nfor (const item of items) {\n  const rawOutput = item.json.output;\n\n  try {\n    if (rawOutput === \"null\" || rawOutput === null) {\n      results.push({\n        json: { info: \"Output is null\", raw: rawOutput }\n      });\n      continue;\n    }\n\n    let safeJson = rawOutput.trim();\n\n    // Xử lý TH nhiều object không nằm trong array\n    if (safeJson.startsWith(\"{\") && safeJson.includes(\"},\"))\n      safeJson = `[${safeJson}]`;\n\n    const parsed = JSON.parse(safeJson);\n\n    const normalized = Array.isArray(parsed) ? parsed : [parsed];\n\n    for (const obj of normalized) {\n      if (typeof obj === 'object' && obj !== null) {\n        results.push({ json: obj });\n      } else {\n        results.push({\n          json: {\n            error: true,\n            message: \"Parsed item is not an object\",\n            value: obj\n          }\n        });\n      }\n    }\n  } catch (err) {\n    results.push({\n      json: {\n        error: true,\n        message: \"Failed to parse output\",\n        raw: rawOutput,\n      }\n    });\n  }\n}\n\nreturn results;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        208
+      ],
+      "id": "9431f09c-7da9-43eb-ab41-7034110db3e9",
+      "name": "Json1"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "https://matilde-biogeographical-robena.ngrok-free.dev/api/notifications/general-status",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.access_token }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"message\": \"{{ $('Json1').item.json.message }}\",\n  \"general_status\": \"sent\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1152,
+        192
+      ],
+      "id": "237a959d-e64c-4bb2-9a78-3f870ffd163b",
+      "name": "notifications/respond-status1"
+    },
+    {
+      "parameters": {
+        "url": "https://matilde-biogeographical-robena.ngrok-free.dev/api/notifications/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.access_token }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -272,
+        208
+      ],
+      "id": "63ac2adb-99cc-421e-bac5-383001ba302f",
+      "name": "notifications/3"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-3.5-turbo",
+          "mode": "list",
+          "cachedResultName": "gpt-3.5-turbo"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        272,
+        368
+      ],
+      "id": "2fc2ed94-8b7f-453b-ae7d-13229273f07f",
+      "name": "OpenAI Chat Model3",
+      "credentials": {
+        "openAiApi": {
+          "id": "3uUgOJJu5a7PGxnE",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "10s check có thông báo gửi về",
+        "height": 320,
+        "width": 2224
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -624,
+        176
+      ],
+      "typeVersion": 1,
+      "id": "0fad24b0-6ed4-484e-a986-7c758c2cbdc4",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.results }}",
+        "options": {
+          "systemMessage": "c\n- Lấy title (hoặc suy luận từ nội dung)\n- Lấy scheduled_at (hoặc dùng thời gian hiện tại)\n- Lấy user_id (hoặc dùng 1 nếu null)\n\n**Bước 2:** Tạo array 3 objects\n- Object 1: ENT06304 với threadId 3490028549161409221\n- Object 2: SU06303 với threadId 3454839233573804120\n- Object 3: SE06303 với threadId 8462078403090882501\n- **LƯU Ý:** Message phải chèn tên lớp tương ứng vào mỗi object\n\n### 🔧 CHI TIẾT KỸ THUẬT:\n- **notification_type:** Luôn là \"general\"\n- **title:** Tối đa 3 từ, súc tích\n- **message:** Nội dung thông báo + tên lớp để rõ ràng (ví dụ: \"Cả lớp se06303 nộp asm final...\")\n- **user_id:** Từ input hoặc 1 nếu null\n- **event_id:** Luôn là null\n- **scheduled_at:** Format ISO 8601\n- **channel_name:** Tên lớp chính xác từ yêu cầu\n- **threadId:** ID tương ứng từ danh sách\n\n### 🚫 TUYỆT ĐỐI KHÔNG:\n- ❌ Tạo thông báo khi thiếu thông tin cần thiết\n- ❌ Trả về single object `{...}` thay vì array\n- ❌ Trả về array với 1 hoặc 2 elements\n- ❌ Trả về array với hơn 3 elements\n- ❌ Sử dụng ```json code blocks\n- ❌ Tạo nhiều responses riêng biệt\n- ❌ Sai threadId cho channel_name\n- ❌ Thiếu tên lớp trong message\n- ❌ Title hoặc scheduled_at khác nhau giữa 3 objects\n\n### ⚠️ TRƯỜNG HỢP THIẾU THÔNG TIN:\n**Trả về `null` khi:**\n- Không có nội dung thông báo rõ ràng\n- Không có tên lớp cụ thể hoặc từ khóa \"tất cả\"\n- Thông tin đầu vào không đầy đủ để tạo thông báo\n\n**Output:** `null` (không phải JSON object hoặc array)\n\n### ✅ LUÔN LUÔN:\n- ✅ **KIỂM TRA VÀ NHẬN DẠNG CẤU TRÚC ĐẦU VÀO**\n- ✅ **KIỂM TRA THÔNG TIN ĐẦU VÀO TRƯỚC**\n- ✅ **TẠO ARRAY 3 OBJECTS** - Không thảo luận, không hỏi, chỉ tạo 3\n- ✅ Mapping đúng channel_name với threadId:\n  - ENT06304 → 3490028549161409221\n  - SU06303 → 3454839233573804120\n  - SE06303 → 8462078403090882501\n- ✅ Message có chèn tên lớp phù hợp\n- ✅ Title và scheduled_at giống hệt nhau cho cả 3 objects\n- ✅ Format JSON thuần túy (không có markdown)\n- ✅ Kiểm tra kỹ có đủ 3 objects trước khi trả về\n\n### 📝 LƯU Ý QUAN TRỌNG:\n**BẤT KỂ USER NÓI GÌ → LUÔN TẠO 3 OUTPUTS**\n\n- User nói \"lớp ENT06304\" → Tạo 3 outputs\n- User nói \"2 lớp ENT và SU\" → Tạo 3 outputs\n- User nói \"tất cả lớp\" → Tạo 3 outputs\n- User nói \"gửi thông báo\" (không nói lớp) → Tạo 3 outputs\n\n**KẾT LUẬN:** Luôn luôn, mọi trường hợp, bắt buộc phải trả về array 3 objects cho ENT06304, SU06303, SE06303\nc"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [
+        272,
+        192
+      ],
+      "id": "4f699fc0-a160-4621-8552-f65cd629b477",
+      "name": "Xử lí thông báo theo lớp"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://matilde-biogeographical-robena.ngrok-free.dev/auth/login",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "Content-Type"
+            },
+            {
+              "name": "Value",
+              "value": "application/x-www-form-urlencoded"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "username",
+              "value": "admin@gmail.com"
+            },
+            {
+              "name": "password",
+              "value": "Admin123!"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -448,
+        208
+      ],
+      "id": "b3012cba-cb44-48ff-a77c-72ece1c7b61c",
+      "name": "Lấy Token10"
+    },
+    {
+      "parameters": {
+        "jsCode": "const notifications = $input.item.json.notifications;\nconst results = [];\n\nconst nowUTC = new Date();\nconst nowVN = new Date(nowUTC.getTime() + 7 * 60 * 60 * 1000);\n\nnotifications.forEach((json) => {\n  if (json.notification_type !== 'general') return;\n\n  const scheduledAt = new Date(json.scheduled_at);\n  if (isNaN(scheduledAt.getTime())) return;\n\n  const diffSeconds = Math.abs((nowVN.getTime() - scheduledAt.getTime()) / 1000);\n  const within30Seconds = diffSeconds <= 15;\n\n  if (within30Seconds) {\n    results.push({\n      send: true,\n      notification_id: json.id,\n      title: json.title,\n      message: json.message,\n      user_id: json.user_id,\n      scheduled_at: json.scheduled_at,\n      now_vn: nowVN.toISOString(),\n      diff_seconds: diffSeconds\n    });\n  }\n});\n\nreturn {\n  now_utc: nowUTC.toISOString(),\n  now_vn: nowVN.toISOString(),\n  results\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -112,
+        208
+      ],
+      "id": "636c0450-2f1a-42c8-ae10-b313e7b65d7f",
+      "name": "scheduled_at"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "4a1f8c37-e90f-4909-bf12-89699bf0b6a3",
+              "leftValue": "={{ $json.results[0].send }}",
+              "rightValue": "general",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "7277e9cc-6f28-4646-be18-6861512ad8b4",
+              "leftValue": "={{ $json.results }}",
+              "rightValue": "",
+              "operator": {
+                "type": "array",
+                "operation": "notContains",
+                "rightType": "any"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        48,
+        208
+      ],
+      "id": "51e0e112-e284-46c9-b53d-2bc084ac6bf2",
+      "name": "False1"
+    },
+    {
+      "parameters": {
+        "threadId": "=4691593985282203569",
+        "type": 1,
+        "message": "={{ $json.lecturerMessage }}",
+        "quote": {},
+        "mentions": {}
+      },
+      "type": "n8n-nodes-zalo-tools.zaloSendMessage",
+      "typeVersion": 4,
+      "position": [
+        1504,
+        192
+      ],
+      "id": "88edcc03-18da-4578-8f2b-da2503b2f978",
+      "name": "TB Hoàn thành",
+      "credentials": {
+        "zaloApi": {
+          "id": "7JCnFGs9sqjDv5LF",
+          "name": "Zalo API Credentials"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "threadId": "={{ $json.discord_user_id }}",
+        "message": "={{ $json.one_line }}",
+        "quote": {},
+        "mentions": {}
+      },
+      "type": "n8n-nodes-zalo-tools.zaloSendMessage",
+      "typeVersion": 4,
+      "position": [
+        480,
+        -80
+      ],
+      "id": "9a4a98ae-d24a-4303-987d-da6876cd0e5b",
+      "name": "Nhận TB1",
+      "credentials": {
+        "zaloApi": {
+          "id": "7JCnFGs9sqjDv5LF",
+          "name": "Zalo API Credentials"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "threadId": "={{ $json.discord_user_id }}",
+        "message": "={{ $json.one_line }}",
+        "quote": {},
+        "mentions": {}
+      },
+      "type": "n8n-nodes-zalo-tools.zaloSendMessage",
+      "typeVersion": 4,
+      "position": [
+        496,
+        -336
+      ],
+      "id": "a3d67433-fd4c-4b99-bb71-7b1e0b6cee60",
+      "name": "Nhận TB2",
+      "credentials": {
+        "zaloApi": {
+          "id": "7JCnFGs9sqjDv5LF",
+          "name": "Zalo API Credentials"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "threadId": "=4691593985282203569",
+        "type": 1,
+        "message": "=✅ {{ $('/download/cache').item.json.message }}",
+        "quote": {},
+        "mentions": {}
+      },
+      "type": "n8n-nodes-zalo-tools.zaloSendMessage",
+      "typeVersion": 4,
+      "position": [
+        656,
+        848
+      ],
+      "id": "9378e9ed-df57-40ff-aec7-fceb4c273d13",
+      "name": "Nhận TB3",
+      "credentials": {
+        "zaloApi": {
+          "id": "7JCnFGs9sqjDv5LF",
+          "name": "Zalo API Credentials"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Gom tất cả thông báo con từ input\nconst notifications = items.flatMap(item => item.json.notifications || []);\n\n// Nếu không có thông báo\nif (notifications.length === 0) {\n  return [\n    {\n      json: {\n        status: \"error\",\n        message: \"❌ Không có lớp nào để thông báo.\"\n      }\n    }\n  ];\n}\n\n// Dùng Set để tránh trùng lớp\nconst classSet = new Set();\nlet commonMessage = \"\";\n\n// Duyệt thông báo\nnotifications.forEach((n, idx) => {\n  // Regex lấy tên lớp\n  const match = n.message.match(/Lớp\\s+([A-Z0-9]+)/i);\n  if (match) {\n    classSet.add(match[1]); // thêm vào Set, tự động loại trùng\n  }\n\n  // Với thông báo đầu tiên, cắt phần sau tên lớp làm \"nội dung chung\"\n  if (idx === 0) {\n    commonMessage = n.message.replace(/Lớp\\s+[A-Z0-9]+\\s*/i, \"\");\n  }\n});\n\n// Chuyển Set về mảng rồi ghép\nconst combinedClasses = Array.from(classSet).join(\", \");\n\n// Tạo tin nhắn chung\nconst lecturerMessage = `📢Thành công : Lớp ${combinedClasses} ${commonMessage.trim()}`;\n\n// Trả về 1 item duy nhất\nreturn [\n  {\n    json: {\n      status: \"success\",\n      lecturerMessage\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1328,
+        192
+      ],
+      "id": "885251f2-9175-4241-a6a3-e5583a7ee900",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "threadId": "=3490028549161409000",
+        "type": 1,
+        "message": "={{ $json.message }}",
+        "quote": {},
+        "mentions": {}
+      },
+      "type": "n8n-nodes-zalo-tools.zaloSendMessage",
+      "typeVersion": 4,
+      "position": [
+        736,
+        208
+      ],
+      "id": "7dfd4f82-36dd-4279-9d86-2e85e8684efa",
+      "name": "Nhận TB",
+      "credentials": {
+        "zaloApi": {
+          "id": "7JCnFGs9sqjDv5LF",
+          "name": "Zalo API Credentials"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://matilde-biogeographical-robena.ngrok-free.dev/auth/login",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "Content-Type"
+            },
+            {
+              "name": "Value",
+              "value": "application/x-www-form-urlencoded"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "username",
+              "value": "admin@gmail.com"
+            },
+            {
+              "name": "password",
+              "value": "Admin123!"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        960,
+        192
+      ],
+      "id": "aee963e0-e24b-4d68-bb93-911f549a8d6a",
+      "name": "Lấy Token12"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "8h Sáng": {
+      "main": [
+        []
+      ]
+    },
+    "Lấy Token3": {
+      "main": [
+        [
+          {
+            "node": "events/today",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "/send_reminder": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lấy Token4": {
+      "main": [
+        [
+          {
+            "node": "events/today1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "events/today1": {
+      "main": [
+        [
+          {
+            "node": "/reminder_service",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "/reminder_service": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "events/today": {
+      "main": [
+        [
+          {
+            "node": "Lấy Token7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Pinecone Vector Store1",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recursive Character Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lấy Token5": {
+      "main": [
+        [
+          {
+            "node": "/latest/download",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Pinecone Vector Store1",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pinecone Vector Store1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Lấy Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lấy Token": {
+      "main": [
+        [
+          {
+            "node": "/latest/download1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "api/users/",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Spam 10s": {
+      "main": [
+        [
+          {
+            "node": "Lấy Token5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "/latest/download": {
+      "main": [
+        [
+          {
+            "node": "Lấy Token6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "/download/cache": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "/latest/download1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lấy Token6": {
+      "main": [
+        [
+          {
+            "node": "/download/cache",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lấy Token7": {
+      "main": [
+        [
+          {
+            "node": "/send_reminder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "10s check Event": {
+      "main": [
+        [
+          {
+            "node": "Lấy Token4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Pinecone Vector Store1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lấy Token8": {
+      "main": [
+        [
+          {
+            "node": "notifications/1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lấy Token9": {
+      "main": [
+        [
+          {
+            "node": "notifications/2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Nhận TB2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "Nhận TB1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "api/users/": {
+      "main": [
+        [
+          {
+            "node": "Nhận TB3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "10s": {
+      "main": [
+        [
+          {
+            "node": "Lấy Token10",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Json1": {
+      "main": [
+        [
+          {
+            "node": "Nhận TB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "notifications/respond-status1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "notifications/3": {
+      "main": [
+        [
+          {
+            "node": "scheduled_at",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Xử lí thông báo theo lớp",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Xử lí thông báo theo lớp": {
+      "main": [
+        [
+          {
+            "node": "Json1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lấy Token10": {
+      "main": [
+        [
+          {
+            "node": "notifications/3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "scheduled_at": {
+      "main": [
+        [
+          {
+            "node": "False1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "False1": {
+      "main": [
+        [
+          {
+            "node": "Xử lí thông báo theo lớp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Nhận TB1": {
+      "main": [
+        [
+          {
+            "node": "Lấy Token9",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Nhận TB2": {
+      "main": [
+        [
+          {
+            "node": "Lấy Token8",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "TB Hoàn thành",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Nhận TB3": {
+      "main": [
+        []
+      ]
+    },
+    "TB Hoàn thành": {
+      "main": [
+        []
+      ]
+    },
+    "notifications/2": {
+      "main": [
+        []
+      ]
+    },
+    "notifications/1": {
+      "main": [
+        []
+      ]
+    },
+    "Nhận TB": {
+      "main": [
+        [
+          {
+            "node": "Lấy Token12",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lấy Token12": {
+      "main": [
+        [
+          {
+            "node": "notifications/respond-status1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "d18b3976-22a1-4098-abbf-291e1b66de27",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "8b28b30818410daa2d4d5c2cd4bf339c8d371939329cdd8408ad01ec285a903e"
+  },
+  "id": "pRjljVLA6r72EodQ",
+  "tags": []
+}

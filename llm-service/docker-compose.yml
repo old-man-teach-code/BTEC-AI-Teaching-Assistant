@@ -14,7 +14,7 @@ services:
       - model_cache:/home/appuser/.cache
     networks:
       - ai_network
-      - backend_default  # Network của backend service
+      - backend_default  # Network của backend service.
     # depends_on:
     #   - backend-db
     environment:
