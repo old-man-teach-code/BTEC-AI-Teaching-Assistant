@@ -7,6 +7,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 class Settings:
     # Database settings
     DB_HOST: str = os.getenv("DB_HOST", "db")
+    DB_PORT: int = int(os.getenv("DB_PORT", 3306))
     DB_USER: str = os.getenv("DB_USER", "testuser")
     DB_PASSWORD: str = os.getenv("DB_PASSWORD", "testpass")
     DB_NAME: str = os.getenv("DB_NAME", "testdb")
@@ -14,7 +15,7 @@ class Settings:
     # JWT settings
     SECRET_KEY: str = os.getenv("SECRET_KEY", "your_secret_key")
     ALGORITHM: str = os.getenv("ALGORITHM", "HS256")
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 30))
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 480))  # 8 giờ (480 phút)
     
     # Redis settings
     REDIS_HOST: str = os.getenv("REDIS_HOST", "redis")

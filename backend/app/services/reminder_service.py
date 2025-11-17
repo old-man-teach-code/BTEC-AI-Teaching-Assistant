@@ -7,13 +7,23 @@ import aiohttp
 
 def get_upcoming_reminders(session):
     now = datetime.datetime.now()
-    in_15_min = now + datetime.timedelta(minutes=15)
-    return session.query(Event).filter(
-        Event.reminder_time != None,
-        Event.reminded == False,
-        Event.reminder_time >= now,
-        Event.reminder_time <= in_15_min
+    
+    # Lấy tất cả events chưa được nhắc nhở và có reminder_minutes
+    events = session.query(Event).filter(
+        Event.reminder_minutes != None,
+        Event.reminded == False
     ).all()
+    
+    upcoming_events = []
+    for event in events:
+        # Tính thời gian nhắc nhở = start_time - reminder_minutes
+        reminder_time = event.start_time - datetime.timedelta(minutes=event.reminder_minutes)
+        
+        # Kiểm tra xem đã đến hoặc qua thời gian nhắc nhở chưa
+        if now >= reminder_time:
+            upcoming_events.append(event)
+    
+    return upcoming_events
 
 def mark_as_reminded(session, event):
     event.reminded = True

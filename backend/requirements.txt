@@ -12,3 +12,6 @@ redis
 requests
 aiohttp
 pydantic>=2.0.0
+openpyxl
+xlrd
+pandas

@@ -8,6 +8,40 @@ from models.document import Document
 from schemas.folder import FolderCreate, FolderUpdate
 
 
+def check_folder_name_exists(
+    db: Session, 
+    name: str, 
+    owner_id: int, 
+    parent_id: Optional[int] = None,
+    exclude_folder_id: Optional[int] = None
+) -> bool:
+    """
+    Kiểm tra xem tên folder đã tồn tại trong cùng parent folder chưa
+    
+    Args:
+        db: Database session
+        name: Tên folder cần kiểm tra
+        owner_id: ID của user sở hữu folder
+        parent_id: ID của parent folder (None = root level)
+        exclude_folder_id: ID của folder cần loại trừ (khi update)
+        
+    Returns:
+        bool: True nếu tên đã tồn tại, False nếu chưa
+    """
+    query = db.query(Folder).filter(
+        Folder.name == name,
+        Folder.owner_id == owner_id,
+        Folder.parent_id == parent_id,
+        Folder.is_deleted == False
+    )
+    
+    # Loại trừ folder hiện tại khi update
+    if exclude_folder_id:
+        query = query.filter(Folder.id != exclude_folder_id)
+    
+    return query.first() is not None
+
+
 def create_folder(db: Session, folder_data: FolderCreate, owner_id: int) -> Folder:
     """
     Tạo folder mới

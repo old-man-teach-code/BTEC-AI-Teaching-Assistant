@@ -9,25 +9,26 @@ Dưới đây là hướng dẫn triển khai code dựa trên source code base 
 
 ```
 backend/
-├── app/
-│   ├── main.py
-│   ├── core/
-│   ├── crud/
-│   ├── database/
-│   ├── dependencies/
-│   ├── models/
-│   ├── routes/
-│   ├── schemas/
-│   ├── services/
-│   └── request.log
-├── requirements.txt
-├── Dockerfile
-├── docker-compose.yml
-├── docker-compose.dev.yml
-├── docker-compose.prod.yml
-├── .env.dev
-├── .env.prod
-└── run-dev.sh
+├── app/                    # Thư mục chứa toàn bộ source code
+│   ├── main.py            # File chính chứa FastAPI application
+│   ├── core/              # Cấu hình, security, middleware
+│   ├── crud/              # Database operations
+│   ├── database/          # Database connection và session
+│   ├── dependencies/      # FastAPI dependencies
+│   ├── models/            # SQLAlchemy models
+│   ├── routes/            # API endpoints
+│   ├── schemas/           # Pydantic schemas
+│   ├── services/          # Business logic
+│   ├── utils/             # Utility functions
+│   └── cache/             # Redis cache client
+├── requirements.txt       # Python dependencies
+├── Dockerfile            # Docker image configuration
+├── docker-compose.yml    # Base docker compose
+├── docker-compose.dev.yml # Development overrides
+├── docker-compose.prod.yml # Production overrides
+├── .env.dev              # Development environment variables
+├── .env.prod             # Production environment variables
+└── run-dev.sh            # Development startup script
 ```
 
 ---

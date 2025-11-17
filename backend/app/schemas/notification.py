@@ -141,9 +141,15 @@ class NotificationFilterByStatus(BaseModel):
         return v
 
 
-class NotificationResponse(NotificationBase):
-    """Schema response cho notification"""
+class NotificationResponse(BaseModel):
+    """Schema response cho notification - không validate scheduled_at cho dữ liệu đã lưu"""
     id: int
+    notification_type: NotificationType = Field(..., description="Loại thông báo: respond/event/general")
+    title: str = Field(..., description="Tiêu đề thông báo")
+    message: str = Field(..., description="Nội dung thông báo")
+    user_id: int = Field(..., description="ID người nhận")
+    event_id: Optional[int] = Field(None, description="ID sự kiện")
+    scheduled_at: Optional[datetime] = Field(None, description="Thời gian lập lịch")
     event_status: Optional[NotificationEventStatus] = None
     respond_status: Optional[NotificationRespondStatus] = None
     general_status: Optional[NotificationGeneralStatus] = None
@@ -152,6 +158,18 @@ class NotificationResponse(NotificationBase):
 
     class Config:
         from_attributes = True
+
+
+    @property
+    def status(self) -> Optional[str]:
+        """Computed property trả về status chung dựa trên notification_type"""
+        if self.notification_type == NotificationType.EVENT:
+            return self.event_status.value if self.event_status else None
+        elif self.notification_type == NotificationType.RESPOND:
+            return self.respond_status.value if self.respond_status else None
+        elif self.notification_type == NotificationType.GENERAL:
+            return self.general_status.value if self.general_status else None
+        return None
 
 
 class NotificationListResponse(BaseModel):

@@ -67,6 +67,9 @@ def get_user_events(
     Returns:
         List[Event]: Danh sách events
     """
+    print(f"🔍 [get_user_events] Querying events for owner_id={owner_id}, skip={skip}, limit={limit}")
+    print(f"🔍 [get_user_events] Filters: start_date={start_date}, end_date={end_date}")
+    
     # Query cơ bản
     query = db.query(Event).filter(Event.owner_id == owner_id)
     
@@ -77,7 +80,13 @@ def get_user_events(
         query = query.filter(Event.start_time <= end_date)
     
     # Sắp xếp theo thời gian bắt đầu
-    return query.order_by(Event.start_time).offset(skip).limit(limit).all()
+    results = query.order_by(Event.start_time).offset(skip).limit(limit).all()
+    print(f"✅ [get_user_events] Found {len(results)} events")
+    
+    if len(results) > 0:
+        print(f"📝 [get_user_events] First event: id={results[0].id}, title={results[0].title}, type={results[0].event_type}")
+    
+    return results
 
 
 def get_total_user_events(
@@ -98,6 +107,8 @@ def get_total_user_events(
     Returns:
         int: Tổng số events
     """
+    print(f"🔍 [get_total_user_events] Counting events for owner_id={owner_id}")
+    
     # Query cơ bản
     query = db.query(Event).filter(Event.owner_id == owner_id)
     
@@ -107,7 +118,10 @@ def get_total_user_events(
     if end_date:
         query = query.filter(Event.start_time <= end_date)
     
-    return query.count()
+    count = query.count()
+    print(f"✅ [get_total_user_events] Total count: {count}")
+    
+    return count
 
 
 def update_event(

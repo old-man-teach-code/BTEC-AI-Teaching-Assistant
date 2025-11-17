@@ -13,7 +13,7 @@ from crud.folder import (
     create_folder, get_active_folder, get_user_folders, get_total_user_folders,
     update_folder, soft_delete_folder, restore_folder, delete_folder,
     get_folder_with_counts, get_expired_folders, get_folder_tree,
-    get_user_trash_folders, get_total_user_trash_folders
+    get_user_trash_folders, get_total_user_trash_folders, check_folder_name_exists
 )
 from crud.document import get_user_documents
 
@@ -46,6 +46,13 @@ def service_create_folder(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Parent folder không tồn tại hoặc bạn không có quyền truy cập"
                 )
+        
+        # Kiểm tra tên folder đã tồn tại chưa
+        if check_folder_name_exists(db, folder_data.name, owner_id, folder_data.parent_id):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Folder với tên '{folder_data.name}' đã tồn tại trong thư mục này"
+            )
         
         # Tạo folder
         folder = create_folder(db, folder_data, owner_id)
